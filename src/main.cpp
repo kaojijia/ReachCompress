@@ -1,5 +1,5 @@
 #include "pll.h"
-#include "graph_pruner.h"
+// #include "graph_pruner.h"
 #include "compression.h"
 #include "InputHandler.h"
 #include "OutputHandler.h"
@@ -21,9 +21,9 @@ int main() {
     // 使用双向BFS进行可达性查询
     BidirectionalBFS bfs(g);
 
-    // 实例化GraphPruner并裁剪图
-    GraphPruner pruner(g);
-    pruner.pruneIsolatedNodes();  // 裁剪孤立节点
+    // // 实例化GraphPruner并裁剪图
+    // GraphPruner pruner(g);
+    // pruner.pruneIsolatedNodes();  // 裁剪孤立节点
 
     // 实例化PLL并构建索引
     PLL pll(g);

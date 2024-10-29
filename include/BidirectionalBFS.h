@@ -2,29 +2,25 @@
 #define BIDIRECTIONAL_BFS_H
 
 #include "graph.h"
-#include <unordered_map>
 #include <vector>
 #include <queue>
 #include <unordered_set>
 
 class BidirectionalBFS {
 public:
-    // 构造函数，传入图的引用，自动构建邻接表
-    BidirectionalBFS(Graph& g);
+    BidirectionalBFS(Graph& graph);
 
-    // 执行双向BFS查询，返回两个节点之间的可达性
     bool reachabilityQuery(int source, int target);
 
 private:
-    Graph& g;  // 引用图
-    std::unordered_map<int, std::vector<int>> adjList;  // 邻接表，用于BFS
+    Graph& g;
+    std::vector<std::vector<int>> adjList;         // 正向邻接表
+    std::vector<std::vector<int>> reverseAdjList;  // 逆邻接表
 
-    // 通过BFS扩展一层
-    bool bfsStep(std::queue<int>& queue, std::unordered_set<int>& visited, 
-                 std::unordered_set<int>& opposite_visited);
-
-    // 初始化邻接表
     void buildAdjList();
+    bool bfsStep(std::queue<int>& queue, std::unordered_set<int>& visited, 
+                 std::unordered_set<int>& opposite_visited, 
+                 const std::vector<std::vector<int>>& adjList); // 增加邻接表参数，用于选择正向或逆向邻接表
 };
 
-#endif
+#endif  // BIDIRECTIONAL_BFS_H

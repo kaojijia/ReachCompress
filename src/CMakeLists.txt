@@ -1,5 +1,5 @@
 # 生成静态库libpll.a
-add_library(pll STATIC graph.cpp pll.cpp graph_pruner.cpp compression.cpp input_handler.cpp output_handler.cpp BidirectionalBFS.cpp)
+add_library(pll STATIC graph.cpp pll.cpp compression.cpp input_handler.cpp output_handler.cpp BidirectionalBFS.cpp)
 
 # 包含头文件目录
 target_include_directories(pll PUBLIC ../include)

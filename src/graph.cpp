@@ -7,8 +7,11 @@ Graph::Graph(bool store_edges) : store_edges(store_edges) {}
 
 // 添加边到图
 void Graph::addEdge(int u, int v, bool is_directed) {
-    vertices[u].LOUT.insert(v);
-    vertices[v].LIN.insert(u);
+    if (u >= vertices.size()) vertices.resize(u + 1);
+    if (v >= vertices.size()) vertices.resize(v + 1);
+
+    vertices[u].LOUT.push_back(v);
+    vertices[v].LIN.push_back(u);
     vertices[u].out_degree++;
     vertices[v].in_degree++;
 
@@ -22,22 +25,24 @@ void Graph::addEdge(int u, int v, bool is_directed) {
 
 // 删除边
 void Graph::removeEdge(int u, int v, bool is_directed) {
-    if (vertices[u].LOUT.erase(v) > 0) {
-        vertices[u].out_degree--;
-    }
-    if (vertices[v].LIN.erase(u) > 0) {
-        vertices[v].in_degree--;
-    }
+    auto remove_edge = [](std::vector<int>& vec, int val) {
+        vec.erase(std::remove(vec.begin(), vec.end(), val), vec.end());
+    };
+
+    remove_edge(vertices[u].LOUT, v);
+    remove_edge(vertices[v].LIN, u);
+    vertices[u].out_degree--;
+    vertices[v].in_degree--;
 
     if (store_edges) {
         // 使用 std::remove_if 删除边
         edges.erase(std::remove_if(edges.begin(), edges.end(),
-                                   [u, v](const Edge& e) { return e.from == u && e.to == v; }),
+                                   [u, v](const std::pair<int, int>& e) { return e.first == u && e.second == v; }),
                     edges.end());
 
         if (!is_directed) {
             edges.erase(std::remove_if(edges.begin(), edges.end(),
-                                       [u, v](const Edge& e) { return e.from == v && e.to == u; }),
+                                       [u, v](const std::pair<int, int>& e) { return e.first == v && e.second == u; }),
                         edges.end());
         }
     }
@@ -46,7 +51,7 @@ void Graph::removeEdge(int u, int v, bool is_directed) {
 // 打印边信息
 void Graph::printEdges() {
     std::cout << "Edges in the graph:" << std::endl;
-    for (const Edge& edge : edges) {
-        std::cout << edge.from << " -> " << edge.to << std::endl;
+    for (const auto& edge : edges) {
+        std::cout << edge.first << " -> " << edge.second << std::endl;
     }
 }

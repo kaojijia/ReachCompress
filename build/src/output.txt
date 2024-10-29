@@ -1,2 +1,0 @@
-Reachability Query: From 1 to 5 - Not Reachable
-2-hop Cover Nodes: 

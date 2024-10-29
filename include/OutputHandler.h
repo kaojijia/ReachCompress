@@ -3,19 +3,21 @@
 
 #include <string>
 #include <vector>
+#include "graph.h"
 
 class OutputHandler {
 public:
-    explicit OutputHandler(const std::string& output_file);
-    
-    // 写入2-hop覆盖信息
-    void writeCoverInfo(const std::vector<int>& cover);
+    // 静态方法：输出图的信息到控制台
+    static void printGraphInfo(const Graph& graph);
 
-    // 写入可达性查询信息
+    // 非静态方法：写入图的信息到文件
+    explicit OutputHandler(const std::string& output_file);
+    void writeGraphInfo(const Graph& graph);
+    void writeCoverInfo(const std::vector<int>& cover);
     void writeReachabilityQuery(int u, int v, bool result);
 
 private:
     std::string output_file;  // 输出文件路径
 };
 
-#endif
+#endif  // OUTPUT_HANDLER_H

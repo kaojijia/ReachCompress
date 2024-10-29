@@ -1,6 +1,7 @@
 #include "pll.h"
 #include <queue>
 #include <unordered_set>
+#include <algorithm>  // 确保包含算法库
 
 PLL::PLL(Graph& graph) : g(graph) {}
 
@@ -20,16 +21,16 @@ void PLL::bfsPruned(int start, bool is_reversed) {
             if (visited.find(neighbor) != visited.end()) continue;
 
             // 剪枝条件：如果已经通过2-hop索引可达，跳过进一步遍历
-            if (!is_reversed && g.vertices[start].LOUT.count(neighbor)) continue;
-            if (is_reversed && g.vertices[start].LIN.count(neighbor)) continue;
+            if (!is_reversed && std::find(g.vertices[start].LOUT.begin(), g.vertices[start].LOUT.end(), neighbor) != g.vertices[start].LOUT.end()) continue;
+            if (is_reversed && std::find(g.vertices[start].LIN.begin(), g.vertices[start].LIN.end(), neighbor) != g.vertices[start].LIN.end()) continue;
 
             visited.insert(neighbor);
 
             if (is_reversed) {
-                g.vertices[neighbor].LIN.insert(start);
+                g.vertices[neighbor].LIN.push_back(start);
                 q.push(neighbor);
             } else {
-                g.vertices[neighbor].LOUT.insert(start);
+                g.vertices[neighbor].LOUT.push_back(start);
                 q.push(neighbor);
             }
         }
@@ -38,8 +39,7 @@ void PLL::bfsPruned(int start, bool is_reversed) {
 
 // 构建2-hop标签的PLL主函数
 void PLL::buildPLLLabels() {
-    for (auto& node_pair : g.vertices) {
-        int node = node_pair.first;
+    for (int node = 0; node < g.vertices.size(); ++node) {
         bfsPruned(node, false);  // 正向BFS，构建LOUT
         bfsPruned(node, true);   // 反向BFS，构建LIN
     }
@@ -51,7 +51,7 @@ bool PLL::reachabilityQuery(int u, int v) {
     const auto& LIN_v = g.vertices[v].LIN;
 
     for (int node : LOUT_u) {
-        if (LIN_v.find(node) != LIN_v.end()) {
+        if (std::find(LIN_v.begin(), LIN_v.end(), node) != LIN_v.end()) {
             return true;
         }
     }
@@ -67,9 +67,8 @@ std::vector<int> PLL::greedy2HopCover() {
         int bestNode = -1;
         int maxCover = 0;
 
-        for (const auto& pair : g.vertices) {
-            int node = pair.first;
-            const auto& LOUT = pair.second.LOUT;
+        for (int node = 0; node < g.vertices.size(); ++node) {
+            const auto& LOUT = g.vertices[node].LOUT;
 
             int uncoveredCount = 0;
             for (int neighbor : LOUT) {
