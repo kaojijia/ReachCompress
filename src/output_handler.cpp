@@ -60,3 +60,27 @@ void OutputHandler::writeReachabilityQuery(int u, int v, bool result) {
     outfile << (result ? "Reachable" : "Not Reachable") << std::endl;
     outfile.close();
 }
+
+
+void OutputHandler::writeInOutSets(const Graph& graph) {
+    std::ofstream outfile(output_file, std::ios_base::out|std::ios_base::app);  
+    if (!outfile.is_open()) {
+        std::cerr << "Error opening output file: " << output_file << std::endl;
+        return;
+    }
+
+    for (int i = 0; i < graph.vertices.size(); ++i) {
+        outfile << "Node " << i << " in_set: ";
+        for (int inNode : graph.vertices[i].LIN) {
+            outfile << inNode << " ";
+        }
+        outfile << std::endl;
+
+        outfile << "Node " << i << " out_set: ";
+        for (int outNode : graph.vertices[i].LOUT) {
+            outfile << outNode << " ";
+        }
+        outfile << std::endl;
+    }
+    outfile.close();
+}

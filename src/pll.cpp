@@ -1,14 +1,41 @@
 #include "pll.h"
 #include <queue>
 #include <unordered_set>
-#include <algorithm>  // 确保包含算法库
+#include <algorithm>
+#include <vector>
 
+// 构造函数，接收图结构
 PLL::PLL(Graph& graph) : g(graph) {}
 
-// 剪枝的BFS，用于构建2-hop索引
+// 计算节点度，并按度降序排序节点
+std::vector<int> PLL::orderByDegree() {
+    // 初始化节点顺序数组
+    std::vector<int> nodes(g.vertices.size());
+    for (int i = 0; i < g.vertices.size(); ++i) {
+        nodes[i] = i;
+    }
+
+    // 按照度的降序排序节点，度计算为 (in + 1) * (out + 1)
+    // std::sort(nodes.begin(), nodes.end(), [&](int a, int b) {
+    //     int inDegreeA = g.vertices[a].LIN.empty() ? 0 : g.vertices[a].LIN.size();
+    //     int outDegreeA = g.vertices[a].LOUT.empty() ? 0 : g.vertices[a].LOUT.size();
+    //     int degreeA = (inDegreeA + 1) * (outDegreeA + 1);
+
+    //     int inDegreeB = g.vertices[b].LIN.empty() ? 0 : g.vertices[b].LIN.size();
+    //     int outDegreeB = g.vertices[b].LOUT.empty() ? 0 : g.vertices[b].LOUT.size();
+    //     int degreeB = (inDegreeB + 1) * (outDegreeB + 1);
+
+    //     return degreeA > degreeB;
+    // });
+
+    return nodes;
+}
+
+
+// 从Landmark节点出发的剪枝 BFS
 void PLL::bfsPruned(int start, bool is_reversed) {
     std::queue<int> q;
-    std::unordered_set<int> visited;
+    std::unordered_set<int> visited;  // 记录访问过的节点
     q.push(start);
     visited.insert(start);
 
@@ -16,80 +43,137 @@ void PLL::bfsPruned(int start, bool is_reversed) {
         int current = q.front();
         q.pop();
 
+        // 遍历邻居节点
         const auto& neighbors = is_reversed ? g.vertices[current].LIN : g.vertices[current].LOUT;
         for (int neighbor : neighbors) {
-            if (visited.find(neighbor) != visited.end()) continue;
+            if (neighbor == start) continue;
+            if (visited.find(neighbor) != visited.end()) {
+                continue;  // 已访问过则跳过
+            }
 
-            // 剪枝条件：如果已经通过2-hop索引可达，跳过进一步遍历
-            if (!is_reversed && std::find(g.vertices[start].LOUT.begin(), g.vertices[start].LOUT.end(), neighbor) != g.vertices[start].LOUT.end()) continue;
-            if (is_reversed && std::find(g.vertices[start].LIN.begin(), g.vertices[start].LIN.end(), neighbor) != g.vertices[start].LIN.end()) continue;
+            // 检查是否可以剪枝
+            const auto& start_labels = is_reversed ? g.vertices[start].LIN : g.vertices[start].LOUT;
+            const auto& neighbor_labels = is_reversed ? g.vertices[neighbor].LOUT : g.vertices[neighbor].LIN;
+            bool can_prune = false;
 
+            // 检查标签是否重叠
+            for (int label : start_labels) {
+                for (int neighbor_label : neighbor_labels) {
+                    if (neighbor_label == label) {
+                        can_prune = true;
+                        break;  // 找到重叠，跳出内层循环
+                    }
+                }
+                if (can_prune) break;  // 跳出外层循环
+            }
+
+            // 如果可以剪枝，跳过该邻居，但仍然将其加入队列
+            if (can_prune) {
+                visited.insert(neighbor);
+                q.push(neighbor);
+                continue;
+            }
+
+            // 如果未剪枝，将 neighbor 加入到访问队列
             visited.insert(neighbor);
+            q.push(neighbor);
 
+            // 更新标签：只有在未剪枝的情况下，才将 start 添加到 neighbor 的标签集合
             if (is_reversed) {
-                g.vertices[neighbor].LIN.push_back(start);
-                q.push(neighbor);
+                g.vertices[neighbor].LOUT.push_back(start);  // 反向 BFS 更新出度集合
             } else {
-                g.vertices[neighbor].LOUT.push_back(start);
-                q.push(neighbor);
+                g.vertices[neighbor].LIN.push_back(start);   // 正向 BFS 更新入度集合
             }
         }
     }
 }
+
 
 // 构建2-hop标签的PLL主函数
 void PLL::buildPLLLabels() {
-    for (int node = 0; node < g.vertices.size(); ++node) {
-        bfsPruned(node, false);  // 正向BFS，构建LOUT
-        bfsPruned(node, true);   // 反向BFS，构建LIN
+    // 按节点度排序并从每个节点出发进行剪枝BFS
+    std::vector<int> nodes = orderByDegree();
+    for (int node : nodes) {
+        bfsPruned(node, false);  // 正向 BFS
+        bfsPruned(node, true);   // 反向 BFS
     }
+    simplifyInOutSets();
 }
 
-// 可达性查询
+// 可达性查询，检查是否存在2-hop路径
 bool PLL::reachabilityQuery(int u, int v) {
+    if (u >= g.vertices.size() || v >= g.vertices.size()) return false;
+
     const auto& LOUT_u = g.vertices[u].LOUT;
     const auto& LIN_v = g.vertices[v].LIN;
-
-    for (int node : LOUT_u) {
-        if (std::find(LIN_v.begin(), LIN_v.end(), node) != LIN_v.end()) {
-            return true;
-        }
+    
+    std::unordered_set<int> loutSet(LOUT_u.begin(), LOUT_u.end());
+    for (int node : LIN_v) {
+        if (loutSet.count(node)) return true;  // 存在交集，表示可达
     }
-    return false;
+
+    for (auto i : LOUT_u) {
+        if (i == v) return true;
+    }
+
+    for (int node : LIN_v) {
+        if (node == u) return true;  // 存在交集，表示可达
+    }
+
+    return false;  // 无交集，不可达
 }
 
-// 贪婪算法求解2-Hop覆盖
-std::vector<int> PLL::greedy2HopCover() {
-    std::vector<int> selectedNodes;
-    std::unordered_set<int> coveredNodes;
+// 不剪枝的 BFS，用于构建in和out集合
+void PLL::bfsUnpruned(int start, bool is_reversed) {
+    std::queue<int> q;
+    std::unordered_set<int> visited;  // 记录访问过的节点
+    q.push(start);
+    visited.insert(start);
 
-    while (coveredNodes.size() < g.vertices.size()) {
-        int bestNode = -1;
-        int maxCover = 0;
+    while (!q.empty()) {
+        int current = q.front();
+        q.pop();
 
-        for (int node = 0; node < g.vertices.size(); ++node) {
-            const auto& LOUT = g.vertices[node].LOUT;
-
-            int uncoveredCount = 0;
-            for (int neighbor : LOUT) {
-                if (coveredNodes.find(neighbor) == coveredNodes.end()) {
-                    uncoveredCount++;
-                }
+        // 选择邻接方向
+        const auto& neighbors = is_reversed ? g.vertices[current].LIN : g.vertices[current].LOUT;
+        for (int neighbor : neighbors) {
+            if (visited.find(neighbor) != visited.end()) {
+                continue; // 如果已访问过，则跳过
             }
 
-            if (uncoveredCount > maxCover) {
-                maxCover = uncoveredCount;
-                bestNode = node;
+            // 更新标签：根据方向更新neighbor的in或out集合
+            if (is_reversed) {
+                g.vertices[neighbor].LOUT.push_back(start);  // 反向 BFS 更新 out 集合
+            } else {
+                g.vertices[neighbor].LIN.push_back(start);   // 正向 BFS 更新 in 集合
             }
-        }
 
-        if (bestNode == -1) break;  // 没有更多节点可以覆盖
-
-        selectedNodes.push_back(bestNode);
-        for (int neighbor : g.vertices[bestNode].LOUT) {
-            coveredNodes.insert(neighbor);
+            // 扩展到下一层
+            visited.insert(neighbor);
+            q.push(neighbor);
         }
     }
+}
 
-    return selectedNodes;
+// 构建2-hop标签的PLL主函数（不剪枝版本）
+void PLL::buildPLLLabelsUnpruned() {
+    for (int node = 0; node < g.vertices.size(); ++node) {
+        bfsUnpruned(node, false);  // 正向 BFS，构建LOUT
+        bfsUnpruned(node, true);   // 反向 BFS，构建LIN
+    }
+}
+
+// 新增函数：精简每个节点的in和out集合
+void PLL::simplifyInOutSets() {
+    for (auto& vertex : g.vertices) {
+        // 移除 in 集合中的重复元素和自身
+        std::unordered_set<int> unique_in(vertex.LIN.begin(), vertex.LIN.end());
+        unique_in.erase(&vertex - &g.vertices[0]);
+        vertex.LIN.assign(unique_in.begin(), unique_in.end());
+
+        // 移除 out 集合中的重复元素和自身
+        std::unordered_set<int> unique_out(vertex.LOUT.begin(), vertex.LOUT.end());
+        unique_out.erase(&vertex - &g.vertices[0]);
+        vertex.LOUT.assign(unique_out.begin(), unique_out.end());
+    }
 }

@@ -1,14 +1,54 @@
 #include "gtest/gtest.h"
 #include "pll.h"
-
+#include "graph.h"
+#include "BidirectionalBFS.h"
+#include "OutputHandler.h"
+#include "RandomUtils.h"
+#include "InputHandler.h"
+#include <string>
 TEST(PLLTest, ReachabilityTest) {
-    Graph g;
-    g.addEdge(1, 2);
-    g.addEdge(2, 3);
+    Graph g1(true);
+    Graph g2(true);
 
-    PLL pll(g);
-    pll.buildPLLLabels();
+    // 使用项目根目录宏构建绝对路径
+    std::string filename = "gene_edges_20241029_135003";
+    std::string gene_path = "/Edges/generate/";
+    std::string result_path = "/result/";
 
-    EXPECT_TRUE(pll.reachabilityQuery(1, 3));
-    EXPECT_FALSE(pll.reachabilityQuery(3, 1));
+    
+    InputHandler inputHandler1(PROJECT_ROOT_DIR + gene_path + filename);
+    inputHandler1.readGraph(g1);
+    OutputHandler outputHandler_origin(PROJECT_ROOT_DIR + result_path+ filename + "_origin");
+    
+    OutputHandler::printGraphInfo(g1);
+    
+    InputHandler inputHandler2(PROJECT_ROOT_DIR + gene_path + filename);
+    inputHandler2.readGraph(g2);
+    OutputHandler outputHandler_pruned(PROJECT_ROOT_DIR + result_path+ filename +"_pruned");
+
+
+
+    PLL pll_origin(g1);
+    pll_origin.buildPLLLabelsUnpruned();
+    outputHandler_origin.writeInOutSets(g1);
+    
+    PLL pll2(g2);
+    pll2.buildPLLLabels();
+    outputHandler_pruned.writeInOutSets(g2);
+    
+    // 生成不重复的随机查询对
+    int num_queries = 30;
+    int max_value = g1.vertices.size();
+    unsigned int seed = 42; // 可选的随机种子
+        std::vector<std::pair<int, int>> query_pairs = RandomUtils::generateUniqueQueryPairs(num_queries, max_value, seed);
+
+    
+    for (const auto& query_pair : query_pairs) {
+        int source = query_pair.first;
+        int target = query_pair.second;
+        bool result = pll2.reachabilityQuery(source, target);
+        std::cout << "Query from " << source << " to " << target << ": " << (result ? "Reachable" : "Not Reachable") << std::endl;
+    }
+
+
 }

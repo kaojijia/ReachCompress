@@ -8,11 +8,19 @@ class PLL {
 public:
     PLL(Graph& graph);  // 构造函数，传入图的引用
 
+    std::vector<int> orderByDegree();
+
     // 构建PLL标签
     void buildPLLLabels();
 
     // 可达性查询
     bool reachabilityQuery(int u, int v);
+
+    void bfsUnpruned(int start, bool is_reversed);
+
+    void buildPLLLabelsUnpruned();
+
+    void simplifyInOutSets();
 
     // 贪婪算法用于2-Hop覆盖
     std::vector<int> greedy2HopCover();

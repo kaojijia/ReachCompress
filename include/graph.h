@@ -15,7 +15,7 @@ struct Vertex {
 // 图的结构，支持可选的边集存储
 class Graph {
 public:
-    std::vector<Vertex> vertices;  // 邻接表存储节点
+    std::vector<Vertex> vertices;  
     std::vector<std::pair<int, int>> edges;  // 边集存储（用于显式存储所有边）
 
     // 构造函数，控制是否存储边集

@@ -10,8 +10,8 @@ matplotlib.use('Agg')
 
 
 # 参数设置
-num_nodes = 20  # 图中的节点数
-num_edges = 30  # 需要生成的边数
+num_nodes = 40  # 图中的节点数
+num_edges = 90  # 需要生成的边数
 scc_ratio = 0  # 强连通分量的比例
 num_scc = 4  # 强连通分量的数量
 

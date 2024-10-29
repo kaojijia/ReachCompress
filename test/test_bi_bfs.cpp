@@ -69,7 +69,7 @@ TEST(BidirectionalBFSTest, RandomQueryPairs) {
 
     // 使用项目根目录宏构建绝对路径
     
-    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241029_135549");
+    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241029_135003");
     inputHandler.readGraph(g);
     OutputHandler::printGraphInfo(g);
 
@@ -77,7 +77,7 @@ TEST(BidirectionalBFSTest, RandomQueryPairs) {
     BidirectionalBFS bfs(g);
 
     // 生成不重复的随机查询对
-    int num_queries = 30;
+    int num_queries = 100;
     int max_value = g.vertices.size();
     unsigned int seed = 42; // 可选的随机种子
 

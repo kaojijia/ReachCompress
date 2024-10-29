@@ -35,8 +35,8 @@ int main() {
     output_handler.writeReachabilityQuery(u, v, reachability_result);
 
     // 获取2-Hop覆盖并写入结果
-    std::vector<int> cover = pll.greedy2HopCover();
-    output_handler.writeCoverInfo(cover);
+    // std::vector<int> cover = pll.greedy2HopCover();
+    // output_handler.writeCoverInfo(cover);
 
     return 0;
 }

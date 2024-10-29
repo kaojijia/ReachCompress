@@ -15,6 +15,7 @@ public:
     void writeGraphInfo(const Graph& graph);
     void writeCoverInfo(const std::vector<int>& cover);
     void writeReachabilityQuery(int u, int v, bool result);
+    void writeInOutSets(const Graph& graph);
 
 private:
     std::string output_file;  // 输出文件路径
