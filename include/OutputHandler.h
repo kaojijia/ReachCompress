@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "graph.h"
+#include "pll.h"
 
 class OutputHandler {
 public:
@@ -15,7 +16,7 @@ public:
     void writeGraphInfo(const Graph& graph);
     void writeCoverInfo(const std::vector<int>& cover);
     void writeReachabilityQuery(int u, int v, bool result);
-    void writeInOutSets(const Graph& graph);
+    void writeInOutSets(const PLL& pll);
 
 private:
     std::string output_file;  // 输出文件路径

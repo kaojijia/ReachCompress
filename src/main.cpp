@@ -31,8 +31,8 @@ int main() {
 
     // 查询可达性并写入结果
     int u = 1, v = 5;
-    bool reachability_result = pll.reachabilityQuery(u, v);
-    output_handler.writeReachabilityQuery(u, v, reachability_result);
+    // bool reachability_result = pll.reachabilityQuery(u, v);
+    // output_handler.writeReachabilityQuery(u, v, reachability_result);
 
     // 获取2-Hop覆盖并写入结果
     // std::vector<int> cover = pll.greedy2HopCover();

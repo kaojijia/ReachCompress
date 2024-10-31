@@ -1,40 +1,40 @@
-Node 0 in_set: 
-Node 0 out_set: 11 1 3 
-Node 1 in_set: 17 6 3 11 0 10 2 
-Node 1 out_set: 4 12 7 14 2 
-Node 2 in_set: 4 5 0 1 
-Node 2 out_set: 9 6 1 
-Node 3 in_set: 0 
-Node 3 out_set: 13 8 6 16 5 1 18 
-Node 4 in_set: 13 0 10 1 6 
-Node 4 out_set: 12 2 14 17 10 
-Node 5 in_set: 3 0 11 
-Node 5 out_set: 14 12 2 17 10 
-Node 6 in_set: 10 9 13 2 0 3 14 
-Node 6 out_set: 1 9 4 14 
-Node 7 in_set: 1 18 0 10 
-Node 7 out_set: 
-Node 8 in_set: 18 3 0 16 
-Node 8 out_set: 
-Node 9 in_set: 11 6 17 3 0 2 
-Node 9 out_set: 6 1 17 
-Node 10 in_set: 1 0 5 4 
-Node 10 out_set: 6 1 7 4 
-Node 11 in_set: 0 18 16 
-Node 11 out_set: 9 1 12 14 5 16 18 
-Node 12 in_set: 5 0 4 11 1 
-Node 12 out_set: 
-Node 13 in_set: 18 3 0 16 
-Node 13 out_set: 6 1 4 
-Node 14 in_set: 5 0 11 17 6 4 1 
-Node 14 out_set: 1 6 
-Node 15 in_set: 19 
-Node 15 out_set: 
-Node 16 in_set: 3 0 11 
-Node 16 out_set: 6 1 13 11 8 
-Node 17 in_set: 1 5 0 4 9 
-Node 17 out_set: 9 1 14 
-Node 18 in_set: 11 3 
-Node 18 out_set: 13 6 8 1 7 11 
-Node 19 in_set: 
-Node 19 out_set: 15 
+Node 0 IN_set: 
+Node 0 OUT_set: 3 18 14 
+Node 1 IN_set: 9 2 17 6 4 10 14 11 
+Node 1 OUT_set: 12 7 
+Node 2 IN_set: 9 17 6 4 10 14 1 11 
+Node 2 OUT_set: 12 7 
+Node 3 IN_set: 0 
+Node 3 OUT_set: 18 14 
+Node 4 IN_set: 9 13 2 17 6 10 14 1 11 
+Node 4 OUT_set: 12 7 
+Node 5 IN_set: 16 18 11 
+Node 5 OUT_set: 10 
+Node 6 IN_set: 17 9 2 4 10 14 1 11 
+Node 6 OUT_set: 12 7 
+Node 7 IN_set: 9 2 17 6 4 10 14 1 11 
+Node 7 OUT_set: 
+Node 8 IN_set: 16 18 11 
+Node 8 OUT_set: 
+Node 9 IN_set: 2 17 6 4 10 14 1 11 
+Node 9 OUT_set: 12 7 
+Node 10 IN_set: 9 5 2 17 6 4 14 1 11 
+Node 10 OUT_set: 12 7 
+Node 11 IN_set: 16 18 
+Node 11 OUT_set: 8 13 5 14 
+Node 12 IN_set: 9 2 17 6 4 10 14 1 11 
+Node 12 OUT_set: 
+Node 13 IN_set: 16 18 11 
+Node 13 OUT_set: 4 
+Node 14 IN_set: 9 2 17 6 16 18 4 10 1 11 
+Node 14 OUT_set: 12 7 
+Node 15 IN_set: 19 
+Node 15 OUT_set: 
+Node 16 IN_set: 18 11 
+Node 16 OUT_set: 8 13 5 14 
+Node 17 IN_set: 9 2 6 4 10 14 1 11 
+Node 17 OUT_set: 12 7 
+Node 18 IN_set: 3 16 11 
+Node 18 OUT_set: 8 13 5 14 
+Node 19 IN_set: 
+Node 19 OUT_set: 15 

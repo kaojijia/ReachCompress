@@ -62,22 +62,22 @@ void OutputHandler::writeReachabilityQuery(int u, int v, bool result) {
 }
 
 
-void OutputHandler::writeInOutSets(const Graph& graph) {
-    std::ofstream outfile(output_file, std::ios_base::out|std::ios_base::app);  
+void OutputHandler::writeInOutSets(const PLL &pll) {
+    std::ofstream outfile(output_file, std::ios_base::out);  // 以覆盖方式打开文件
     if (!outfile.is_open()) {
         std::cerr << "Error opening output file: " << output_file << std::endl;
         return;
     }
 
-    for (int i = 0; i < graph.vertices.size(); ++i) {
-        outfile << "Node " << i << " in_set: ";
-        for (int inNode : graph.vertices[i].LIN) {
+    for (int i = 0; i < pll.IN.size(); ++i) {
+        outfile << "Node " << i << " IN_set: ";
+        for (int inNode : pll.IN[i]) {
             outfile << inNode << " ";
         }
         outfile << std::endl;
 
-        outfile << "Node " << i << " out_set: ";
-        for (int outNode : graph.vertices[i].LOUT) {
+        outfile << "Node " << i << " OUT_set: ";
+        for (int outNode : pll.OUT[i]) {
             outfile << outNode << " ";
         }
         outfile << std::endl;

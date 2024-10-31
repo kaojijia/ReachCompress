@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "your_executable"
+			"path" : "test/test_comp"
 		}
 	],
 	"backtrace" : 1,
@@ -17,6 +17,7 @@
 		],
 		"files" : 
 		[
+			"test/CMakeLists.txt",
 			"CMakeLists.txt"
 		],
 		"nodes" : 
@@ -27,26 +28,29 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 20,
+				"line" : 18,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 32,
+				"line" : 19,
 				"parent" : 0
+			},
+			{
+				"file" : 1
 			},
 			{
 				"command" : 2,
-				"file" : 0,
+				"file" : 1,
 				"line" : 10,
-				"parent" : 0
+				"parent" : 3
 			},
 			{
 				"command" : 3,
-				"file" : 0,
+				"file" : 1,
 				"line" : 17,
-				"parent" : 0
+				"parent" : 3
 			}
 		]
 	},
@@ -65,23 +69,27 @@
 			"defines" : 
 			[
 				{
-					"backtrace" : 3,
+					"backtrace" : 4,
 					"define" : "PROJECT_ROOT_DIR=\"/root/Projects/ReachCompress\""
 				}
 			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 4,
+					"backtrace" : 5,
 					"path" : "/root/Projects/ReachCompress/include"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 2,
+					"path" : "/root/Projects/ReachCompress/src/../include"
+				},
+				{
+					"backtrace" : 5,
 					"isSystem" : true,
 					"path" : "/root/Projects/ReachCompress/external/googletest/googletest/include"
 				},
 				{
-					"backtrace" : 4,
+					"backtrace" : 5,
 					"isSystem" : true,
 					"path" : "/root/Projects/ReachCompress/external/googletest/googletest"
 				}
@@ -89,18 +97,16 @@
 			"language" : "CXX",
 			"sourceIndexes" : 
 			[
-				0,
-				1,
-				2,
-				3,
-				4,
-				5,
-				6
+				0
 			]
 		}
 	],
 	"dependencies" : 
 	[
+		{
+			"backtrace" : 2,
+			"id" : "pll::@145eef247bfb46b6828c"
+		},
 		{
 			"backtrace" : 2,
 			"id" : "gtest_main::@405f3af846dabb1ba1ce"
@@ -110,7 +116,7 @@
 			"id" : "gtest::@405f3af846dabb1ba1ce"
 		}
 	],
-	"id" : "your_executable::@6890427a1f51a3e7e1df",
+	"id" : "test_comp::@36f028580bb02cc8272a",
 	"link" : 
 	{
 		"commandFragments" : 
@@ -125,17 +131,15 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "lib/libgtest.a",
+				"fragment" : "../src/libpll.a",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 2,
-				"fragment" : "lib/libgtest_main.a",
+				"fragment" : "../lib/libgtest_main.a",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 2,
-				"fragment" : "lib/libgtest.a",
+				"fragment" : "../lib/libgtest.a",
 				"role" : "libraries"
 			},
 			{
@@ -145,12 +149,12 @@
 		],
 		"language" : "CXX"
 	},
-	"name" : "your_executable",
-	"nameOnDisk" : "your_executable",
+	"name" : "test_comp",
+	"nameOnDisk" : "test_comp",
 	"paths" : 
 	{
-		"build" : ".",
-		"source" : "."
+		"build" : "test",
+		"source" : "test"
 	},
 	"sourceGroups" : 
 	[
@@ -158,13 +162,7 @@
 			"name" : "Source Files",
 			"sourceIndexes" : 
 			[
-				0,
-				1,
-				2,
-				3,
-				4,
-				5,
-				6
+				0
 			]
 		}
 	],
@@ -173,43 +171,7 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "src/main.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/BidirectionalBFS.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/compression.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/graph.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/input_handler.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/output_handler.cpp",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "src/pll.cpp",
+			"path" : "test/test_comp.cpp",
 			"sourceGroupIndex" : 0
 		}
 	],

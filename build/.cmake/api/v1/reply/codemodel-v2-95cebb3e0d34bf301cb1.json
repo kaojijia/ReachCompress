@@ -21,7 +21,7 @@
 					"source" : ".",
 					"targetIndexes" : 
 					[
-						10
+						11
 					]
 				},
 				{
@@ -104,7 +104,8 @@
 						6,
 						7,
 						8,
-						9
+						9,
+						10
 					]
 				}
 			],
@@ -131,7 +132,8 @@
 						7,
 						8,
 						9,
-						10
+						10,
+						11
 					]
 				},
 				{
@@ -230,6 +232,13 @@
 				},
 				{
 					"directoryIndex" : 5,
+					"id" : "test_comp::@36f028580bb02cc8272a",
+					"jsonFile" : "target-test_comp-Debug-189bb7dbb84abd997f2d.json",
+					"name" : "test_comp",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
 					"id" : "test_graph::@36f028580bb02cc8272a",
 					"jsonFile" : "target-test_graph-Debug-11aa89a0df1ec82e2d3d.json",
 					"name" : "test_graph",
@@ -252,7 +261,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "your_executable::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-your_executable-Debug-c8a51414db02193e245a.json",
+					"jsonFile" : "target-your_executable-Debug-52ccb8840ff35d577fb6.json",
 					"name" : "your_executable",
 					"projectIndex" : 0
 				}

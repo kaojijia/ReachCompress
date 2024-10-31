@@ -3,7 +3,10 @@
 #include <algorithm>  // 确保包含算法库
 
 // 构造函数，指定是否存储边集
-Graph::Graph(bool store_edges) : store_edges(store_edges) {}
+Graph::Graph(bool store_edges) : store_edges(store_edges) {
+
+
+}
 
 // 添加边到图
 void Graph::addEdge(int u, int v, bool is_directed) {
