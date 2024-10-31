@@ -1,6 +1,7 @@
 #include "utils/OutputHandler.h"
 #include <fstream>
 #include <iostream>
+#include "compression.h"
 
 // 静态方法：输出图的信息到控制台
 void OutputHandler::printGraphInfo(const Graph& graph) {
@@ -12,6 +13,36 @@ void OutputHandler::printGraphInfo(const Graph& graph) {
         }
     }
 }
+
+// 打印 Compression 对象中的 mapping
+void OutputHandler::printMapping(const Compression &com) {
+    const auto& mapping = com.getMapping();
+
+    for (const auto& pair : mapping) {
+        std::cout << "Node " << pair.first << ":" << std::endl;
+
+        std::cout << "  SCC Mapping: ";
+        for (int mapped_node : pair.second.sccMapping) {
+            std::cout << mapped_node << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "  Out Mapping: ";
+        for (int mapped_node : pair.second.outMapping) {
+            std::cout << mapped_node << " ";
+        }
+        std::cout << std::endl;
+
+        std::cout << "  In Mapping: ";
+        for (int mapped_node : pair.second.inMapping) {
+            std::cout << mapped_node << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+
+
 
 // 非静态方法：写入图的信息到文件
 OutputHandler::OutputHandler(const std::string& output_file) : output_file(output_file) {}

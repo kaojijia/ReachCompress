@@ -6,6 +6,7 @@
 
 // 表示节点的结构
 struct Vertex {
+    int label;
     std::vector<int> LOUT;  // 出度
     std::vector<int> LIN;   // 入度
     int in_degree = 0;
@@ -23,8 +24,12 @@ public:
     // 添加边
     void addEdge(int u, int v, bool is_directed = true);
 
+    bool hasEdge(int u, int v);
     // 删除边
     void removeEdge(int u, int v, bool is_directed = true);
+
+    // 删除点
+    void removeNode(int node);
 
     // 打印边信息
     void printEdges();
@@ -32,10 +37,6 @@ public:
 private:
     bool store_edges;  // 控制是否存储边集
 
-    std::vector<std::vector<int>> adjList;         // 正向邻接表
-    std::vector<std::vector<int>> reverseAdjList;  // 逆邻接表
-
-    void buildAdjList();
 
 };
 

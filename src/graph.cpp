@@ -26,6 +26,22 @@ void Graph::addEdge(int u, int v, bool is_directed) {
     }
 }
 
+bool Graph::hasEdge(int u, int v)
+{
+    if (u >= vertices.size() || v >= vertices.size()) {
+        return false;
+    }
+    if (vertices[u].out_degree == 0 || vertices[v].in_degree == 0) {
+        return false;
+    }
+    if (u < vertices.size()) {
+        auto& out_edges = vertices[u].LOUT;
+        return std::find(out_edges.begin(), out_edges.end(), v) != out_edges.end();
+    }
+    return false;
+}
+
+
 // 删除边
 void Graph::removeEdge(int u, int v, bool is_directed) {
     auto remove_edge = [](std::vector<int>& vec, int val) {
@@ -49,6 +65,25 @@ void Graph::removeEdge(int u, int v, bool is_directed) {
                         edges.end());
         }
     }
+}
+
+// 删除节点
+void Graph::removeNode(int node) {
+    if (node >= vertices.size()) return;
+
+    // 删除与该节点相关的所有出边和入边
+    for (int v : vertices[node].LOUT) {
+        removeEdge(node, v);
+    }
+    for (int u : vertices[node].LIN) {
+        removeEdge(u, node);
+    }
+
+    // 清空该节点的出边和入边列表
+    vertices[node].LOUT.clear();
+    vertices[node].LIN.clear();
+    vertices[node].out_degree = 0;
+    vertices[node].in_degree = 0;
 }
 
 // 打印边信息
