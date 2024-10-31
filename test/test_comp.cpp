@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include "compression.h"
 #include "graph.h"
-#include "InputHandler.h"
-#include "OutputHandler.h"
+#include "utils/InputHandler.h"
+#include "utils/OutputHandler.h"
 
 TEST(CompressionTest, ConstructRAG){
     Graph g(true);

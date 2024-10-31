@@ -1,8 +1,8 @@
 #include "pll.h"
 // #include "graph_pruner.h"
 #include "compression.h"
-#include "InputHandler.h"
-#include "OutputHandler.h"
+#include "utils/InputHandler.h"
+#include "utils/OutputHandler.h"
 #include "BidirectionalBFS.h"
 #include <iostream>
 
@@ -15,19 +15,16 @@ int main() {
     // 初始化图
     Graph g;
     
-    // 从文件中读取边集
-    input_handler.readGraph(g);
+    // // 从文件中读取边集
+    // input_handler.readGraph(g);
 
-    // 使用双向BFS进行可达性查询
-    BidirectionalBFS bfs(g);
+    // // 使用双向BFS进行可达性查询
+    // BidirectionalBFS bfs(g);
 
-    // // 实例化GraphPruner并裁剪图
-    // GraphPruner pruner(g);
-    // pruner.pruneIsolatedNodes();  // 裁剪孤立节点
 
-    // 实例化PLL并构建索引
-    PLL pll(g);
-    pll.buildPLLLabels();
+    // // 实例化PLL并构建索引
+    // PLL pll(g);
+    // pll.buildPLLLabels();
 
     // 查询可达性并写入结果
     int u = 1, v = 5;

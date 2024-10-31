@@ -21,31 +21,42 @@ void Compression::markAsMerged(int node) {
 
 // 压缩有向无环子图
 void Compression::compressRAG() {
+    // 获取拓扑排序
     std::vector<int> topo_order = topologicalSort();
     std::unordered_set<int> rag_nodes(topo_order.begin(), topo_order.end());
 
-    int new_node = g.vertices.size();
-    g.vertices.push_back(Vertex());
+    int new_node = g.vertices.size();  // 新增的节点编号
+    g.vertices.push_back(Vertex());    // 在图中新增一个节点
 
+    // 遍历拓扑排序中的所有节点
     for (int node : topo_order) {
+        if (isMerged(node)) {
+            continue;  // 如果节点已合并，跳过
+        }
+
+        // 处理出边
         for (int neighbor : g.vertices[node].LOUT) {
             if (rag_nodes.find(neighbor) == rag_nodes.end()) {
+                // 如果邻居节点不在RAG中，则将其连接到新节点
                 g.vertices[new_node].LOUT.push_back(neighbor);
                 g.vertices[neighbor].LIN.push_back(new_node);
             }
         }
+
+        // 处理入边
         for (int neighbor : g.vertices[node].LIN) {
             if (rag_nodes.find(neighbor) == rag_nodes.end()) {
+                // 如果邻居节点不在RAG中，则将其连接到新节点
                 g.vertices[new_node].LIN.push_back(neighbor);
                 g.vertices[neighbor].LOUT.push_back(new_node);
             }
         }
-    }
-
-    for (int node : topo_order) {
+        
+        // 标记当前节点为已合并
         markAsMerged(node);
     }
 
+    // 删除已合并的节点
     for (int node : topo_order) {
         if (isMerged(node)) {
             removeNode(node);

@@ -2,9 +2,9 @@
 #include "pll.h"
 #include "graph.h"
 #include "BidirectionalBFS.h"
-#include "OutputHandler.h"
-#include "RandomUtils.h"
-#include "InputHandler.h"
+#include "utils/OutputHandler.h"
+#include "utils/RandomUtils.h"
+#include "utils/InputHandler.h"
 #include <string>
 TEST(PLLTest, ReachabilityTest) {
     Graph g1(true);
@@ -46,7 +46,6 @@ TEST(PLLTest, ReachabilityTest) {
     for (const auto& query_pair : query_pairs) {
         int source = query_pair.first;
         int target = query_pair.second;
-        // bool r = pll2.query(6,12);
         bool result = pll2.query(source, target);
         std::cout << "Query from " << source << " to " << target << ": " << (result ? "Reachable" : "Not Reachable") << std::endl;
     }
