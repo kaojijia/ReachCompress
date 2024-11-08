@@ -37,7 +37,7 @@ public:
     void mergeRouteNodes(); //合并中继点
 
     void classifyVertex(int vertex); // 归类节点
-
+    void del_nodes();
     void mergeNodes(int u, int v, int w);    // 合并节点，需要保证顺序u->v->w
     void mergeNodes(int u, int v, bool is_reversed, bool is_delete); // 单向合并节点，标注方向（默认u->v）和是否删除
 
@@ -63,3 +63,5 @@ private:
 };
 
 #endif
+
+

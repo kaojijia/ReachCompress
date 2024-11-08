@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <stack>
 #include <unordered_set>
+#include <iostream>
 
 Compression::Compression(const Graph& graph) : g(graph) {
     inNout1.clear();
@@ -192,10 +193,13 @@ void Compression::removeRedundantEdges(int u, int w) {
 void Compression::mergeIn1Out1Nodes() {
     // std::vector<int> nodesToRemove;
     int flag = 0;
+    int count = 0;
     while (!in1out1.empty()) {
+        
         flag = 0;
         int node = *in1out1.begin();
-        if (g.vertices[node].LIN.size() == g.vertices[node].LOUT.size() == 1) {
+        in1out1.erase(in1out1.begin());
+        //if (g.vertices[node].LIN.size() == g.vertices[node].LOUT.size() == 1) {
             int predecessor = g.vertices[node].LIN.front();
             int successor = g.vertices[node].LOUT.front();
 
@@ -207,14 +211,40 @@ void Compression::mergeIn1Out1Nodes() {
                 in1out1.erase(in1out1.begin());
                 removeRedundantEdges(predecessor, successor);
                 classifyVertex(predecessor);
-                return;
+                count++;
+                // std::cout<<"处理完成"<<++count<<"个节点"<<std::endl;
             } else if(g.vertices[successor].LIN.size()-flag == 1){
                 mergeNodes(successor,node,true, true);
                 in1out1.erase(in1out1.begin());
                 removeRedundantEdges(predecessor, successor);
                 classifyVertex(successor);
+                count++;
+                // std::cout<<"处理完成"<<++count<<"个节点"<<std::endl;
             }
+        //}
+        // auto i = g.statics();
+        // std::cout <<"nodes num:"<< i.first << " " <<"edges num:" <<i.second << std::endl;s
+            
+    }
+    std::cout<<"处理完成"<<count<<"个节点，mergeIn1Out1函数退出"<<std::endl;
+}
+
+void Compression::del_nodes(){
+
+    std::vector<int> del_list;
+    for(int i = 0; i < g.vertices.size();i++){
+        if (g.vertices[i].in_degree ==0 && g.vertices[i].out_degree ==0)
+        {
+            continue;
         }
+        if(g.vertices[i].in_degree ==0||g.vertices[i].out_degree==0){
+            del_list.push_back(i);
+        }
+        
+    }
+    std::cout<<"无入度或出度的点数量是"<<del_list.size()<<std::endl;
+    for(auto i:del_list){
+        g.removeNode(i);
     }
 }
 
@@ -226,14 +256,19 @@ void Compression::mergeIn1Out1Nodes() {
 // 或者从out1集合中出发，找终点的终点只有一个入度的
 // 再从out2集合中出发，找终点的终点和自己的另一个终点一样的
 void Compression::mergeRouteNodes(){
-    // int flag=0;
-
+    int flag=0;
+    int count =0;
     //一个度的
     while (!inNout1.empty()) {
-        // flag = 0;
+        // flag++;
         int node = *inNout1.begin();
         int route = g.vertices[node].LOUT.front();
         int successor = -1;
+
+        inNout1.erase(inNout1.begin());
+
+        //临时条件，中继点度数不能大于3
+        if((g.vertices[route].in_degree + g.vertices[route].out_degree) > 3) continue;
 
         //找一个中继点后面只有一个入度的点拿来合并
         for(auto i: g.vertices[route].LOUT){
@@ -242,14 +277,15 @@ void Compression::mergeRouteNodes(){
                 break;
             }
         }
-        inNout1.erase(inNout1.begin());
         if(successor == -1){
             continue;
         }
         mergeNodes(node, route, successor);
         classifyVertex(node);
         classifyVertex(successor);
-    }
+        std::cout<<"处理完成"<<++count<<"个节点"<<std::endl;
+    }    
+    std::cout<<"处理完成"<<count<<"个节点，mergeRouteNodes函数退出"<<std::endl;
 
     //2个度的
 

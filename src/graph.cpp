@@ -1,6 +1,7 @@
 #include "graph.h"
 #include <iostream>
 #include <algorithm>  // 确保包含算法库
+#include <fstream>
 
 // 构造函数，指定是否存储边集
 Graph::Graph(bool store_edges) : store_edges(store_edges) {
@@ -92,4 +93,31 @@ void Graph::printEdges() {
     for (const auto& edge : edges) {
         std::cout << edge.first << " -> " << edge.second << std::endl;
     }
+}
+
+std::pair<int, int> Graph::statics(const std::string& filename) const {
+    int node_count = 0;
+    int edge_count = 0;
+
+    for (const auto& vertex : vertices) {
+        if (!vertex.LOUT.empty() || !vertex.LIN.empty()) {
+            node_count++;
+            edge_count += vertex.LOUT.size();
+        }
+    }
+
+    if (filename.empty()) {
+        return std::make_pair(node_count, edge_count);
+    }
+
+    std::ofstream outfile(PROJECT_ROOT_DIR + filename, std::ios::out | std::ios::trunc);
+    if (outfile.is_open()) {
+        outfile << "Node count: " << node_count << std::endl;
+        outfile << "Edge count: " << edge_count << std::endl;
+        outfile.close();
+    } else {
+        std::cerr << "Failed to open file: " << PROJECT_ROOT_DIR + filename << std::endl;
+    }
+
+    return std::make_pair(node_count, edge_count);
 }

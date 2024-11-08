@@ -1,6 +1,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
-
+#include <string>
 #include <vector>
 #include <algorithm>
 
@@ -33,6 +33,9 @@ public:
 
     // 打印边信息
     void printEdges();
+
+    // 边和点的数量存进去
+    std::pair<int, int> statics(const std::string &filename = "") const;
 
 private:
     bool store_edges;  // 控制是否存储边集
