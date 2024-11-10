@@ -2,12 +2,15 @@
 #define PLL_H
 
 #include "graph.h"
+#include "Algorithm.h"
 #include <vector>
 
-class PLL {
+class PLL : public Algorithm{
 public:
     PLL(Graph& graph);  // 构造函数，传入图的引用
 
+    void offline_industry() override;
+    bool reachability_query(int source, int target) override;
     // 构建PLL标签
     void buildPLLLabels();
     // 完全体标签

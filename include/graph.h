@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 
 // 表示节点的结构
 struct Vertex {
@@ -37,6 +38,8 @@ public:
     // 边和点的数量存进去
     std::pair<int, int> statics(const std::string &filename = "") const;
 
+
+    std::unordered_map<int, int> node_community;
 private:
     bool store_edges;  // 控制是否存储边集
 

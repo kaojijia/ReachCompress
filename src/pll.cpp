@@ -13,6 +13,17 @@ PLL::PLL(Graph& graph) : g(graph) {
 
 }
 
+void PLL::offline_industry()
+{
+    int aa;
+
+}
+
+bool PLL::reachability_query(int source, int target)
+{
+    return false;
+}
+
 //构建邻接表和逆邻接表，遍历的时候用
 void PLL::buildAdjList() {
     adjList.resize(g.vertices.size());

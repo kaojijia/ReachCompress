@@ -2,15 +2,20 @@
 #define BIDIRECTIONAL_BFS_H
 
 #include "graph.h"
+#include "Algorithm.h"
 #include <vector>
 #include <queue>
 #include <unordered_set>
 
-class BidirectionalBFS {
+class BidirectionalBFS : public Algorithm {
 public:
     BidirectionalBFS(Graph& graph);
 
-    bool reachabilityQuery(int source, int target);
+    // bool reachability(int source, int target) override;
+
+    void offline_industry() override;
+
+    bool reachability_query(int source, int target) override;
 
 private:
     Graph& g;

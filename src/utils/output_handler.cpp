@@ -80,7 +80,7 @@ void OutputHandler::writeCoverInfo(const std::vector<int>& cover) {
     outfile.close();
 }
 
-void OutputHandler::writeReachabilityQuery(int u, int v, bool result) {
+void OutputHandler::writereachability_query(int u, int v, bool result) {
     std::ofstream outfile(output_file, std::ios_base::app);  // 以追加方式打开文件
     if (!outfile.is_open()) {
         std::cerr << "Error opening output file: " << output_file << std::endl;

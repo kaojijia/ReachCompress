@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(PLL_Project)
+project(ReachCompress)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -16,6 +16,10 @@ add_subdirectory(external/googletest)
 # 包含include目录和GoogleTest头文件
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
+
+# 查找 pthread 库
+
+find_package(Threads REQUIRED)
 
 # 启用测试
 enable_testing()

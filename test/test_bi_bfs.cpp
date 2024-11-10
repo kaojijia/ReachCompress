@@ -21,12 +21,12 @@ TEST(BidirectionalBFSTest, ReachabilityTest) {
     BidirectionalBFS bfs(g);
 
     // 测试可达性
-    EXPECT_TRUE(bfs.reachabilityQuery(1, 2));
-    EXPECT_TRUE(bfs.reachabilityQuery(1, 3));
-    EXPECT_TRUE(bfs.reachabilityQuery(1, 4));
-    EXPECT_FALSE(bfs.reachabilityQuery(6, 1)); // 6 -> 1 不可达（假设是有向图）
-    EXPECT_TRUE(bfs.reachabilityQuery(2, 4));  // 2 -> 4 可达
-    EXPECT_FALSE(bfs.reachabilityQuery(1, 5)); // 1 -> 5 不可达（节点5不存在）
+    EXPECT_TRUE(bfs.reachability_query(1, 2));
+    EXPECT_TRUE(bfs.reachability_query(1, 3));
+    EXPECT_TRUE(bfs.reachability_query(1, 4));
+    EXPECT_FALSE(bfs.reachability_query(6, 1)); // 6 -> 1 不可达（假设是有向图）
+    EXPECT_TRUE(bfs.reachability_query(2, 4));  // 2 -> 4 可达
+    EXPECT_FALSE(bfs.reachability_query(1, 5)); // 1 -> 5 不可达（节点5不存在）
 }
 
 TEST(BidirectionalBFSTest, NoPathTest) {
@@ -42,8 +42,8 @@ TEST(BidirectionalBFSTest, NoPathTest) {
     BidirectionalBFS bfs(g);
 
     // 测试不可达性
-    EXPECT_FALSE(bfs.reachabilityQuery(1, 4)); // 1 -> 4 不可达
-    EXPECT_FALSE(bfs.reachabilityQuery(2, 3)); // 2 -> 3 不可达
+    EXPECT_FALSE(bfs.reachability_query(1, 4)); // 1 -> 4 不可达
+    EXPECT_FALSE(bfs.reachability_query(2, 3)); // 2 -> 3 不可达
 }
 
 TEST(BidirectionalBFSTest, SelfLoopTest) {
@@ -59,7 +59,7 @@ TEST(BidirectionalBFSTest, SelfLoopTest) {
     BidirectionalBFS bfs(g);
 
     // 测试自环
-    EXPECT_TRUE(bfs.reachabilityQuery(1, 1));  // 1 -> 1 可达
+    EXPECT_TRUE(bfs.reachability_query(1, 1));  // 1 -> 1 可达
 }
 
 
@@ -87,7 +87,7 @@ TEST(BidirectionalBFSTest, RandomQueryPairs) {
     for (const auto& query_pair : query_pairs) {
         int source = query_pair.first;
         int target = query_pair.second;
-        bool result = bfs.reachabilityQuery(source, target);
+        bool result = bfs.reachability_query(source, target);
         std::cout << "Query from " << source << " to " << target << ": " << (result ? "Reachable" : "Not Reachable") << std::endl;
     }
 }
