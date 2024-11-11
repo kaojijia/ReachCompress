@@ -140,3 +140,12 @@ compile_commands.json
 CTestTestfile.cmake
 
 
+Edges/AMiner-Paper.txt
+Edges/cit-DBLP.txt
+Edges/email-dnc_edges.txt
+Edges/ia-email-EU-dir.txt
+Edges/ia-radoslaw-email_edges.txt
+Edges/Slashdot0811.txt
+Edges/soc-Epinions1.txt
+Edges/soc-LiveJournal1.txt
+Edges/soc-twitter-follows-mun.txt
