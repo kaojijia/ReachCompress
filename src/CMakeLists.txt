@@ -8,7 +8,11 @@ add_library(reach_comp STATIC
     utils/input_handler.cpp 
     utils/output_handler.cpp 
     BidirectionalBFS.cpp
+    CompressedSearch.cpp
+    PartitionManager.cpp
+    LouvainPartitioner.cpp
 )
 
 # 包含头文件目录
 target_include_directories(reach_comp PUBLIC ${CMAKE_SOURCE_DIR}/include)
+

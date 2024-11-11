@@ -38,12 +38,8 @@ public:
     // 边和点的数量存进去
     std::pair<int, int> statics(const std::string &filename = "") const;
 
-
-    std::unordered_map<int, int> node_community;
 private:
     bool store_edges;  // 控制是否存储边集
-
-
 };
 
 #endif  // GRAPH_H
