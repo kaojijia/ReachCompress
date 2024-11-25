@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
 
 // 表示节点的结构
 struct Vertex {
@@ -39,8 +40,6 @@ public:
 
 private:
     bool store_edges;  // 控制是否存储边集
-
-
 };
 
 #endif  // GRAPH_H

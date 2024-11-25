@@ -24,8 +24,15 @@ void BidirectionalBFS::buildAdjList() {
     }
 }
 
+
+void BidirectionalBFS::offline_industry()
+{
+    int a;
+    return;
+}
+
 // 双向BFS查询
-bool BidirectionalBFS::reachabilityQuery(int source, int target) {
+bool BidirectionalBFS::reachability_query(int source, int target) {
     if (source == target) return true;
     if (source >= adjList.size() || target >= adjList.size() || source < 0 || target < 0) {
         return false; // 如果超出范围，直接返回不可达

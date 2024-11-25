@@ -1,0 +1,64 @@
+# Doxyfile 1.8.17
+
+# The project name
+PROJECT_NAME           = MyProject
+
+# The output directory
+OUTPUT_DIRECTORY       = docs
+
+# The input files and directories
+INPUT                  = src include
+RECURSIVE              = YES
+
+# Extract all classes, members, etc.
+EXTRACT_ALL            = YES
+
+# Enable UML look and feel
+HAVE_DOT               = YES
+UML_LOOK               = YES
+
+# Generate class diagrams
+CLASS_DIAGRAMS         = YES
+
+# Show undocumented relations in class diagrams
+HIDE_UNDOC_RELATIONS   = NO
+
+# Include inherited members in derived class documentation
+INLINE_INHERITED_MEMB  = YES
+
+# Generate collaboration graphs
+COLLABORATION_GRAPH    = YES
+
+# Generate inheritance graphs
+INHERIT_GRAPH          = YES
+
+# Set the maximum depth of the inheritance graph
+MAX_DOT_GRAPH_DEPTH    = 10
+
+# Set the maximum number of nodes in a graph
+DOT_GRAPH_MAX_NODES    = 1000
+
+# Set the image format for dot-generated images
+DOT_IMAGE_FORMAT       = png
+
+# Show files in the documentation
+SHOW_FILES             = YES
+
+# Generate HTML documentation
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+
+# Generate LaTeX documentation
+GENERATE_LATEX         = NO
+
+# Generate XML documentation
+GENERATE_XML           = NO
+
+# Generate man pages
+GENERATE_MAN           = NO
+
+# Generate RTF documentation
+GENERATE_RTF           = NO
+
+# Generate PDF documentation
+GENERATE_PDF           = NO

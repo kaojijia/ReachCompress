@@ -18,7 +18,7 @@ public:
     explicit OutputHandler(const std::string& output_file);
     void writeGraphInfo(const Graph& graph);
     void writeCoverInfo(const std::vector<int>& cover);
-    void writeReachabilityQuery(int u, int v, bool result);
+    void writereachability_query(int u, int v, bool result);
     void writeInOutSets(const PLL& pll);
 
 

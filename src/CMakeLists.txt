@@ -1,11 +1,18 @@
-# 生成静态库libpll.a
-add_library(reach_comp STATIC graph.cpp pll.cpp compression.cpp utils/input_handler.cpp utils/output_handler.cpp BidirectionalBFS.cpp)
+# src/CMakeLists.txt
+
+# 生成静态库 libreach_comp.a
+add_library(reach_comp STATIC 
+    graph.cpp 
+    pll.cpp 
+    compression.cpp 
+    utils/input_handler.cpp 
+    utils/output_handler.cpp 
+    BidirectionalBFS.cpp
+    CompressedSearch.cpp
+    PartitionManager.cpp
+    LouvainPartitioner.cpp
+)
 
 # 包含头文件目录
-target_include_directories(reach_comp PUBLIC ../include)
+target_include_directories(reach_comp PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
-# 生成可执行文件
-add_executable(pll_executable main.cpp)
-
-# 链接静态库
-target_link_libraries(pll_executable reach_comp)
