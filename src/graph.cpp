@@ -20,10 +20,8 @@ void Graph::addEdge(int u, int v, bool is_directed) {
     vertices[v].in_degree++;
 
     if (store_edges) {
-        edges.emplace_back(u, v);  // 将边添加到边集中
-        if (!is_directed) {
-            edges.emplace_back(v, u);  // 无向图添加反向边
-        }
+        adjList[u].push_back(v); 
+        reverseAdjList[v].push_back(u);
     }
 }
 
@@ -45,6 +43,7 @@ bool Graph::hasEdge(int u, int v)
 
 // 删除边
 void Graph::removeEdge(int u, int v, bool is_directed) {
+    if (u >= vertices.size() || v >= vertices.size()) return;
     auto remove_edge = [](std::vector<int>& vec, int val) {
         vec.erase(std::remove(vec.begin(), vec.end(), val), vec.end());
     };
@@ -55,16 +54,8 @@ void Graph::removeEdge(int u, int v, bool is_directed) {
     vertices[v].in_degree--;
 
     if (store_edges) {
-        // 使用 std::remove_if 删除边
-        edges.erase(std::remove_if(edges.begin(), edges.end(),
-                                   [u, v](const std::pair<int, int>& e) { return e.first == u && e.second == v; }),
-                    edges.end());
-
-        if (!is_directed) {
-            edges.erase(std::remove_if(edges.begin(), edges.end(),
-                                       [u, v](const std::pair<int, int>& e) { return e.first == v && e.second == u; }),
-                        edges.end());
-        }
+        remove_edge(adjList[u], v);
+        remove_edge(reverseAdjList[v], u);
     }
 }
 
@@ -85,13 +76,25 @@ void Graph::removeNode(int node) {
     vertices[node].LIN.clear();
     vertices[node].out_degree = 0;
     vertices[node].in_degree = 0;
+    
+    // 清空邻接表和逆邻接表中的信息
+    if (store_edges && node < adjList.size()) {
+        adjList[node].clear();
+        reverseAdjList[node].clear();
+    }
 }
 
 // 打印边信息
 void Graph::printEdges() {
+    if (!store_edges) {
+        std::cout << "Adjacency lists are not stored." << std::endl;
+        return;
+    }
     std::cout << "Edges in the graph:" << std::endl;
-    for (const auto& edge : edges) {
-        std::cout << edge.first << " -> " << edge.second << std::endl;
+    for (size_t u = 0; u < adjList.size(); ++u) {
+        for (int v : adjList[u]) {
+            std::cout << u << " -> " << v << std::endl;
+        }
     }
 }
 

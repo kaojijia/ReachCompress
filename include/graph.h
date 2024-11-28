@@ -17,10 +17,10 @@ struct Vertex {
 // 图的结构，支持可选的邻接表逆邻接表存储
 class Graph {
 public:
-    std::vector<Vertex> vertices;  
-    std::vector<std::pair<int, int>> edges;  // 边集存储（用于显式存储所有边）
+    std::vector<Vertex> vertices;  //点集
+
     // 构造函数，控制是否存储边集
-    Graph(bool store_edges = false);
+    Graph(bool store_edges = true);
 
     // 添加边
     void addEdge(int u, int v, bool is_directed = true);
@@ -40,6 +40,8 @@ public:
 
 private:
     bool store_edges;  // 控制是否存储边集
+    std::vector<std::vector<int>> adjList;  //邻接表
+    std::vector<std::vector<int>> reverseAdjList; //逆邻接表
 };
 
 #endif  // GRAPH_H

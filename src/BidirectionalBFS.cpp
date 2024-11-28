@@ -27,7 +27,7 @@ void BidirectionalBFS::buildAdjList() {
 
 void BidirectionalBFS::offline_industry()
 {
-    int a;
+    this->buildAdjList();
     return;
 }
 
@@ -99,3 +99,68 @@ bool BidirectionalBFS::bfsStep(std::queue<int>& queue, std::unordered_set<int>& 
 
     return false;
 }
+
+std::vector<int> BidirectionalBFS::findPath(int source, int target) {
+    if (source == target) {
+        return {source};
+    }
+
+    std::queue<std::vector<int>> forward_queue, backward_queue;
+    std::unordered_set<int> forward_visited, backward_visited;
+
+    forward_queue.push({source});
+    backward_queue.push({target});
+    forward_visited.insert(source);
+    backward_visited.insert(target);
+
+    while (!forward_queue.empty() && !backward_queue.empty()) {
+        // 正向搜索一步
+        auto forward_path = forward_queue.front();
+        forward_queue.pop();
+        int current = forward_path.back();
+
+        for (int next : adjList[current]) {
+            if (backward_visited.count(next)) {
+                // 找到交点，拼接路径
+                auto backward_path = backward_queue.front();
+                std::reverse(backward_path.begin(), backward_path.end());
+                forward_path.push_back(next);
+                forward_path.insert(forward_path.end(), backward_path.begin(), backward_path.end());
+                return forward_path;
+            }
+
+            if (forward_visited.count(next)) continue;
+
+            forward_visited.insert(next);
+            auto new_path = forward_path;
+            new_path.push_back(next);
+            forward_queue.push(new_path);
+        }
+
+        // 反向搜索一步
+        auto backward_path = backward_queue.front();
+        backward_queue.pop();
+        current = backward_path.back();
+
+        for (int next : reverseAdjList[current]) {
+            if (forward_visited.count(next)) {
+                // 找到交点，拼接路径
+                auto forward_path = forward_queue.front();
+                std::reverse(backward_path.begin(), backward_path.end());
+                forward_path.push_back(next);
+                forward_path.insert(forward_path.end(), backward_path.begin(), backward_path.end());
+                return forward_path;
+            }
+
+            if (backward_visited.count(next)) continue;
+
+            backward_visited.insert(next);
+            auto new_path = backward_path;
+            new_path.push_back(next);
+            backward_queue.push(new_path);
+        }
+    }
+
+    return std::vector<int>(); // 未找到路径
+}
+

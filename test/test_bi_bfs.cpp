@@ -63,7 +63,7 @@ TEST(BidirectionalBFSTest, SelfLoopTest) {
 }
 
 
-TEST(BidirectionalBFSTest, RandomQueryPairs) {
+TEST(BidirectionalBFSTest, DISABLED_RandomQueryPairs) {
     // 创建一个图
     Graph g(true);
 
@@ -90,4 +90,40 @@ TEST(BidirectionalBFSTest, RandomQueryPairs) {
         bool result = bfs.reachability_query(source, target);
         std::cout << "Query from " << source << " to " << target << ": " << (result ? "Reachable" : "Not Reachable") << std::endl;
     }
+}
+
+TEST(BidirectionalBFSTest, PathTest){
+    Graph g(true);
+    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241029_135003");
+    inputHandler.readGraph(g);
+    OutputHandler::printGraphInfo(g);
+    BidirectionalBFS bfs(g);
+            // 生成不重复的随机查询对
+    int num_queries = 100;
+    int max_value = g.vertices.size();
+    unsigned int seed = 42; // 可选的随机种子
+
+    std::vector<std::pair<int, int>> query_pairs = RandomUtils::generateUniqueQueryPairs(num_queries, max_value, seed);
+
+
+    for (const auto& query_pair : query_pairs) {
+        int source = query_pair.first;
+        int target = query_pair.second;
+
+        bool result = bfs.reachability_query(source, target);
+        auto path = bfs.findPath(source, target);
+        std::cout << "Query from " << source << " to " << target << ": " << (result ? "Reachable" : "Not Reachable") << std::endl;
+        if (!path.empty()) {
+            std::cout << "Path found: ";
+            for (int node : path) {
+                std::cout << node << " ";
+            }
+            std::cout << std::endl;
+        } else {
+            std::cout << "No path exists" << std::endl;
+        }
+
+    }
+
+
 }

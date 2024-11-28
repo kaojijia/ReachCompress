@@ -17,6 +17,8 @@ public:
 
     bool reachability_query(int source, int target) override;
 
+    std::vector<int> findPath(int source, int target); // 新增：查找路径的方法
+
 private:
     Graph& g;
     std::vector<std::vector<int>> adjList;         // 正向邻接表
@@ -26,6 +28,7 @@ private:
     bool bfsStep(std::queue<int>& queue, std::unordered_set<int>& visited, 
                  std::unordered_set<int>& opposite_visited, 
                  const std::vector<std::vector<int>>& adjList); // 增加邻接表参数，用于选择正向或逆向邻接表
+
 };
 
 #endif  // BIDIRECTIONAL_BFS_H
