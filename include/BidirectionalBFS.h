@@ -17,7 +17,9 @@ public:
 
     bool reachability_query(int source, int target) override;
 
-    std::vector<int> findPath(int source, int target); // 新增：查找路径的方法
+    // 找路径是否可达，如果可达返回路径，否则返回空。第三个参数，分区内搜索的时候要设置成true
+    std::vector<int> findPath(int source, int target, int partition_number = -1); 
+
 
 private:
     Graph& g;

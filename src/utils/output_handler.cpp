@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include "compression.h"
+#include "PartitionManager.h"
 
 // 静态方法：输出图的信息到控制台
 void OutputHandler::printGraphInfo(const Graph& graph) {
@@ -41,8 +42,20 @@ void OutputHandler::printMapping(const Compression &com) {
     }
 }
 
+void OutputHandler::printPartitionInfo(const PartitionManager &partition_manager)
+{
+    const auto& partition_adjacency = partition_manager.partition_adjacency;
 
-
+    for (const auto& source_pair : partition_adjacency) {
+        int source_partition = source_pair.first;
+        const auto& targets = source_pair.second;
+        for (const auto& target_pair : targets) {
+            int target_partition = target_pair.first;
+            const auto& edge_info = target_pair.second;
+            std::cout << "Partition " << source_partition << " -> Partition " << target_partition << ": " << edge_info.edge_count << " edges" << std::endl;
+        }
+    }
+}
 
 // 非静态方法：写入图的信息到文件
 OutputHandler::OutputHandler(const std::string& output_file) : output_file(output_file) {}

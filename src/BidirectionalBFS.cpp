@@ -40,8 +40,6 @@ bool BidirectionalBFS::reachability_query(int source, int target) {
         // 检查是否为孤立节点（无出边且无入边）
     if (adjList[source].empty() && reverseAdjList[source].empty()) return false;
     if (adjList[target].empty() && reverseAdjList[target].empty()) return false;
-
-
     
     // BFS队列
     std::queue<int> queueFromSource, queueFromTarget;
@@ -99,8 +97,7 @@ bool BidirectionalBFS::bfsStep(std::queue<int>& queue, std::unordered_set<int>& 
 
     return false;
 }
-
-std::vector<int> BidirectionalBFS::findPath(int source, int target) {
+std::vector<int> BidirectionalBFS::findPath(int source, int target, int partition_number) {
     if (source == target) {
         return {source};
     }
@@ -117,50 +114,71 @@ std::vector<int> BidirectionalBFS::findPath(int source, int target) {
         // 正向搜索一步
         auto forward_path = forward_queue.front();
         forward_queue.pop();
-        int current = forward_path.back();
+        int current_forward = forward_path.back();
 
-        for (int next : adjList[current]) {
-            if (backward_visited.count(next)) {
-                // 找到交点，拼接路径
-                auto backward_path = backward_queue.front();
-                std::reverse(backward_path.begin(), backward_path.end());
-                forward_path.push_back(next);
-                forward_path.insert(forward_path.end(), backward_path.begin(), backward_path.end());
-                return forward_path;
+        // 检查当前节点是否在指定的分区内（如果有指定分区）
+        if (partition_number != -1 && g.get_partition_id(current_forward) != partition_number) {
+            // 跳过对该节点的扩展
+        } else {
+            for (int next : adjList[current_forward]) {
+                // 检查分区号（可选，视需求而定）
+                if (partition_number != -1 && g.get_partition_id(next) != partition_number) {
+                    continue; // 不在指定分区，跳过
+                }
+
+                if (backward_visited.count(next)) {
+                    // 找到交点，拼接路径
+                    auto backward_path = backward_queue.front();
+                    backward_queue.pop();
+                    std::reverse(backward_path.begin(), backward_path.end());
+                    forward_path.push_back(next);
+                    forward_path.insert(forward_path.end(), backward_path.begin(), backward_path.end());
+                    return forward_path;
+                }
+
+                if (forward_visited.count(next)) continue;
+
+                forward_visited.insert(next);
+                auto new_path = forward_path;
+                new_path.push_back(next);
+                forward_queue.push(new_path);
             }
-
-            if (forward_visited.count(next)) continue;
-
-            forward_visited.insert(next);
-            auto new_path = forward_path;
-            new_path.push_back(next);
-            forward_queue.push(new_path);
         }
 
         // 反向搜索一步
         auto backward_path = backward_queue.front();
         backward_queue.pop();
-        current = backward_path.back();
+        int current_backward = backward_path.back();
 
-        for (int next : reverseAdjList[current]) {
-            if (forward_visited.count(next)) {
-                // 找到交点，拼接路径
-                auto forward_path = forward_queue.front();
-                std::reverse(backward_path.begin(), backward_path.end());
-                forward_path.push_back(next);
-                forward_path.insert(forward_path.end(), backward_path.begin(), backward_path.end());
-                return forward_path;
+        // 检查当前节点是否在指定的分区内（如果有指定分区）
+        if (partition_number != -1 && g.get_partition_id(current_backward) != partition_number) {
+            // 跳过对该节点的扩展
+        } else {
+            for (int next : reverseAdjList[current_backward]) {
+                // 检查分区号（可选，视需求而定）
+                if (partition_number != -1 && g.get_partition_id(next) != partition_number) {
+                    continue; // 不在指定分区，跳过
+                }
+
+                if (forward_visited.count(next)) {
+                    // 找到交点，拼接路径
+                    auto forward_path = forward_queue.front();
+                    forward_queue.pop();
+                    std::reverse(backward_path.begin(), backward_path.end());
+                    forward_path.push_back(next);
+                    forward_path.insert(forward_path.end(), backward_path.begin(), backward_path.end());
+                    return forward_path;
+                }
+
+                if (backward_visited.count(next)) continue;
+
+                backward_visited.insert(next);
+                auto new_path = backward_path;
+                new_path.push_back(next);
+                backward_queue.push(new_path);
             }
-
-            if (backward_visited.count(next)) continue;
-
-            backward_visited.insert(next);
-            auto new_path = backward_path;
-            new_path.push_back(next);
-            backward_queue.push(new_path);
         }
     }
 
     return std::vector<int>(); // 未找到路径
 }
-

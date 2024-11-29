@@ -1,20 +1,40 @@
-
 #ifndef PARTITION_MANAGER_H
 #define PARTITION_MANAGER_H
 
 #include <unordered_map>
+#include <vector>
+#include "graph.h"
+
+// 表示两个分区之间的边
+struct PartitionEdge {
+    std::vector<std::pair<int, int>> original_edges; // 原始图中的边 <source, target>
+    int edge_count = 0; // 边的数量
+};
 
 class PartitionManager {
 public:
+    PartitionManager(Graph &graph);
+
+    // 建立分区图
+    void build_partition_graph();
     // 设置节点的分区ID
     void set_partition(int node, int partitionId);
-    // 获取节点的分区ID
-    int get_partition(int node) const;
-    // 判断两个节点是否在同一分区
-    bool is_same_partition(int node1, int node2) const;
+    int get_partition(int node) const {return g.get_partition_id(node);}
 
+    // 获取分区之间的连接
+    const std::unordered_map<int, PartitionEdge>& getPartitionConnections(int partitionId) const;
+
+    // 更新分区之间的连接
+    void update_partition_connections();
+
+    // 分区之间的邻接表
+    std::unordered_map<int, std::unordered_map<int, PartitionEdge>> partition_adjacency;
+
+
+    Graph &g;
+    Graph part_g;
 private:
-    std::unordered_map<int, int> node_partition;  // 节点到分区ID的映射
+
 };
 
 #endif // PARTITION_MANAGER_H

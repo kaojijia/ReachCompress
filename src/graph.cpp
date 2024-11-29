@@ -9,6 +9,30 @@ Graph::Graph(bool store_edges) : store_edges(store_edges) {
 
 }
 
+long Graph::get_partition_degree(int target_patition) const
+{
+    long total_degree = 0;
+    for(auto const i:vertices){
+        if(i.partition_id == target_patition){
+            total_degree += i.out_degree;
+        }
+    }
+    return 0;
+}
+
+
+int Graph::get_partition_id(int node) const
+{
+    return vertices[node].partition_id;
+}
+
+bool Graph::set_partition_id(int node, int part_id)
+{
+    if (node >= vertices.size()) return false;
+    vertices[node].partition_id = part_id;
+    return true;
+}
+
 // 添加边到图
 void Graph::addEdge(int u, int v, bool is_directed) {
     if (u >= vertices.size()) vertices.resize(u + 1);
@@ -19,7 +43,12 @@ void Graph::addEdge(int u, int v, bool is_directed) {
     vertices[u].out_degree++;
     vertices[v].in_degree++;
 
+    // 如果需要存储边集，确保 adjList 和 reverseAdjList 也被正确调整
     if (store_edges) {
+        // 确保 adjList 和 reverseAdjList 足够大
+        if (u >= adjList.size()) adjList.resize(u + 1);
+        if (v >= reverseAdjList.size()) reverseAdjList.resize(v + 1);
+
         adjList[u].push_back(v); 
         reverseAdjList[v].push_back(u);
     }

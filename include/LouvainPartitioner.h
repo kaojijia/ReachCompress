@@ -9,6 +9,7 @@
  */
 class LouvainPartitioner : public GraphPartitioner {
 public:
+    double compute_gain(int node, int target_partition, Graph &graph, PartitionManager &partition_manager, double m);
     /**
      * @brief 执行 Louvain 分区算法。
      * @param graph 需要分区的图。

@@ -7,7 +7,7 @@
 
 // 表示节点的结构
 struct Vertex {
-    int label;
+    int partition_id = -1;  // 分区ID
     std::vector<int> LOUT;  // 出度
     std::vector<int> LIN;   // 入度
     int in_degree = 0;
@@ -21,6 +21,8 @@ public:
 
     // 构造函数，控制是否存储边集
     Graph(bool store_edges = true);
+
+
 
     // 添加边
     void addEdge(int u, int v, bool is_directed = true);
@@ -37,11 +39,21 @@ public:
 
     // 边和点的数量存进去
     std::pair<int, int> statics(const std::string &filename = "") const;
+    
+    
+    long get_partition_degree(int target_patition) const;
 
-private:
-    bool store_edges;  // 控制是否存储边集
+    int get_partition_id(int node) const;
+    bool set_partition_id(int node, int part_id);
+    // std::vector<std::vector<int>>* get_adjList() const{ return &adjList; }
+    // const std::vector<std::vector<int>> * get_adjList() const { return &adjList; }
+    // const std::vector<std::vector<int>> * get_reverseAdjList() const { return &reverseAdjList; }
+
     std::vector<std::vector<int>> adjList;  //邻接表
     std::vector<std::vector<int>> reverseAdjList; //逆邻接表
+private:
+    bool store_edges;  // 控制是否存储边集
+
 };
 
 #endif  // GRAPH_H
