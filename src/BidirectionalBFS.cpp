@@ -101,6 +101,15 @@ std::vector<int> BidirectionalBFS::findPath(int source, int target, int partitio
     if (source == target) {
         return {source};
     }
+    if (g.vertices[source].LOUT.empty() || g.vertices[target].LIN.empty()){
+        return {};
+    }
+
+    for (auto v: (g.vertices[source].LOUT)){
+        if (v == target){
+            return {source,target};
+        }
+    }
 
     std::queue<std::vector<int>> forward_queue, backward_queue;
     std::unordered_set<int> forward_visited, backward_visited;

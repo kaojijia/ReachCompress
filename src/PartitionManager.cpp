@@ -19,6 +19,13 @@ void PartitionManager::build_partition_graph() {
     // 清空之前的分区图
     part_g = Graph(false); // 假设分区图不需要存储边集
 
+
+    // 填充 mapping，记录每个分区包含的节点
+    for (size_t node = 0; node < g.vertices.size(); ++node) {
+        int partition_id = g.get_partition_id(node);
+        mapping[partition_id].insert(node);
+    }
+
     // 使用一个临时的映射来累积边的权重
     std::unordered_map<int, std::unordered_map<int, int>> temp_edges;
 

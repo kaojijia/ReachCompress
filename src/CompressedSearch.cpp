@@ -124,14 +124,11 @@ bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, in
     }
     for(auto &edge:edges){
         //上一个前序点无法到达这条边就下一轮循环
-        auto temp_path = bfs.findPath(u,edge.first,current_partition);
-        if(temp_path.empty()) continue;
+        if(!query_within_partition(u,edge.first)) continue;
         //如果下一个分区是终点分区就使用BFS查找，如果不是指向终点分区就继续递归找
         auto next_partition = path[1];
         if(g.get_partition_id(target) == next_partition){
-            auto temp_path2 = bfs.findPath(edge.second, target);
-            if(temp_path2.empty())return false;
-            return true;
+            return query_within_partition(edge.second, target);
         }
         else{
             std::vector<int> remain_path(path.begin() + 1, path.end());

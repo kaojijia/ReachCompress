@@ -1,6 +1,6 @@
 #ifndef PARTITION_MANAGER_H
 #define PARTITION_MANAGER_H
-
+#include <unordered_set>
 #include <unordered_map>
 #include <vector>
 #include "graph.h"
@@ -33,6 +33,8 @@ public:
     // 分区之间的邻接表
     std::unordered_map<int, std::unordered_map<int, PartitionEdge>> partition_adjacency;
 
+    // 分区和点的映射关系
+    std::unordered_map<int, std::unordered_set<int>> mapping;
     Graph &g;
     Graph part_g;
 private:
