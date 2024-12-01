@@ -47,6 +47,9 @@ public:
      */
     bool reachability_query(int source, int target) override;
 
+
+    BidirectionalBFS bfs;                                 ///< 原图上的双向BFS算法。
+
 private:
     /**
      * @brief 执行图分区算法。
@@ -68,9 +71,10 @@ private:
      * @return 如果可达返回 true，否则返回 false。
      */
     bool query_across_partitions(int source, int target); ///< 跨分区查询
-    bool dfs_partition_search(int current_partition, int target_partition);
+    bool dfs_partition_search(int u, std::vector<std::pair<int, int>> edges, std::vector<int> path, int target);
 
-    BidirectionalBFS bfs;                                 ///< 原图上的双向BFS算法。
+
+
     std::unique_ptr<BidirectionalBFS> part_bfs;           ///< 分区图上的双向BFS算法。
     Graph &g;                                             ///< 处理的图。
     PartitionManager partition_manager_;                  ///< 分区管理器。

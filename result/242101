@@ -1,0 +1,29 @@
+Partition graph constructed with 1 partitions.
+BiBFS Query from 7 to 15: Not Reachable
+PartSearch Query from 7 to 15: Not Reachable
+BiBFS Query from 19 to 3: Not Reachable
+PartSearch Query from 19 to 3: Not Reachable
+BiBFS Query from 14 to 15: Not Reachable
+PartSearch Query from 14 to 15: Not Reachable
+BiBFS Query from 3 to 8: Reachable
+PartSearch Query from 3 to 8: Not Reachable
+BiBFS Query from 3 to 1: Reachable
+PartSearch Query from 3 to 1: Not Reachable
+BiBFS Query from 1 to 9: Reachable
+PartSearch Query from 1 to 9: Reachable
+BiBFS Query from 17 to 6: Reachable
+PartSearch Query from 17 to 6: Reachable
+BiBFS Query from 12 to 2: Not Reachable
+PartSearch Query from 12 to 2: Not Reachable
+BiBFS Query from 14 to 13: Not Reachable
+PartSearch Query from 14 to 13: Not Reachable
+BiBFS Query from 0 to 1: Reachable
+PartSearch Query from 0 to 1: Not Reachable
+BiBFS Query from 19 to 14: Not Reachable
+PartSearch Query from 19 to 14: Not Reachable
+BiBFS Query from 16 to 18: Reachable
+PartSearch Query from 16 to 18: Reachable
+BiBFS Query from 4 to 0: Not Reachable
+PartSearch Query from 4 to 0: Not Reachable
+BiBFS Query from 3 to 19: Not Reachable
+[1]    55406 segmentation fault (core dumped)  /home/gh/projects/ReachCompress/bu

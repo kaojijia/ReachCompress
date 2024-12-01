@@ -19,6 +19,9 @@ target_link_libraries(test_comp reach_comp gtest gtest_main)
 add_executable(test_part test_part.cpp)
 target_link_libraries(test_part reach_comp gtest gtest_main)
 
+add_executable(test_part_reach test_part_reach.cpp)
+target_link_libraries(test_part_reach reach_comp gtest gtest_main)
+
 set_target_properties(${TARGET} PROPERTIES
 COMPILE_FLAGS "-pthread"
 LINK_FLAGS "-pthread")

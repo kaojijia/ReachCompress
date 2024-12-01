@@ -87,3 +87,19 @@ void PartitionManager::update_partition_connections() {
 const std::unordered_map<int, PartitionEdge>& PartitionManager::getPartitionConnections(int partitionId) const {
     return partition_adjacency.at(partitionId);
 }
+
+// 获取两个分区之间的连接
+const PartitionEdge& PartitionManager::get_partition_adjacency(int u, int v) const {
+    auto it_outer = partition_adjacency.find(u);
+    if (it_outer == partition_adjacency.end()) {
+        throw std::out_of_range("Partition U not found.");
+    }
+
+    const auto& inner_map = it_outer->second;
+    auto it_inner = inner_map.find(v);
+    if (it_inner == inner_map.end()) {
+        throw std::out_of_range("Partition V not found.");
+    }
+
+    return it_inner->second;
+}

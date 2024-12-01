@@ -19,6 +19,8 @@ TEST(PartitionTest, LouvainTest) {
     LouvainPartitioner partitioner;
     partitioner.partition(g, partition_manager);
     
+    auto edges = partition_manager.get_partition_adjacency(3,16);
+   
     OutputHandler::printPartitionInfo(partition_manager);
 
 }

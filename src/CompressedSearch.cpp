@@ -32,9 +32,9 @@ void CompressedSearch::set_partitioner(std::string partitioner_name)
 void CompressedSearch::offline_industry() {
     partition_graph();  ///< 执行图分区算法
     // 构建 Bloom Filter
-    bloom_filter_.build(g);
+    // bloom_filter_.build(g);
     // 构建 Node Embedding
-    node_embedding_.build(g);
+    // node_embedding_.build(g);
     part_bfs = std::unique_ptr<BidirectionalBFS>(new BidirectionalBFS(partition_manager_.part_g));
 }
 
@@ -46,12 +46,12 @@ void CompressedSearch::offline_industry() {
  */
 bool CompressedSearch::reachability_query(int source, int target) {
     // 使用 Bloom Filter 和 Node Embedding 进行快速判断
-    if (!bloom_filter_.possibly_connected(source, target)) {
-        return false;
-    }
-    if (!node_embedding_.are_nodes_related(source, target)) {
-        return false;
-    }
+    // if (!bloom_filter_.possibly_connected(source, target)) {
+    //     return false;
+    // }
+    // if (!node_embedding_.are_nodes_related(source, target)) {
+    //     return false;
+    // }
 
     int source_partition = g.get_partition_id(source);
     int target_partition = g.get_partition_id(target);
@@ -103,70 +103,40 @@ bool CompressedSearch::query_within_partition(int source, int target) {
 bool CompressedSearch::query_across_partitions(int source, int target) {
     auto source_partition = g.get_partition_id(source);
     auto target_partition = g.get_partition_id(target);
-    auto part_path = part_bfs->findPath(source,target);
-    if(part_path.size() == 0) {
-        return false;
-    }
-
-    for(int i = 0; i < part_path.size() - 1; i++) {
-        if(i == 0){}
-        
-        auto partition_id = part_path[i];
-        auto next_partition_id = part_path[i + 1];
-        auto result = bfs.findPath(source, target, partition_id);
-        if(result.size() > 0) {
-            return true;
-        }
-    }
-
-    return false;
+    std::vector<int> path = part_bfs->findPath(source,target);
+    if(path.empty())return false;
+    auto edges = partition_manager_.get_partition_adjacency(path[0], path[1]);
+    return dfs_partition_search(source, edges.original_edges, path, target);
 }
-
 
 /**
  * @brief 辅助方法，执行分区间的迭代式DFS搜索。
  * @param current_partition 当前分区ID。
  * @param target_partition 目标分区ID。
  * @param visited 已访问的分区集合。
+ * @param path 从当前节点出发的可达路径集合
  * @return 如果可达返回 true，否则返回 false。
  */
-bool CompressedSearch::dfs_partition_search(int source, int target) {
-    std::stack<int> stack;
-    stack.push(source);
-    std::unordered_set<int> visited;
-
-    while (!stack.empty()) {
-        int current_node = stack.top();
-        stack.pop();
-
-        if (g.get_partition_id(current_node) == g.get_partition_id(target)) {
-            return query_within_partition(current_node, target);
+bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, int>>edges, std::vector<int>path, int target) {
+    auto current_partition = path[0];
+    if (current_partition != g.get_partition_id(u)) {
+        throw std::logic_error("Current partition from path[] does not match the partition of node u");
+    }
+    for(auto &edge:edges){
+        //上一个前序点无法到达这条边就下一轮循环
+        auto temp_path = bfs.findPath(u,edge.first,current_partition);
+        if(temp_path.empty()) continue;
+        //如果下一个分区是终点分区就使用BFS查找，如果不是指向终点分区就继续递归找
+        auto next_partition = path[1];
+        if(g.get_partition_id(target) == next_partition){
+            auto temp_path2 = bfs.findPath(edge.second, target);
+            if(temp_path2.empty())return false;
+            return true;
         }
-
-        if (visited.find(partition) != visited.end()) {
-            continue;
-        }
-
-        visited.insert(partition);
-
-        // 遍历当前分区的所有相邻分区
-        const auto &connections = partition_manager_.partition_adjacency[partition];
-        for (const auto &pair : connections) {
-            int adjacent_partition = pair.first;
-            const PartitionEdge &edge = pair.second;
-
-            // 遍历连接边，检查分区内的可达性
-            for (const auto &edge_pair : edge.original_edges) {
-                int from_node = edge_pair.first;
-                int to_node = edge_pair.second;
-
-                // 检查从当前分区的某个节点是否可达
-                if (query_within_partition(from_node, to_node)) {
-                    if (visited.find(adjacent_partition) == visited.end()) {
-                        stack.push(adjacent_partition);
-                    }
-                }
-            }
+        else{
+            std::vector<int> remain_path(path.begin() + 1, path.end());
+            auto next_edges = partition_manager_.get_partition_adjacency(path[0],path[1]);
+            return dfs_partition_search(edge.second,next_edges.original_edges,remain_path,target);
         }
     }
 

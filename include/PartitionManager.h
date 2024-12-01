@@ -21,15 +21,17 @@ public:
     void set_partition(int node, int partitionId);
     int get_partition(int node) const {return g.get_partition_id(node);}
 
-    // 获取分区之间的连接
+    // 获取分区的所有连接
     const std::unordered_map<int, PartitionEdge>& getPartitionConnections(int partitionId) const;
+    // 获取两个分区之间的连接
+    const PartitionEdge& get_partition_adjacency(int u, int v) const;
+
 
     // 更新分区之间的连接
     void update_partition_connections();
 
     // 分区之间的邻接表
     std::unordered_map<int, std::unordered_map<int, PartitionEdge>> partition_adjacency;
-
 
     Graph &g;
     Graph part_g;
