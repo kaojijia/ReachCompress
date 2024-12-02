@@ -111,83 +111,106 @@ std::vector<int> BidirectionalBFS::findPath(int source, int target, int partitio
         }
     }
 
-    std::queue<std::vector<int>> forward_queue, backward_queue;
-    std::unordered_set<int> forward_visited, backward_visited;
 
-    forward_queue.push({source});
-    backward_queue.push({target});
+    // 初始化队列和访问集合，以及父节点记录
+    std::queue<int> forward_queue, backward_queue;
+    std::unordered_set<int> forward_visited, backward_visited;
+    std::unordered_map<int, int> forward_parent, backward_parent;
+
+    forward_queue.push(source);
     forward_visited.insert(source);
+    forward_parent[source] = -1;  // 起点的父节点设为 -1
+
+    backward_queue.push(target);
     backward_visited.insert(target);
+    backward_parent[target] = -1; // 终点的父节点设为 -1
+
+    int meeting_node = -1; // 记录正反搜索相遇的节点
 
     while (!forward_queue.empty() && !backward_queue.empty()) {
         // 正向搜索一步
-        auto forward_path = forward_queue.front();
+        int forward_current = forward_queue.front();
         forward_queue.pop();
-        int current_forward = forward_path.back();
 
-        // 检查当前节点是否在指定的分区内（如果有指定分区）
-        if (partition_number != -1 && g.get_partition_id(current_forward) != partition_number) {
-            // 跳过对该节点的扩展
-        } else {
-            for (int next : adjList[current_forward]) {
-                // 检查分区号（可选，视需求而定）
-                if (partition_number != -1 && g.get_partition_id(next) != partition_number) {
-                    continue; // 不在指定分区，跳过
-                }
-
-                if (backward_visited.count(next)) {
-                    // 找到交点，拼接路径
-                    auto backward_path = backward_queue.front();
-                    backward_queue.pop();
-                    std::reverse(backward_path.begin(), backward_path.end());
-                    forward_path.push_back(next);
-                    forward_path.insert(forward_path.end(), backward_path.begin(), backward_path.end());
-                    return forward_path;
-                }
-
-                if (forward_visited.count(next)) continue;
-
-                forward_visited.insert(next);
-                auto new_path = forward_path;
-                new_path.push_back(next);
-                forward_queue.push(new_path);
+        for (int neighbor : adjList[forward_current]) {
+            // 如果指定了分区，且邻居节点不在指定分区内，跳过
+            if (partition_number != -1 && g.get_partition_id(neighbor) != partition_number) {
+                continue;
             }
+
+            if (forward_visited.find(neighbor) == forward_visited.end()) {
+                forward_visited.insert(neighbor);
+                forward_parent[neighbor] = forward_current;
+                forward_queue.push(neighbor);
+
+                // 检查是否在反向已访问集合中
+                if (backward_visited.find(neighbor) != backward_visited.end()) {
+                    meeting_node = neighbor; // 记录相遇节点
+                    break; // 跳出循环
+                }
+            }
+        }
+
+        if (meeting_node != -1) {
+            break; // 跳出主循环
         }
 
         // 反向搜索一步
-        auto backward_path = backward_queue.front();
+        int backward_current = backward_queue.front();
         backward_queue.pop();
-        int current_backward = backward_path.back();
 
-        // 检查当前节点是否在指定的分区内（如果有指定分区）
-        if (partition_number != -1 && g.get_partition_id(current_backward) != partition_number) {
-            // 跳过对该节点的扩展
-        } else {
-            for (int next : reverseAdjList[current_backward]) {
-                // 检查分区号（可选，视需求而定）
-                if (partition_number != -1 && g.get_partition_id(next) != partition_number) {
-                    continue; // 不在指定分区，跳过
-                }
-
-                if (forward_visited.count(next)) {
-                    // 找到交点，拼接路径
-                    auto forward_path = forward_queue.front();
-                    forward_queue.pop();
-                    std::reverse(backward_path.begin(), backward_path.end());
-                    forward_path.push_back(next);
-                    forward_path.insert(forward_path.end(), backward_path.begin(), backward_path.end());
-                    return forward_path;
-                }
-
-                if (backward_visited.count(next)) continue;
-
-                backward_visited.insert(next);
-                auto new_path = backward_path;
-                new_path.push_back(next);
-                backward_queue.push(new_path);
+        for (int neighbor : reverseAdjList[backward_current]) {
+            // 如果指定了分区，且邻居节点不在指定分区内，跳过
+            if (partition_number != -1 && g.get_partition_id(neighbor) != partition_number) {
+                continue;
             }
+
+            if (backward_visited.find(neighbor) == backward_visited.end()) {
+                backward_visited.insert(neighbor);
+                backward_parent[neighbor] = backward_current;
+                backward_queue.push(neighbor);
+
+                // 检查是否在正向已访问集合中
+                if (forward_visited.find(neighbor) != forward_visited.end()) {
+                    meeting_node = neighbor; // 记录相遇节点
+                    break; // 跳出循环
+                }
+            }
+        }
+
+        if (meeting_node != -1) {
+            break; // 跳出主循环
         }
     }
 
-    return std::vector<int>(); // 未找到路径
+    if (meeting_node == -1) {
+        // 未找到路径
+        return {};
+    }
+
+    // 构建完整路径
+    std::vector<int> path;
+
+    // 从相遇节点回溯到源节点
+    int node = meeting_node;
+    std::vector<int> forward_path;
+    while (node != -1) {
+        forward_path.push_back(node);
+        node = forward_parent[node];
+    }
+    std::reverse(forward_path.begin(), forward_path.end());
+
+    // 从相遇节点回溯到目标节点
+    node = backward_parent[meeting_node];
+    std::vector<int> backward_path;
+    while (node != -1) {
+        backward_path.push_back(node);
+        node = backward_parent[node];
+    }
+
+    // 合并路径，避免重复相遇节点
+    path.insert(path.end(), forward_path.begin(), forward_path.end());
+    path.insert(path.end(), backward_path.begin(), backward_path.end());
+
+    return path;
 }
