@@ -103,7 +103,8 @@ bool CompressedSearch::query_within_partition(int source, int target) {
 bool CompressedSearch::query_across_partitions(int source, int target) {
     auto source_partition = g.get_partition_id(source);
     auto target_partition = g.get_partition_id(target);
-    std::vector<int> path = part_bfs->findPath(source,target);
+    // 找分区的路径
+    std::vector<int> path = part_bfs->findPath(source_partition,target_partition);
     if(path.empty())return false;
     auto edges = partition_manager_.get_partition_adjacency(path[0], path[1]);
     return dfs_partition_search(source, edges.original_edges, path, target);
