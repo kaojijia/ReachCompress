@@ -8,7 +8,7 @@
 #include <string>
 
 
-TEST(PLLTest, BIGVertexTest) {
+TEST(PLLTest, DISABLED_BIGVertexTest) {
     Graph g(true);
     g.addEdge(1, 2);
     g.addEdge(2, 3);

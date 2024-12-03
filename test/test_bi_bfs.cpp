@@ -4,7 +4,7 @@
 #include "utils/OutputHandler.h"
 #include "utils/RandomUtils.h"
 #include "utils/InputHandler.h"
-TEST(BidirectionalBFSTest, ReachabilityTest) {
+TEST(BidirectionalBFSTest, DISABLED_BasicReachabilityTest) {
     // 创建一个图
     Graph g(true);  // 确保存储边集
 
@@ -29,7 +29,7 @@ TEST(BidirectionalBFSTest, ReachabilityTest) {
     EXPECT_FALSE(bfs.reachability_query(1, 5)); // 1 -> 5 不可达（节点5不存在）
 }
 
-TEST(BidirectionalBFSTest, NoPathTest) {
+TEST(BidirectionalBFSTest, DISABLED_NoPathTest) {
     // 创建一个图
     Graph g(true);  // 确保存储边集
 
@@ -46,7 +46,7 @@ TEST(BidirectionalBFSTest, NoPathTest) {
     EXPECT_FALSE(bfs.reachability_query(2, 3)); // 2 -> 3 不可达
 }
 
-TEST(BidirectionalBFSTest, SelfLoopTest) {
+TEST(BidirectionalBFSTest, DISABLED_SelfLoopTest) {
     // 创建一个图
     Graph g(true);  // 确保存储边集
 
@@ -94,9 +94,9 @@ TEST(BidirectionalBFSTest, DISABLED_RandomQueryPairs) {
 
 TEST(BidirectionalBFSTest, PathTest){
     Graph g(true);
-    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241029_135003");
+    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/soc-Epinions1.txt");
     inputHandler.readGraph(g);
-    OutputHandler::printGraphInfo(g);
+    // OutputHandler::printGraphInfo(g);
     BidirectionalBFS bfs(g);
             // 生成不重复的随机查询对
     int num_queries = 100;

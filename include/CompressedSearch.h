@@ -51,7 +51,12 @@ public:
     };
 
     BidirectionalBFS bfs;                                 ///< 原图上的双向BFS算法。
+    
+    std::unordered_map<std::string, size_t> getIndexSizes() const override{
+        std::unordered_map<std::string, size_t> index_sizes;
 
+        return {};
+    }
 private:
     /**
      * @brief 执行图分区算法。

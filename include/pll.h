@@ -5,6 +5,7 @@
 #include "Algorithm.h"
 #include <vector>
 
+
 class PLL : public Algorithm{
 public:
     PLL(Graph& graph);  // 构造函数，传入图的引用
@@ -21,6 +22,18 @@ public:
     std::vector<std::vector<int>> IN;
     std::vector<std::vector<int>> OUT;
 
+    
+    std::unordered_map<std::string, size_t> getIndexSizes() const override{
+        size_t inSize = 0;
+        size_t outSize = 0;
+        for (const auto& inSet : IN) {
+            inSize += inSet.size();
+        }
+        for (const auto& outSet : OUT) {
+            outSize += outSet.size();
+        }
+        return {{"IN", inSize}, {"OUT", outSize}};
+    }
 private:
     Graph& g;  // 引用图
 
@@ -44,3 +57,4 @@ private:
 };
 
 #endif
+

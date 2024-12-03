@@ -37,21 +37,13 @@ protected:
 
 // }
 
-TEST_F(CompressionTest, DISABLED_MergeNodes){
-    Compression com(g);
-    // com.mergeNodes(3,2);
-    com.mergeNodes(1,2,3);
-    OutputHandler::printGraphInfo(com.getGraph());
-    OutputHandler::printMapping(com);
-    
-}
 TEST_F(CompressionTest, DISABLED_MergeIn1Out1Nodes){
     Compression com(g);
     com.mergeIn1Out1Nodes();
     OutputHandler::printGraphInfo(com.getGraph());
     OutputHandler::printMapping(com);
 }
-TEST_F(CompressionTest, MergeNodes){
+TEST_F(CompressionTest, DISABLED_MergeNodes){
     auto i = g.statics();
     std::cout <<"nodes num:"<< i.first << " " <<"edges num:" <<i.second << std::endl;
     Compression com(g);

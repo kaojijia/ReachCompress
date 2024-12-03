@@ -42,6 +42,7 @@ public:
     void mergeNodes(int u, int v, bool is_reversed, bool is_delete); // 单向合并节点，标注方向（默认u->v）和是否删除
 
     void removeRedundantEdges(int u, int w);  // 删除多余的边
+    
 private:
     Graph g;  //存储图的副本
 

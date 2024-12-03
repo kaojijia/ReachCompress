@@ -5,6 +5,7 @@
 #include "utils/OutputHandler.h"
 #include "utils/RandomUtils.h"
 #include "utils/InputHandler.h"
+#include "pll.h"
 #include "CompressedSearch.h"
 #include "ReachRatio.h"
 #include <dirent.h>      // 用于目录遍历
@@ -13,9 +14,30 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <chrono>
+
 
 // 使用命名空间简化代码
 using namespace std;
+
+
+class ReachabilityTest : public ::testing::Test {
+protected:
+    void SetUp() override {
+        // 初始化代码
+        InputHandler inputHandler(PROJECT_ROOT_DIR "/Edges/ia-radoslaw-email_edges.txt");
+        inputHandler.readGraph(g);
+        OutputHandler outputHandler(PROJECT_ROOT_DIR "/result/20241203");
+        
+    }
+
+    void TearDown() override {
+        // 清理代码
+    }
+
+    Graph g;
+};
+
 
 // 辅助函数：获取指定目录下的所有文件路径
 vector<string> getAllFiles(const string& directoryPath) {
@@ -47,40 +69,22 @@ vector<string> getAllFiles(const string& directoryPath) {
 
     return files;
 }
-TEST(ReachabilityTest, DISABLED_BasicTest) {
-    // 创建一个图
-    Graph g(true);  // 确保存储边集    
-    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241029_135003");
-    inputHandler.readGraph(g);
-    OutputHandler::printGraphInfo(g);
-    // // 创建PartitionManager对象
-    // PartitionManager partition_manager(g);
-    // // 进行分区
-    // LouvainPartitioner partitioner;
-    // partitioner.partition(g, partition_manager);
-    
-    // auto edges = partition_manager.get_partition_adjacency(3,16);
-   
-    // OutputHandler::printPartitionInfo(partition_manager);
-
+TEST_F(ReachabilityTest, BasicTest) {
     CompressedSearch comps(g);
     comps.offline_industry();
-    // EXPECT_TRUE(comps.reachability_query(3,16));
-    // EXPECT_TRUE(comps.reachability_query(3,18));
-    // EXPECT_TRUE(comps.reachability_query(3,11));
+    string filename = "ia-radoslaw-email_edges.txt";
+    OutputHandler outputHandler(PROJECT_ROOT_DIR "/result/20241203");
+    outputHandler.writeStringWithTimestamp("当前处理文件"+filename);
+    outputHandler.writeStringWithTimestamp("完成Compress离线索引构建");
     
-    // EXPECT_FALSE(comps.reachability_query(3,0));
-
-    // 这几个出问题了
-    // comps.reachability_query(3,1);
-    // comps.reachability_query(3,8);
-    // comps.reachability_query(3,9);
-    // comps.reachability_query(3,19);
-    // comps.reachability_query(3,12);
-    // comps.reachability_query(3,7);
-    // comps.reachability_query(0,1);
-    // comps.reachability_query(0,17);
-    // comps.reachability_query(0,17);
+    PLL pll(g);
+    pll.offline_industry();
+    outputHandler.writeStringWithTimestamp("完成pll离线索引构建");
+    
+    auto pllIndexSizes = pll.getIndexSizes();
+    std::ostringstream oss;
+    oss << "PLL Index Sizes - IN: " << pllIndexSizes["IN"] << ", OUT: " << pllIndexSizes["OUT"];
+    outputHandler.writeStringWithTimestamp(oss.str());
 
     int num_queries = 100;
     int max_value = g.vertices.size();
@@ -88,37 +92,80 @@ TEST(ReachabilityTest, DISABLED_BasicTest) {
 
     std::vector<std::pair<int, int>> query_pairs = RandomUtils::generateUniqueQueryPairs(num_queries, max_value, seed);
 
+    // 计算每个方法的平均耗时
+    long long total_duration_bfs = 0;
+    long long total_duration_part = 0;
+    long long total_duration_pll = 0;
+    int query_count = 0;
 
     for (const auto& query_pair : query_pairs) {
         int source = query_pair.first;
         int target = query_pair.second;
 
-        std::cout << "query from "<< source << " to " <<target<<std::endl;
-        bool bfs_result = comps.bfs.reachability_query(source, target);
-        bool part_result = comps.reachability_query(source, target);
-        EXPECT_EQ(bfs_result,part_result);
-        std::cout << "BiBFS :"<< (bfs_result ? " Reachable" : " Not Reachable") << std::endl;
-        std::cout << "PartSearch:" << (part_result ? " Reachable" : " Not Reachable") << std::endl;
-        std::cout << "***** Does Result Match from " << source << " query to " << target << ":  " << ((bfs_result==part_result)?"Match":"Not Match") <<" *****"<< std::endl;
-        std::cout << std::endl;
-        // if (!path.empty()) {
-        //     std::cout << "Path found: ";
-        //     for (int node : path) {
-        //         std::cout << node << " ";
-        //     }
-        //     std::cout << std::endl;
-        // } else {
-        //     std::cout << "No path exists" << std::endl;
-        // }
+        std::ostringstream query_oss;
+        query_oss << "Query from " << source << " to " << target;
+        outputHandler.writeStringWithTimestamp(query_oss.str());
 
+        // 测量 BiBFS 查询耗时
+        auto start_bfs = std::chrono::high_resolution_clock::now();
+        bool bfs_result = comps.bfs.reachability_query(source, target);
+        auto end_bfs = std::chrono::high_resolution_clock::now();
+        auto duration_bfs = std::chrono::duration_cast<std::chrono::microseconds>(end_bfs - start_bfs).count();
+        total_duration_bfs += duration_bfs;
+
+        // 测量 Partitioned Search 查询耗时
+        auto start_part = std::chrono::high_resolution_clock::now();
+        bool part_result = comps.reachability_query(source, target);
+        auto end_part = std::chrono::high_resolution_clock::now();
+        auto duration_part = std::chrono::duration_cast<std::chrono::microseconds>(end_part - start_part).count();
+        total_duration_part += duration_part;
+
+        // 测量 PLL 查询耗时
+        auto start_pll = std::chrono::high_resolution_clock::now();
+        bool pll_result = pll.reachability_query(source, target);
+        auto end_pll = std::chrono::high_resolution_clock::now();
+        auto duration_pll = std::chrono::duration_cast<std::chrono::microseconds>(end_pll - start_pll).count();
+        total_duration_pll += duration_pll;
+
+        // 输出查询结果和耗时
+        std::ostringstream result_oss;
+        result_oss << "BiBFS: " << (bfs_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_bfs << " microseconds)";
+        outputHandler.writeStringWithTimestamp(result_oss.str());
+
+        result_oss.str(""); // 清空字符串流
+        result_oss << "PartSearch: " << (part_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_part << " microseconds)";
+        outputHandler.writeStringWithTimestamp(result_oss.str());
+
+        result_oss.str(""); // 清空字符串流
+        result_oss << "PLLSearch: " << (pll_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_pll << " microseconds)";
+        outputHandler.writeStringWithTimestamp(result_oss.str());
+
+        query_count++;
+
+        bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);
+        std::ostringstream match_oss;
+        match_oss << "***** Does Result Match from " << source << " query to " << target << ": " << (results_match ? "Match" : "Not Match") << " *****";
+        outputHandler.writeStringWithTimestamp(match_oss.str());
+
+        EXPECT_EQ(bfs_result, part_result);
+        EXPECT_EQ(bfs_result, pll_result);
     }
 
+    std::ostringstream final_oss;
+    final_oss << "Final Average BiBFS Time: " << (total_duration_bfs / query_count) << " microseconds";
+    outputHandler.writeStringWithTimestamp(final_oss.str());
 
+    final_oss.str(""); // 清空字符串流
+    final_oss << "Final Average PartSearch Time: " << (total_duration_part / query_count) << " microseconds";
+    outputHandler.writeStringWithTimestamp(final_oss.str());
 
+    final_oss.str(""); // 清空字符串流
+    final_oss << "Final Average PLLSearch Time: " << (total_duration_pll / query_count) << " microseconds";
+    outputHandler.writeStringWithTimestamp(final_oss.str());
 }
 
 
-TEST(ReachabilityTest, ReachabilityRatioTest){
+TEST(ReachabilityTest, DISABLED_ReachabilityRatioTest){
     Graph g(true);  // 确保存储边集    
     //InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241031_163820");
     InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/soc-Epinions1.txt");

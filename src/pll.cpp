@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include <vector>
+#include <iostream>
 
 // 构造函数，接收图结构
 PLL::PLL(Graph& graph) : g(graph) {
@@ -72,42 +73,55 @@ std::vector<int> PLL::orderByDegree() {
 }
 
 
-//剪枝 BFS
 void PLL::bfsPruned(int start){
-    std::unordered_set<int> visited;
-    std::queue<int> q;
-    q.push(start);
-    while (!q.empty())
-    {
-        int current = q.front();
-        q.pop();
-        // if (visited.count(current)) continue;
-        visited.insert(current);
+    // 第一轮 BFS：从 start 出发，构建 IN 集合
+    std::unordered_set<int> visited_forward;
+    std::queue<int> q_forward;
+    q_forward.push(start);
+    visited_forward.insert(start);
 
-        if(HopQuery(start, current)) continue;
-        if(current!=start)IN[current].push_back(start);
+    while (!q_forward.empty())
+    {
+        int current = q_forward.front();
+        q_forward.pop();
+
+        if (HopQuery(start, current)) continue;
+        if(current != start) IN[current].push_back(start);
+
         for(auto neighbor : adjList[current]){
-            if(!visited.count(neighbor)) q.push(neighbor);
-        }            
-
+            if(!visited_forward.count(neighbor)) {
+                q_forward.push(neighbor);
+                visited_forward.insert(neighbor);
+            }
+        }
     }
-    q.push(start);
-    std::unordered_set<int> visited2;
-    while (!q.empty())
+
+    // 第二轮 BFS：从 start 出发，构建 OUT 集合
+    std::unordered_set<int> visited_backward;
+    std::queue<int> q_backward;
+    q_backward.push(start);
+    visited_backward.insert(start);
+
+    while (!q_backward.empty())
     {
-        int current = q.front();
-        q.pop();
-        // if (visited.count(current)) continue;
-        visited.insert(current);
-        if(HopQuery(current, start)) continue;
-        if(current!=start)OUT[current].push_back(start);
-        for(auto neighbor: reverseAdjList[current]){
-            if(!visited.count(neighbor)) q.push(neighbor);
+        int current = q_backward.front();
+        q_backward.pop();
+
+        if (HopQuery(current, start)) continue;
+        if(current != start) OUT[current].push_back(start);
+
+        for(auto neighbor : reverseAdjList[current]){
+            if(!visited_backward.count(neighbor)) {
+                q_backward.push(neighbor);
+                visited_backward.insert(neighbor);
+            }
         }
     }
 }
+
 void PLL::buildPLLLabels(){
     std::vector<int> nodes = orderByDegree();
+    int i = 0;
     for (int node : nodes) {
         bfsPruned(node);
     }
