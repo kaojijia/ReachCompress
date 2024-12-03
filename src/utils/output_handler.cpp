@@ -44,16 +44,15 @@ void OutputHandler::printMapping(const Compression &com) {
 
 void OutputHandler::printPartitionInfo(const PartitionManager &partition_manager)
 {
-    const auto& partition_adjacency = partition_manager.partition_adjacency;
+    const auto& mapping = partition_manager.get_mapping();
 
-    for (const auto& source_pair : partition_adjacency) {
-        int source_partition = source_pair.first;
-        const auto& targets = source_pair.second;
-        for (const auto& target_pair : targets) {
-            int target_partition = target_pair.first;
-            const auto& edge_info = target_pair.second;
-            std::cout << "Partition " << source_partition << " -> Partition " << target_partition << ": " << edge_info.edge_count << " edges" << std::endl;
+    for (const auto& pair : mapping) {
+        std::cout << "Partition " << pair.first << ":" << std::endl;
+        std::cout << "  Nodes: ";
+        for (int node : pair.second) {
+            std::cout << node << " ";
         }
+        std::cout << std::endl;
     }
 }
 

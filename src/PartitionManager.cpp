@@ -41,17 +41,17 @@ void PartitionManager::build_partition_graph() {
     }
 
     // 调试输出 temp_edges
-    std::cout << "Temp Edges:" << std::endl;
-    for (const auto& source_pair : temp_edges) {
-        int source_partition = source_pair.first;
-        const auto& targets = source_pair.second;
-        for (const auto& target_pair : targets) {
-            int target_partition = target_pair.first;
-            int edge_count = target_pair.second;
-            std::cout << "Temp Edge: Partition " << source_partition << " -> Partition " 
-                      << target_partition << " with count " << edge_count << std::endl;
-        }
-    }
+    // std::cout << "Temp Edges:" << std::endl;
+    // for (const auto& source_pair : temp_edges) {
+    //     int source_partition = source_pair.first;
+    //     const auto& targets = source_pair.second;
+    //     for (const auto& target_pair : targets) {
+    //         int target_partition = target_pair.first;
+    //         int edge_count = target_pair.second;
+    //         std::cout << "Temp Edge: Partition " << source_partition << " -> Partition " 
+    //                   << target_partition << " with count " << edge_count << std::endl;
+    //     }
+    // }
 
     // 添加累积后的边到分区图，但是相同的边只存一条
     for (const auto& source_pair : temp_edges) {
@@ -61,8 +61,8 @@ void PartitionManager::build_partition_graph() {
             int target_partition = target_pair.first;
             // 无论 edge_count 有多大，只添加一次边
             part_g.addEdge(source_partition, target_partition, true);
-            std::cout << "Added edge to partition graph: " << source_partition 
-                      << " -> " << target_partition << std::endl;
+            //std::cout << "Added edge to partition graph: " << source_partition 
+            //          << " -> " << target_partition << std::endl;
         }
     }
 

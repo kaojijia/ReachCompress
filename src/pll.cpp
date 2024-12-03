@@ -15,13 +15,12 @@ PLL::PLL(Graph& graph) : g(graph) {
 
 void PLL::offline_industry()
 {
-    int aa;
-
+    buildPLLLabels();
 }
 
 bool PLL::reachability_query(int source, int target)
 {
-    return false;
+    return query(source, target);
 }
 
 //构建邻接表和逆邻接表，遍历的时候用

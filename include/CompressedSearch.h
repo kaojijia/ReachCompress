@@ -46,7 +46,9 @@ public:
      * @return 如果可达返回 true，否则返回 false。
      */
     bool reachability_query(int source, int target) override;
-
+    PartitionManager& get_partition_manager() {
+        return partition_manager_;
+    };
 
     BidirectionalBFS bfs;                                 ///< 原图上的双向BFS算法。
 

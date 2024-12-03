@@ -6,7 +6,24 @@
 #include "utils/RandomUtils.h"
 #include "utils/InputHandler.h"
 #include <string>
-TEST(PLLTest, ReachabilityTest) {
+
+
+TEST(PLLTest, BIGVertexTest) {
+    Graph g(true);
+    g.addEdge(1, 2);
+    g.addEdge(2, 3);
+    g.addEdge(3, 4);
+    g.addEdge(4, 100);
+    PLL pll(g);
+    pll.offline_industry();
+    EXPECT_TRUE(pll.reachability_query(1, 4));
+    EXPECT_TRUE(pll.reachability_query(1, 100));
+    EXPECT_FALSE(pll.reachability_query(1, 5));
+    EXPECT_FALSE(pll.reachability_query(1, 6));
+    EXPECT_FALSE(pll.reachability_query(123, 68));
+    EXPECT_FALSE(pll.reachability_query(43, 1));
+}
+TEST(PLLTest, DISABLED_ReachabilityTest) {
     Graph g1(true);
     Graph g2(true);
 

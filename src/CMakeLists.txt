@@ -11,6 +11,7 @@ add_library(reach_comp STATIC
     CompressedSearch.cpp
     PartitionManager.cpp
     LouvainPartitioner.cpp
+    ReachRatio.cpp
 )
 
 # 包含头文件目录
