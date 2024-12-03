@@ -16,7 +16,7 @@ double LouvainPartitioner::compute_gain(int node, int target_partition, Graph& g
 
     // 节点与目标分区中节点连接的总出边数
     double sum_out = 0.0;
-    for (const auto& neighbor : graph.adjList[node]) {
+    for (const auto& neighbor : graph.vertices[node].LOUT) {
         if (partition_manager.get_partition(neighbor) == target_partition) {
             sum_out += 1.0;
         }
@@ -24,7 +24,7 @@ double LouvainPartitioner::compute_gain(int node, int target_partition, Graph& g
 
     // 节点与目标分区中节点连接的总入边数
     double sum_in = 0.0;
-    for (const auto& neighbor : graph.reverseAdjList[node]) {
+    for (const auto& neighbor : graph.vertices[node].LIN) {
         if (partition_manager.get_partition(neighbor) == target_partition) {
             sum_in += 1.0;
         }
@@ -51,25 +51,23 @@ void LouvainPartitioner::partition(Graph& graph, PartitionManager& partition_man
     while (improvement) {
         improvement = false;
         for (size_t node = 0; node < graph.vertices.size(); ++node) {
-            // 检查当前节点是否有后继（即是否存在相邻节点）
-            if (graph.adjList[node].empty() && graph.reverseAdjList[node].empty()) {
-                continue; // 跳过没有后继的节点
+            // 检查当前节点是否存在相邻节点
+            if (graph.vertices[node].LOUT.empty() && graph.vertices[node].LIN.empty()) {
+                continue; 
             }
 
             int current_partition = partition_manager.get_partition(node);
             std::unordered_map<int, double> partition_gain;
-
             // 统计邻居所属的社区及其连接数（出边）
-            for (const auto& neighbor : graph.adjList[node]) {
+            for (const auto& neighbor : graph.vertices[node].LOUT) {
                 int neighbor_partition = partition_manager.get_partition(neighbor);
                 if (partition_gain.find(neighbor_partition) == partition_gain.end()) {
                     partition_gain[neighbor_partition] = 0.0;
                 }
                 partition_gain[neighbor_partition] += 1.0;
             }
-
             // 统计邻居所属的社区及其连接数（入边）
-            for (const auto& neighbor : graph.reverseAdjList[node]) {
+            for (const auto& neighbor : graph.vertices[node].LIN) {
                 int neighbor_partition = partition_manager.get_partition(neighbor);
                 if (partition_gain.find(neighbor_partition) == partition_gain.end()) {
                     partition_gain[neighbor_partition] = 0.0;

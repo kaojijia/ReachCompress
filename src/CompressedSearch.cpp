@@ -45,6 +45,12 @@ void CompressedSearch::offline_industry() {
  * @return 如果可达返回 true，否则返回 false。
  */
 bool CompressedSearch::reachability_query(int source, int target) {
+    if(source == target) return true;
+    if(source >= g.vertices.size() || target >= g.vertices.size() || source < 0 || target < 0) {
+        return false;
+    }
+    if(g.vertices[source].out_degree == 0 || g.vertices[target].in_degree == 0 ) return false;
+    
     // 使用 Bloom Filter 和 Node Embedding 进行快速判断
     // if (!bloom_filter_.possibly_connected(source, target)) {
     //     return false;
@@ -52,6 +58,7 @@ bool CompressedSearch::reachability_query(int source, int target) {
     // if (!node_embedding_.are_nodes_related(source, target)) {
     //     return false;
     // }
+
 
     int source_partition = g.get_partition_id(source);
     int target_partition = g.get_partition_id(target);
@@ -84,8 +91,8 @@ bool CompressedSearch::query_within_partition(int source, int target) {
     if(g.adjList[source].empty() && g.reverseAdjList[source].empty()) return false;
     if(g.adjList[target].empty() && g.reverseAdjList[target].empty()) return false;
     if(g.get_partition_id(source) != g.get_partition_id(target)) {
-        std::cout<<"The vertices are not in the same partition"<<std::endl;
-        return false;}
+        return false;
+        }
     int partition_id = g.get_partition_id(source);
     auto result = bfs.findPath(source, target, partition_id);
     if(result.size() > 0) {

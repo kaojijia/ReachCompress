@@ -81,7 +81,7 @@ vector<string> getAllFiles(const string& directoryPath) {
 
 TEST_F(ReachabilityTest, BasicTest) {
     // 获取所有边文件
-    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges";
+    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/generate";
     vector<string> edgeFiles = getAllFiles(edgesDirectory);
 
     if (edgeFiles.empty()) {
