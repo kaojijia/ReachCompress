@@ -81,8 +81,14 @@ vector<string> getAllFiles(const string& directoryPath) {
 
 TEST_F(ReachabilityTest, BasicTest) {
     // 获取所有边文件
-    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/generate";
-    vector<string> edgeFiles = getAllFiles(edgesDirectory);
+    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges";
+    vector<string> edgeFiles;
+    // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/email-dnc_edges.txt");
+    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
+    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-Epinions1.txt");
+    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
+    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-LiveJournal1.txt");
+    // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/email-dnc_edges.txt");
 
     if (edgeFiles.empty()) {
         FAIL() << "没有找到任何边文件。";
@@ -134,7 +140,8 @@ TEST_F(ReachabilityTest, BasicTest) {
         int max_value = g.vertices.size();
         unsigned int seed = 42; // 可选的随机种子
 
-        vector<pair<int, int>> query_pairs = RandomUtils::generateUniqueQueryPairs(num_queries, max_value, seed);
+        //改成允许重复的 query
+        vector<pair<int, int>> query_pairs = RandomUtils::generateQueryPairs(num_queries, max_value, seed);
 
         // 计算每个方法的平均耗时
         long long total_duration_bfs = 0;
