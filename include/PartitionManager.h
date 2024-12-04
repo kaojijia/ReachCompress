@@ -69,8 +69,11 @@ public:
     Graph &g;
     Graph part_g;
 
+<<<<<<< HEAD
     // 分区ID到子图的映射
     std::unordered_map<int, Graph> partition_subgraphs;
+=======
+>>>>>>> 6e9f9388b318dd14efce6e7e30b3f294f68e4179
         // 添加缓存：社区的入度、出度和内部边数
     std::unordered_map<int, double> community_in_degree;
     std::unordered_map<int, double> community_out_degree;
