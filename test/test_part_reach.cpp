@@ -81,8 +81,14 @@ vector<string> getAllFiles(const string& directoryPath) {
 
 TEST_F(ReachabilityTest, BasicTest) {
     // 获取所有边文件
-    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/generate";
-    vector<string> edgeFiles = getAllFiles(edgesDirectory);
+    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges";
+    vector<string> edgeFiles;
+    // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/email-dnc_edges.txt");
+    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
+    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-Epinions1.txt");
+    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
+    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-LiveJournal1.txt");
+    // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/email-dnc_edges.txt");
 
     if (edgeFiles.empty()) {
         FAIL() << "没有找到任何边文件。";
@@ -134,7 +140,8 @@ TEST_F(ReachabilityTest, BasicTest) {
         int max_value = g.vertices.size();
         unsigned int seed = 42; // 可选的随机种子
 
-        vector<pair<int, int>> query_pairs = RandomUtils::generateUniqueQueryPairs(num_queries, max_value, seed);
+        //改成允许重复的 query
+        vector<pair<int, int>> query_pairs = RandomUtils::generateQueryPairs(num_queries, max_value, seed);
 
         // 计算每个方法的平均耗时
         long long total_duration_bfs = 0;
@@ -236,8 +243,7 @@ TEST(ReachabilityTest, DISABLED_ReachabilityRatioTest){
     }
 }
 
-
-TEST(ReachabilityTest, DISABLED_TotalReachabilityRatioTest) {
+TEST_F(ReachabilityTest, DISABLED_TotalReachabilityRatioTest) {
     string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges";  // 根据实际路径修改
     string outputFilePath = "reach_ratio_results.csv";            // 输出文件路径
 
@@ -264,7 +270,8 @@ TEST(ReachabilityTest, DISABLED_TotalReachabilityRatioTest) {
     // 写入CSV头
     outputFile << "File,TotalReachRatio,PartitionID,PartitionReachRatio\n";
 
-    // 遍历每个边文件
+    // 统计全图的可达性比例
+    unordered_map<string, float> fileTotalRatios;
     for (const auto& edgeFilePath : edgeFiles) {
         cout << "正在处理: " << edgeFilePath << endl;
 
@@ -275,16 +282,66 @@ TEST(ReachabilityTest, DISABLED_TotalReachabilityRatioTest) {
         InputHandler inputHandler(edgeFilePath);
         inputHandler.readGraph(g);
 
-        // 输出图信息（可选）
-        // OutputHandler::printGraphInfo(g);
+        // 计算全图的可达性比例
+        float total_ratio = compute_reach_ratio(g);
+        cout << "Total reach ratio: " << total_ratio << endl;
+
+        // 存储结果
+        fileTotalRatios[edgeFilePath] = total_ratio;
+
+        // 写入结果到CSV
+        outputFile << "\"" << edgeFilePath << "\"," << total_ratio << ",N/A,N/A\n";
+        outputFile.flush();  // 确保立即写入文件
+    }
+
+    // 关闭输出文件
+    outputFile.close();
+
+    cout << "Total reachability ratio testing completed. Results saved to " << outputFilePath << endl;
+}
+
+TEST_F(ReachabilityTest, CompressedSearchPartitionInfoTest) {
+    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges";  // 根据实际路径修改
+    string outputFilePath = "partition_reach_ratio_results.csv";  // 输出文件路径
+
+    // 获取所有边文件
+    vector<string> edgeFiles = getAllFiles(edgesDirectory);
+
+    if (edgeFiles.empty()) {
+        cout << "没有找到任何边文件。" << endl;
+        return;
+    }
+
+    for (const string& edgeFile : edgeFiles) {
+        // 输出找到的边文件
+        cout << "找到边文件：" << edgeFile << endl;
+    }
+
+    // 打开输出文件
+    ofstream outputFile(outputFilePath);
+    if (!outputFile.is_open()) {
+        cout << "无法打开输出文件: " << outputFilePath << endl;
+        return;
+    }
+
+    // 写入CSV头
+    outputFile << "File,TotalReachRatio,PartitionID,PartitionReachRatio\n";
+
+    // 进行 CompressedSearch 并输出分区信息
+    for (const auto& edgeFilePath : edgeFiles) {
+        cout << "正在处理: " << edgeFilePath << endl;
+
+        // 初始化图
+        Graph g(true);  // 确保存储边集
+
+        // 读取边文件
+        InputHandler inputHandler(edgeFilePath);
+        inputHandler.readGraph(g);
 
         // 初始化 CompressedSearch 并进行离线处理
         CompressedSearch comps(g);
         comps.offline_industry();
-        cout<<"完成离线索引构建"<<endl;
-        // 计算全图的可达性比例
-        float total_ratio = compute_reach_ratio(g);
-        cout << "Total reach ratio: " << total_ratio << endl;
+        cout << "完成离线索引构建" << endl;
 
         // 获取分区管理器并输出分区信息
         PartitionManager pm = comps.get_partition_manager();
@@ -297,21 +354,19 @@ TEST(ReachabilityTest, DISABLED_TotalReachabilityRatioTest) {
             cout << "Partition " << partition_id << " reach ratio: " << partition_ratio << endl;
 
             // 写入结果到CSV
-            outputFile << "\"" << edgeFilePath << "\"," << total_ratio << "," << partition_id << "," << partition_ratio << "\n";
+            outputFile << "\"" << edgeFilePath << "\"," << "N/A" << "," << partition_id << "," << partition_ratio << "\n";
+            outputFile.flush();  // 确保立即写入文件
         }
 
         // 如果没有分区，仍然记录全图的可达性比例
         if (pm.get_mapping().empty()) {
-            outputFile << "\"" << edgeFilePath << "\"," << total_ratio << ",N/A,N/A\n";
+            outputFile << "\"" << edgeFilePath << "\"," << "N/A" << ",N/A,N/A\n";
+            outputFile.flush();  // 确保立即写入文件
         }
-
     }
 
     // 关闭输出文件
     outputFile.close();
 
-    cout << "Reachability ratio testing completed. Results saved to " << outputFilePath << endl;
-
-    // 断言（根据需求添加）
-    // 例如：EXPECT_GE(total_ratio, 0.0f);
+    cout << "Compressed search partition info testing completed. Results saved to " << outputFilePath << endl;
 }

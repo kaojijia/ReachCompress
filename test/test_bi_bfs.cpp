@@ -19,7 +19,7 @@ TEST(BidirectionalBFSTest, DISABLED_BasicReachabilityTest) {
 
     // 创建BidirectionalBFS对象
     BidirectionalBFS bfs(g);
-
+    
     // 测试可达性
     EXPECT_TRUE(bfs.reachability_query(1, 2));
     EXPECT_TRUE(bfs.reachability_query(1, 3));

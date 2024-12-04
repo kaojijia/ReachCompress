@@ -66,6 +66,46 @@ void PartitionManager::build_partition_graph() {
         }
     }
 
+
+
+    // 为每个分区创建一个子图对象
+    for (const auto& partition_pair : mapping) {
+        int partition_id = partition_pair.first;
+        partition_subgraphs[partition_id] = Graph(false); // 子图不需要存储边集
+    }
+
+    // 遍历原始图的所有节点，构建分区子图
+    for (size_t u = 0; u < g.vertices.size(); ++u) {
+        int u_partition = g.get_partition_id(u);
+
+        // 获取对应的子图
+        Graph& subgraph = partition_subgraphs[u_partition];
+
+        // 确保子图中的顶点列表足够大
+        if (u >= subgraph.vertices.size()) {
+            subgraph.vertices.resize(u + 1);
+        }
+
+        // 复制节点属性（如果有需要）
+
+        // 遍历出边
+        for (int v : g.vertices[u].LOUT) {
+            int v_partition = g.get_partition_id(v);
+            if (v_partition == u_partition) {
+                // 边在同一分区内，添加到子图中
+                if (v >= subgraph.vertices.size()) {
+                    subgraph.vertices.resize(v + 1);
+                }
+
+                // 添加边到子图
+                subgraph.vertices[u].LOUT.push_back(v);
+                subgraph.vertices[u].out_degree++;
+                subgraph.vertices[v].LIN.push_back(u);
+                subgraph.vertices[v].in_degree++;
+            }
+        }
+    }
+
     // 打印分区图信息（可选）
     std::cout << "Partition graph constructed with " << temp_edges.size() << " partitions." << std::endl;
 }

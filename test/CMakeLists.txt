@@ -22,6 +22,11 @@ target_link_libraries(test_part reach_comp gtest gtest_main)
 add_executable(test_part_reach test_part_reach.cpp)
 target_link_libraries(test_part_reach reach_comp gtest gtest_main)
 
+
+add_executable(test_ratio test_ratio.cpp)
+target_link_libraries(test_ratio reach_comp gtest gtest_main)
+
+
 set_target_properties(${TARGET} PROPERTIES
 COMPILE_FLAGS "-pthread"
 LINK_FLAGS "-pthread")

@@ -68,6 +68,37 @@ public:
     std::unordered_map<int, std::unordered_set<int>> mapping;
     Graph &g;
     Graph part_g;
+
+    // 分区ID到子图的映射
+    std::unordered_map<int, Graph> partition_subgraphs;
+        // 添加缓存：社区的入度、出度和内部边数
+    std::unordered_map<int, double> community_in_degree;
+    std::unordered_map<int, double> community_out_degree;
+    std::unordered_map<int, double> community_internal_edges;
+
+    // 更新社区的统计信息
+    void update_community_stats(int community_id, double in_degree_delta, double out_degree_delta, double internal_edge_delta) {
+        community_in_degree[community_id] += in_degree_delta;
+        community_out_degree[community_id] += out_degree_delta;
+        community_internal_edges[community_id] += internal_edge_delta;
+    }
+
+    // 获取社区的统计信息
+    double get_community_in_degree(int community_id) const {
+        return community_in_degree.at(community_id);
+    }
+
+    double get_community_out_degree(int community_id) const {
+        return community_out_degree.at(community_id);
+    }
+
+    double get_community_internal_edges(int community_id) const {
+        return community_internal_edges.at(community_id);
+    }
+
+
+
+
 private:
 
 };

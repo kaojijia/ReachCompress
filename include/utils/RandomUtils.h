@@ -24,6 +24,21 @@ public:
 
         return query_pairs;
     }
+        static std::vector<std::pair<int, int>> generateQueryPairs(int num_queries, int max_value, unsigned int seed) {
+        std::vector<std::pair<int, int>> query_pairs;
+        std::mt19937 rng(seed);
+        std::uniform_int_distribution<int> dist(0, max_value - 1);
+
+        while (query_pairs.size() < num_queries) {
+            int source = dist(rng);
+            int target = dist(rng);
+            if (source != target) {
+                query_pairs.emplace_back(source, target);
+            }
+        }
+
+        return query_pairs;
+    }
 };
 
 #endif
