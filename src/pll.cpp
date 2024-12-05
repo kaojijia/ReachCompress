@@ -17,6 +17,8 @@ PLL::PLL(Graph& graph) : g(graph) {
 void PLL::offline_industry()
 {
     buildPLLLabels();
+    adjList.clear();
+    reverseAdjList.clear();
 }
 
 bool PLL::reachability_query(int source, int target)
@@ -152,16 +154,18 @@ bool PLL::query(int u, int v){
     if (g.vertices[u].LOUT.empty() || g.vertices[v].LIN.empty()) return false;
     if (u == v) return true;
     
-    const auto& LOUT_u = OUT[u];
-    const auto& LIN_v = IN[v];
-    if (std::find(LOUT_u.begin(), LOUT_u.end(), v) != LOUT_u.end() || 
-        std::find(LIN_v.begin(), LIN_v.end(), u) != LIN_v.end()) {
-        return true;
+    for(auto out_u:OUT[u]){
+        if(out_u == v) return true;
     }
-    std::unordered_set<int> loutSet(LOUT_u.begin(), LOUT_u.end());
-    for (int node : LIN_v) {
-        if (loutSet.count(node)) return true;  // 存在交集，表示可达
+    for(auto in_v:IN[v]){
+        if(in_v == u) return true;
     }
+    for(auto out_u:OUT[u]){
+        for(auto in_v:IN[v]){
+            if(out_u == in_v) return true;
+        }
+    }
+
     return false;  // 无交集，不可达
 }
 

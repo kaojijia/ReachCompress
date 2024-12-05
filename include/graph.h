@@ -18,12 +18,10 @@ struct Vertex {
 class Graph {
 public:
     std::vector<Vertex> vertices;  //点集
-
+    std::vector<std::vector<int>> adjList;  //邻接表
+    std::vector<std::vector<int>> reverseAdjList; //逆邻接表
     // 构造函数，控制是否存储边集
     Graph(bool store_edges = true);
-
-
-
     // 添加边
     void addEdge(int u, int v, bool is_directed = true);
 
@@ -45,22 +43,29 @@ public:
 
     int get_partition_id(int node) const;
     bool set_partition_id(int node, int part_id);
-    // std::vector<std::vector<int>>* get_adjList() const{ return &adjList; }
-    // const std::vector<std::vector<int>> * get_adjList() const { return &adjList; }
-    // const std::vector<std::vector<int>> * get_reverseAdjList() const { return &reverseAdjList; }
-
-    std::vector<std::vector<int>> adjList;  //邻接表
-    std::vector<std::vector<int>> reverseAdjList; //逆邻接表
     void setFilename(const std::string &name) {
         filename = name;
     }
-
     std::string getFilename() const {
         return filename;
     }
+    void set_ratio(float r) {
+        ratio = r;
+    }
+    float get_ratio() const {
+        return ratio;
+    }
+
+    size_t get_num_vertices() const{
+        return num_vertices;
+    }
 private:
+
     bool store_edges;  // 控制是否存储边集
     std::string filename;
+    float ratio;
+    size_t num_vertices;
+    size_t num_edges;
 };
 
 #endif  // GRAPH_H

@@ -70,6 +70,9 @@
         "format": "cpp",
         "numbers": "cpp",
         "semaphore": "cpp",
-        "stop_token": "cpp"
+        "stop_token": "cpp",
+        "codecvt": "cpp",
+        "shared_mutex": "cpp",
+        "bitset": "cpp"
     }
 }

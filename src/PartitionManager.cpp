@@ -1,5 +1,7 @@
 #include "PartitionManager.h"
+#include "ReachRatio.h"
 #include <iostream>
+
 
 /**
  * @brief 设置节点的分区ID。
@@ -40,18 +42,6 @@ void PartitionManager::build_partition_graph() {
         }
     }
 
-    // 调试输出 temp_edges
-    // std::cout << "Temp Edges:" << std::endl;
-    // for (const auto& source_pair : temp_edges) {
-    //     int source_partition = source_pair.first;
-    //     const auto& targets = source_pair.second;
-    //     for (const auto& target_pair : targets) {
-    //         int target_partition = target_pair.first;
-    //         int edge_count = target_pair.second;
-    //         std::cout << "Temp Edge: Partition " << source_partition << " -> Partition " 
-    //                   << target_partition << " with count " << edge_count << std::endl;
-    //     }
-    // }
     
     // 添加累积后的边到分区图，但是相同的边只存一条
     for (const auto& source_pair : temp_edges) {
@@ -86,7 +76,8 @@ void PartitionManager::build_partition_graph() {
             subgraph.vertices.resize(u + 1);
         }
 
-        // 复制节点属性（如果有需要）
+        // 复制节点分区
+        subgraph.vertices[u].partition_id = u_partition;
 
         // 遍历出边
         for (int v : g.vertices[u].LOUT) {
@@ -98,21 +89,16 @@ void PartitionManager::build_partition_graph() {
                 }
 
                 // 添加边到子图
-                subgraph.vertices[u].LOUT.push_back(v);
-                subgraph.vertices[u].out_degree++;
-                subgraph.vertices[v].LIN.push_back(u);
-                subgraph.vertices[v].in_degree++;
+                subgraph.addEdge(u, v);
             }
         }
     }
 
+    
     // 打印分区图信息（可选）
     std::cout << "Partition graph constructed with " << temp_edges.size() << " partitions." << std::endl;
 }
-void PartitionManager::set_partition(int node, int partition_id)
-{
-    g.set_partition_id(node, partition_id);
-}
+
 
 void PartitionManager::update_partition_connections() {
     for (size_t u = 0; u < g.adjList.size(); ++u) {
@@ -123,9 +109,16 @@ void PartitionManager::update_partition_connections() {
         for (const auto &v : g.adjList[u]) {
             int v_partition = g.get_partition_id(v);
             if (u_partition != v_partition) {
-                PartitionEdge &pe = partition_adjacency[u_partition][v_partition];
-                pe.original_edges.emplace_back(u, v);
-                pe.edge_count++;
+                if (std::find(g.vertices[u].LOUT.begin(), g.vertices[u].LOUT.end(), v) != g.vertices[v].LOUT.end()) {
+                    PartitionEdge &pe = partition_adjacency[u_partition][v_partition];
+                    pe.original_edges.emplace_back(u, v);
+                    pe.edge_count++;
+                }else if(std::find(g.vertices[u].LIN.begin(), g.vertices[u].LIN.end(), v) != g.vertices[v].LOUT.end()){
+                    PartitionEdge &pe = partition_adjacency[v_partition][u_partition];
+                    pe.original_edges.emplace_back(v, u);
+                    pe.edge_count++;
+                }
+
             }
         }
     }

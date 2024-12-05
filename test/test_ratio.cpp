@@ -36,6 +36,21 @@ std::string getCurrentTimestamp() {
     return ss.str();
 }
 
+std::string getCurrentDaystamp() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    std::tm local_tm;
+#if defined(_WIN32) || defined(_WIN64)
+    localtime_s(&local_tm, &now_time);
+#else
+    localtime_r(&now_time, &local_tm);
+#endif
+    std::ostringstream ss;
+    ss << std::put_time(&local_tm, "%Y%m%d");
+    return ss.str();
+}
+
+
 // 辅助函数：获取指定目录下的所有文件路径
 vector<string> getAllFiles(const string& directoryPath) {
     vector<string> files;
@@ -68,8 +83,9 @@ vector<string> getAllFiles(const string& directoryPath) {
 }
 
 TEST(ReachabilityTest, TotalReachabilityRatioTest) {
-    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/medium";  // 根据实际路径修改
-    string outputFilePath = "reach_ratio_results.csv";            // 输出文件路径
+    string edgesDirectory = PROJECT_ROOT_DIR"/Edges/medium";  // 根据实际路径修改
+    
+    string outputFilePath = string(PROJECT_ROOT_DIR)+"/result/"+getCurrentDaystamp()+"/reach_ratio_results.csv";      
 
     // 获取所有边文件
     vector<string> edgeFiles = getAllFiles(edgesDirectory);

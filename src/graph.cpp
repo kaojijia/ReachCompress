@@ -5,8 +5,8 @@
 
 // 构造函数，指定是否存储边集
 Graph::Graph(bool store_edges) : store_edges(store_edges) {
-
-
+    this->num_edges=0;
+    this->num_vertices=0;
 }
 
 long Graph::get_partition_degree(int target_patition) const
@@ -35,6 +35,7 @@ bool Graph::set_partition_id(int node, int part_id)
 
 // 添加边到图
 void Graph::addEdge(int u, int v, bool is_directed) {
+    if (u==v) return;
     if (u >= vertices.size()) vertices.resize(u + 1);
     if (v >= vertices.size()) vertices.resize(v + 1);
 
@@ -42,6 +43,15 @@ void Graph::addEdge(int u, int v, bool is_directed) {
     vertices[v].LIN.push_back(u);
     vertices[u].out_degree++;
     vertices[v].in_degree++;
+
+
+    // 更新顶点和边的数量
+    this->num_edges++;
+    this->num_vertices=0;
+    for(auto i:vertices){
+        if(i.in_degree==0&&i.out_degree==0)continue;
+        this->num_vertices++;
+    }
 
     // 如果需要存储边集，确保 adjList 和 reverseAdjList 也被正确调整
     if (store_edges) {

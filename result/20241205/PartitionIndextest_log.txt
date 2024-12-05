@@ -1,0 +1,69 @@
+**************************************
+***********************************
+******************************
+*************************
+*****************
+*******
+[2024-12-05 21:41:56] 当前处理文件: /home/reco/Projects/ReachCompress/Edges/generate/test_123456_2
+Partition Information:
+Partition 0: Vertices: 6 5 , Reach Ratio: 0.0238095
+Partition 1: Vertices: 4 3 2 1 , Reach Ratio: 0.3
+Partition -1: Vertices: 0 , Reach Ratio: 0
+**************************************
+***********************************
+******************************
+*************************
+*****************
+*******
+[2024-12-05 21:41:56] 当前处理文件: /home/reco/Projects/ReachCompress/Edges/generate/test_SCC_1
+Partition Information:
+Partition 0: Vertices: 7 6 5 , Reach Ratio: 0.0535714
+Partition 1: Vertices: 9 8 4 3 2 1 , Reach Ratio: 0.122222
+Partition -1: Vertices: 0 , Reach Ratio: 0
+**************************************
+***********************************
+******************************
+*************************
+*****************
+*******
+[2024-12-05 21:41:56] 当前处理文件: /home/reco/Projects/ReachCompress/Edges/generate/test_123456
+Partition Information:
+Partition 0: Vertices: 6 5 2 , Reach Ratio: 0.047619
+Partition 1: Vertices: 3 1 , Reach Ratio: 0.0833333
+Partition 2: Vertices: 4 , Reach Ratio: 0
+Partition -1: Vertices: 0 , Reach Ratio: 0
+**************************************
+***********************************
+******************************
+*************************
+*****************
+*******
+[2024-12-05 21:41:56] 当前处理文件: /home/reco/Projects/ReachCompress/Edges/generate/gene_edges_20241031_163820
+Partition Information:
+Partition 0: Vertices: 19 15 14 12 9 8 4 , Reach Ratio: 0.0684211
+Partition 2: Vertices: 17 7 6 16 3 , Reach Ratio: 0.0261438
+Partition 3: Vertices: 10 2 1 , Reach Ratio: 0.0181818
+Partition 1: Vertices: 11 18 5 13 0 , Reach Ratio: 0.0350877
+**************************************
+***********************************
+******************************
+*************************
+*****************
+*******
+[2024-12-05 21:41:56] 当前处理文件: /home/reco/Projects/ReachCompress/Edges/generate/edges_20240929_115202.txt
+Partition Information:
+Partition 1: Vertices: 5 2 1 , Reach Ratio: 0.2
+Partition 0: Vertices: 11 10 9 8 7 6 4 3 0 , Reach Ratio: 0.545455
+**************************************
+***********************************
+******************************
+*************************
+*****************
+*******
+[2024-12-05 21:41:56] 当前处理文件: /home/reco/Projects/ReachCompress/Edges/generate/gene_edges_20241029_135003
+Partition Information:
+Partition 4: Vertices: 19 15 , Reach Ratio: 0.00263158
+Partition 3: Vertices: 17 9 , Reach Ratio: 0.00326797
+Partition 0: Vertices: 14 10 7 6 4 , Reach Ratio: 0.0761905
+Partition 1: Vertices: 12 2 1 , Reach Ratio: 0.025641
+Partition 2: Vertices: 11 8 18 5 16 3 13 0 , Reach Ratio: 0.0818713

@@ -98,6 +98,6 @@ def main(input_dir, output_dir):
     print("All files processed.")
 
 if __name__ == "__main__":
-    input_directory = "Edges/medium"      # 输入边文件目录
+    input_directory = "Edges/generate"      # 输入边文件目录
     output_directory = "Partitions"       # 输出分区结果目录
     main(input_directory, output_directory)

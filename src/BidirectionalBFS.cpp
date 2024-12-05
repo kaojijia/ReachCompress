@@ -97,6 +97,8 @@ bool BidirectionalBFS::bfsStep(std::queue<int>& queue, std::unordered_set<int>& 
 
     return false;
 }
+
+// 必须指定分区号，否则无法进行分区内搜索
 std::vector<int> BidirectionalBFS::findPath(int source, int target, int partition_number) {
     if (source == target) {
         return {source};
