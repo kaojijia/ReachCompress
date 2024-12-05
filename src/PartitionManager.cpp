@@ -8,7 +8,7 @@
  */
 PartitionManager::PartitionManager(Graph &graph):g(graph),part_g(false) 
 {
-    int a;
+
 }
 
 // 建立分区图
@@ -52,7 +52,7 @@ void PartitionManager::build_partition_graph() {
     //                   << target_partition << " with count " << edge_count << std::endl;
     //     }
     // }
-
+    
     // 添加累积后的边到分区图，但是相同的边只存一条
     for (const auto& source_pair : temp_edges) {
         int source_partition = source_pair.first;

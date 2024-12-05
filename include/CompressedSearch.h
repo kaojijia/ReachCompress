@@ -22,7 +22,7 @@ public:
      * @brief 构造函数，初始化图。
      * @param graph 要处理的图。
      */
-    explicit CompressedSearch(Graph &graph, std::string partitioner_name = "Louvain")
+    explicit CompressedSearch(Graph &graph, std::string partitioner_name = "Infomap")
         : g(graph),
           partition_manager_(graph),
           bfs(graph),
@@ -32,7 +32,7 @@ public:
     }
 
     // 设置分区器
-    void set_partitioner(std::string partitioner_name = "Louvain");
+    void set_partitioner(std::string partitioner_name = "Infomap");
 
     /**
      * @brief 离线索引建立和其他辅助数据结构的初始化。

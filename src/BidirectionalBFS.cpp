@@ -101,6 +101,10 @@ std::vector<int> BidirectionalBFS::findPath(int source, int target, int partitio
     if (source == target) {
         return {source};
     }
+
+    if (source >= g.vertices.size() || target >= g.vertices.size() || source < 0 || target < 0) {
+        return {};
+    }
     if (g.vertices[source].LOUT.empty() || g.vertices[target].LIN.empty()){
         return {};
     }

@@ -51,9 +51,16 @@ public:
 
     std::vector<std::vector<int>> adjList;  //邻接表
     std::vector<std::vector<int>> reverseAdjList; //逆邻接表
+    void setFilename(const std::string &name) {
+        filename = name;
+    }
+
+    std::string getFilename() const {
+        return filename;
+    }
 private:
     bool store_edges;  // 控制是否存储边集
-
+    std::string filename;
 };
 
 #endif  // GRAPH_H

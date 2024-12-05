@@ -1,6 +1,7 @@
 #include "CompressedSearch.h"
 #include "GraphPartitioner.h"
-#include "LouvainPartitioner.h"  // Louvain算法的实现
+#include "LouvainPartitioner.h" 
+#include "InfomapPartitioner.h" 
 #include "BloomFilter.h"
 #include "NodeEmbedding.h"
 #include <memory>
@@ -15,11 +16,11 @@
 
 void CompressedSearch::set_partitioner(std::string partitioner_name)
 {
-    // 默认使用 Louvain 分区算法，可根据需要替换
+    // 默认使用 Infomap 分区算法，可根据需要替换
     if (partitioner_name == "Louvain") {
         partitioner_ = std::unique_ptr<LouvainPartitioner>(new LouvainPartitioner());
-    } else if (partitioner_name == "GraphPartitioner") {
-        throw std::invalid_argument("Unsupported partitioner name");
+    } else if (partitioner_name == "Infomap") {
+        partitioner_ = std::unique_ptr<InfomapPartitioner>(new InfomapPartitioner());
         //partitioner_ = std::unique_ptr<GraphPartitioner>(new GraphPartitioner());
     } else {
         throw std::invalid_argument("Unsupported partitioner name");
@@ -65,7 +66,9 @@ bool CompressedSearch::reachability_query(int source, int target) {
 
     if (source_partition == target_partition) {
         return query_within_partition(source, target);  ///< 同分区查询
-    } else {
+    }else if (source_partition == -1 || target_partition == -1) {
+        return false;
+    }else {
         return query_across_partitions(source, target); ///< 跨分区查询
     }
 }

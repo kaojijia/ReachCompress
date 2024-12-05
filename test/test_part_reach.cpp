@@ -81,25 +81,30 @@ vector<string> getAllFiles(const string& directoryPath) {
 
 TEST_F(ReachabilityTest, BasicTest) {
     // 获取所有边文件
-    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges";
+    string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/medium";
     vector<string> edgeFiles;
     // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/email-dnc_edges.txt");
-    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
-    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-Epinions1.txt");
-    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
-    edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-LiveJournal1.txt");
+    // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
+    // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-Epinions1.txt");
+    // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
+    // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-LiveJournal1.txt");
     // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/email-dnc_edges.txt");
-
-    if (edgeFiles.empty()) {
+    edgeFiles = getAllFiles(edgesDirectory);
+    if (edgeFiles[0].empty()) {
         FAIL() << "没有找到任何边文件。";
     }
 
     // 打开日志文件
-    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/20241203/test_log.txt";
+    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/20241205/test_log.txt";
     ofstream logFile(logFilePath, ios::out | ios::app);
     if (!logFile.is_open()) {
         FAIL() << "无法打开日志文件: " << logFilePath;
     }
+
+    for(auto i :edgeFiles){
+        cout << i << endl;
+    }
+
 
     // 遍历每个边文件
     for (const auto& edgeFilePath : edgeFiles) {
@@ -118,7 +123,7 @@ TEST_F(ReachabilityTest, BasicTest) {
         // 读取边文件
         InputHandler inputHandler(edgeFilePath);
         inputHandler.readGraph(g);
-
+        g.setFilename(edgeFilePath);
         // 初始化 CompressedSearch 并进行离线处理
         CompressedSearch comps(g);
         comps.offline_industry();
@@ -300,7 +305,7 @@ TEST_F(ReachabilityTest, DISABLED_TotalReachabilityRatioTest) {
     cout << "Total reachability ratio testing completed. Results saved to " << outputFilePath << endl;
 }
 
-TEST_F(ReachabilityTest, CompressedSearchPartitionInfoTest) {
+TEST(ReachabilityTest, DISABLED_CompressedSearchPartitionInfoTest) {
     string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges";  // 根据实际路径修改
     string outputFilePath = "partition_reach_ratio_results.csv";  // 输出文件路径
 

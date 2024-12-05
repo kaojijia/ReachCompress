@@ -12,6 +12,7 @@ add_library(reach_comp STATIC
     PartitionManager.cpp
     LouvainPartitioner.cpp
     ReachRatio.cpp
+    InfomapPartitioner.cpp
 )
 
 # 包含头文件目录
