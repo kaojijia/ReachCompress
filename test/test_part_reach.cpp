@@ -96,7 +96,7 @@ TEST_F(ReachabilityTest, BasicTest) {
 
     // 打开日志文件
     string logFilePath = string(PROJECT_ROOT_DIR) + "/result/20241205/test_log.txt";
-    ofstream logFile(logFilePath, ios::out | ios::app);
+    ofstream logFile(logFilePath, ios::out);
     if (!logFile.is_open()) {
         FAIL() << "无法打开日志文件: " << logFilePath;
     }
@@ -159,30 +159,38 @@ TEST_F(ReachabilityTest, BasicTest) {
             int target = query_pair.second;
 
             stringstream query_oss;
-            query_oss << "Query from " << source << " to " << target;
-            logFile << "[" << getCurrentTimestamp() << "] " << query_oss.str() << endl;
 
             // 测量 BiBFS 查询耗时
             auto start_bfs = chrono::high_resolution_clock::now();
             bool bfs_result = comps.bfs.reachability_query(source, target);
             auto end_bfs = chrono::high_resolution_clock::now();
             auto duration_bfs = chrono::duration_cast<chrono::microseconds>(end_bfs - start_bfs).count();
-            total_duration_bfs += duration_bfs;
+
 
             // 测量 Partitioned Search 查询耗时
             auto start_part = chrono::high_resolution_clock::now();
             bool part_result = comps.reachability_query(source, target);
             auto end_part = chrono::high_resolution_clock::now();
             auto duration_part = chrono::duration_cast<chrono::microseconds>(end_part - start_part).count();
-            total_duration_part += duration_part;
 
             // 测量 PLL 查询耗时
             auto start_pll = chrono::high_resolution_clock::now();
             bool pll_result = pll.reachability_query(source, target);
             auto end_pll = chrono::high_resolution_clock::now();
             auto duration_pll = chrono::duration_cast<chrono::microseconds>(end_pll - start_pll).count();
-            total_duration_pll += duration_pll;
 
+            
+
+            bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);if(!results_match) continue;
+
+
+            query_oss << "Query from " << source << " to " << target;
+            logFile << "[" << getCurrentTimestamp() << "] " << query_oss.str() << endl;
+
+            query_count++;
+            total_duration_bfs += duration_bfs;
+            total_duration_part += duration_part;
+            total_duration_pll += duration_pll;
             // 输出查询结果和耗时
             stringstream result_oss;
             result_oss << "BiBFS: " << (bfs_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_bfs << " microseconds)";
@@ -196,9 +204,7 @@ TEST_F(ReachabilityTest, BasicTest) {
             result_oss << "PLLSearch: " << (pll_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_pll << " microseconds)";
             logFile << "[" << getCurrentTimestamp() << "] " << result_oss.str() << endl;
 
-            query_count++;
 
-            bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);
             stringstream match_oss;
             match_oss << "***** Does Result Match from " << source << " query to " << target << ": " << (results_match ? "Match" : "Not Match") << " *****";
             logFile << "[" << getCurrentTimestamp() << "] " << match_oss.str() << endl;
