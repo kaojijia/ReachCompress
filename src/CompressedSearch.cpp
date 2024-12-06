@@ -2,7 +2,7 @@
 #include "ReachRatio.h"
 #include "GraphPartitioner.h"
 #include "LouvainPartitioner.h" 
-#include "InfomapPartitioner.h" 
+#include "ImportPartitioner.h" 
 #include "BloomFilter.h"
 #include "NodeEmbedding.h"
 #include <memory>
@@ -21,7 +21,7 @@ void CompressedSearch::set_partitioner(std::string partitioner_name)
     if (partitioner_name == "Louvain") {
         partitioner_ = std::unique_ptr<LouvainPartitioner>(new LouvainPartitioner());
     } else if (partitioner_name == "Infomap") {
-        partitioner_ = std::unique_ptr<InfomapPartitioner>(new InfomapPartitioner());
+        partitioner_ = std::unique_ptr<ImportPartitioner>(new ImportPartitioner());
         //partitioner_ = std::unique_ptr<GraphPartitioner>(new GraphPartitioner());
     } else {
         throw std::invalid_argument("Unsupported partitioner name");
@@ -56,6 +56,7 @@ void CompressedSearch::offline_industry(size_t num_vertices, float ratio)
  * @return 如果可达返回 true，否则返回 false。
  */
 bool CompressedSearch::reachability_query(int source, int target) {
+    cout<<getCurrentTimestamp()<<"开始查询"<<source<<"to"<<target<<endl;
     if(source == target) return true;
     if(source >= g.vertices.size() || target >= g.vertices.size() || source < 0 || target < 0) {
         return false;
@@ -73,7 +74,7 @@ bool CompressedSearch::reachability_query(int source, int target) {
 
     int source_partition = g.get_partition_id(source);
     int target_partition = g.get_partition_id(target);
-
+    cout<<getCurrentTimestamp()<<"分区确定"<<source_partition<<"  "<<target_partition<<endl;
     if (source_partition == target_partition) {
         bool result;
         if(this->is_index){
@@ -83,14 +84,14 @@ bool CompressedSearch::reachability_query(int source, int target) {
             result = query_within_partition(source, target);  ///< 同分区查询
         }
         if(result) return true;
-        return bfs.reachability_query(source, target); //全图找
+        return false;
+        //return bfs.reachability_query(source, target); //全图找
     }else if (source_partition == -1 || target_partition == -1) {
         return false;
     }else {
         return query_across_partitions(source, target); ///< 跨分区查询
     }
 }
-
 
 /**
  * @brief 执行图分区算法。
@@ -127,37 +128,47 @@ bool CompressedSearch::query_within_partition(int source, int target) {
 bool CompressedSearch::query_index_within_partition(int source, int target, int partition_id)
 {
 
+    cout<<getCurrentTimestamp()+"在"<<partition_id<<"分区内查询"<<source<<"到"<<target<<endl;
     //先过滤是否可达
-    if(source == target) return true;
-    auto subgraph = partition_manager_.partition_subgraphs[partition_id];
-    if(g.vertices[source].out_degree == 0 || g.vertices[target].in_degree == 0 ) return false;
-    if(source >= subgraph.vertices.size() || target >= subgraph.vertices.size() || source < 0 || target < 0) {
-        return false;
-    }
+    if(source == target) return true;cout<<getCurrentTimestamp()<<endl;
+    auto &subgraph = partition_manager_.partition_subgraphs[partition_id];    cout<<getCurrentTimestamp()<<endl;
+    
+    if(g.vertices[source].out_degree == 0 || g.vertices[target].in_degree == 0 ) return false;    
+    // if(source >= subgraph.vertices.size() || target >= subgraph.vertices.size() || source < 0 || target < 0) {
+    //     return false;
+    // }
+    cout<<getCurrentTimestamp()<<"       1"<<endl;
     if(g.get_partition_id(source) != g.get_partition_id(target)) {
         //cout<< "输入节点  "<<source<<"  "<<target<<"  不在同一分区内，无法进行可达性查询"<<endl;
         return false;
     }
-
+    cout<<getCurrentTimestamp()<<"       2"<<endl;
 
     //在三个索引中查询
     if (subgraph.get_num_vertices() < this->num_vertices) {
+        cout<<getCurrentTimestamp()+"开始查询索引"<<endl;
         // 使用 small_index_ 进行查询
         auto& node_to_index = small_mapping_[partition_id];
         if (node_to_index.find(source) == node_to_index.end() || node_to_index.find(target) == node_to_index.end()) {
+            cout<<getCurrentTimestamp()+"越界"<<endl;
             return false;
         }
         int mapped_source = node_to_index[source];
         int mapped_target = node_to_index[target];
-        return small_index_[partition_id][mapped_source][mapped_target].test(0);
-    } else if (compute_reach_ratio(subgraph) < this->ratio) {
+        bool result=  small_index_[partition_id][mapped_source][mapped_target].test(0);
+        cout<<getCurrentTimestamp()+"汇报结果"<<endl;
+        return result;
+    } else if (subgraph.get_ratio() < this->ratio) {
         // 使用 PLL 进行查询
-        return pll_index_[partition_id]->reachability_query(source, target);
+        cout<<getCurrentTimestamp()<<"  开始查询pll索引"<<endl;
+        bool result =  pll_index_[partition_id]->reachability_query(source, target);
+        cout<<getCurrentTimestamp()<<"  pll索引查询完成"<<endl;
+        return result;
     } else {
         // 使用 unreachable_index_ 进行查询
         auto& node_to_index = unreachable_mapping_[partition_id];
-        if (node_to_index.find(source) == node_to_index.end() || node_to_index.find(target) == node_to_index.end()) {
-            return false;
+        if (node_to_index.find(source) == node_to_index.end()) {
+            return true;
         }
         int mapped_source = node_to_index[source];
         int mapped_target = node_to_index[target];
@@ -180,6 +191,7 @@ bool CompressedSearch::query_across_partitions(int source, int target) {
     auto source_partition = g.get_partition_id(source);
     auto target_partition = g.get_partition_id(target);
     // 找分区的路径
+    // TODO：这个路径不行就换一个路径，需要迭代一个个路径找下去，可能要把过程放到bfs里面，这个不行继续bfs遍历去找
     std::vector<int> path = part_bfs->findPath(source_partition,target_partition);
     if(path.empty())return false;
     auto edges = partition_manager_.get_partition_adjacency(path[0], path[1]);
@@ -200,6 +212,7 @@ bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, in
         throw std::logic_error("Current partition from path[] does not match the partition of node u");
     }
     for(auto &edge:edges){
+        cout << getCurrentTimestamp() << "当前边: " << edge.first << " -> " << edge.second << endl;
         //上一个前序点无法到达这条边就下一轮循环
         if(is_index){
             if(!query_index_within_partition(u,edge.first,current_partition)) continue;
@@ -216,7 +229,7 @@ bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, in
         }
         else{
             std::vector<int> remain_path(path.begin() + 1, path.end());
-            auto next_edges = partition_manager_.get_partition_adjacency(path[0],path[1]);
+            auto next_edges = partition_manager_.get_partition_adjacency(remain_path[0],remain_path[1]);
             return dfs_partition_search(edge.second,next_edges.original_edges,remain_path,target);
         }
     }
@@ -287,13 +300,13 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
                 }
             }
             // 打印二维数组
-            std::cout<<"small_index_:"<<std::endl;
-            for (size_t i = 0; i < small_index_[subgraph.first].size(); i++) {
-                for (size_t j = 0; j < small_index_[subgraph.first][i].size(); j++) {
-                    std::cout << small_index_[subgraph.first][i][j] << " ";
-                }
-                std::cout << std::endl;
-            }
+            // std::cout<<"small_index_:"<<std::endl;
+            // for (size_t i = 0; i < small_index_[subgraph.first].size(); i++) {
+            //     for (size_t j = 0; j < small_index_[subgraph.first][i].size(); j++) {
+            //         std::cout << small_index_[subgraph.first][i][j] << " ";
+            //     }
+            //     std::cout << std::endl;
+            // }
         } else if(total_ratio < ratio) {
             //构建pll
             pll_index_[subgraph.first] = new PLL(subgraph.second);
@@ -368,6 +381,87 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
 
     }
 
+}
 
+std::vector<std::string> CompressedSearch::get_index_info() {
+    std::vector<std::string> lines;
+    lines.push_back("PRINTING INDEX INFO...........");
+    lines.push_back("PRINTING INDEX INFO...........");
+    lines.push_back("PRINTING INDEX INFO...........");
+    lines.push_back("PRINTING INDEX INFO...........");
+    lines.push_back("PRINTING INDEX INFO...........");
+    lines.push_back("PRINTING INDEX INFO...........");
+    lines.push_back("PRINTING INDEX INFO...........");
+    lines.push_back("PRINTING INDEX INFO...........");
+    lines.push_back("PRINTING INDEX INFO...........");
+    lines.push_back("PRINTING INDEX INFO...........");
+    // 打印图 g 的 ratio 值
+    lines.push_back("Ratio for whole graph : " + std::to_string(g.get_ratio()));
+    // 打印 mapping 信息
+    lines.push_back("Partition to Node Mapping:");
+    for (const auto& partition_pair : partition_manager_.mapping) {
+        std::stringstream ss;
+        ss << "Partition " << partition_pair.first << ": ";
+        for (const auto& node : partition_pair.second) {
+            ss << node << " ";
+        }
+        lines.push_back(ss.str());
+    }
 
+    for (const auto& subgraph : partition_manager_.partition_subgraphs) {
+        if (subgraph.first == -1) continue;
+        auto partition_id = subgraph.first;
+        
+        // 打印子图的 ratio 值
+        lines.push_back("Ratio for partition " + std::to_string(partition_id) + ": " + std::to_string(subgraph.second.get_ratio()));
+
+        if (subgraph.second.get_num_vertices() < num_vertices) {
+            // 打印 small_index_
+            lines.push_back("Small Index for partition " + std::to_string(partition_id) + ":");
+            for (size_t i = 0; i < small_index_[partition_id].size(); i++) {
+                std::stringstream ss;
+                for (size_t j = 0; j < small_index_[partition_id][i].size(); j++) {
+                    ss << small_index_[partition_id][i][j] << " ";
+                }
+                lines.push_back(ss.str());
+            }
+        } else if (subgraph.second.get_ratio() < ratio) {
+            // 打印 PLL 的 IN 和 OUT 集合
+            lines.push_back("PLL IN and OUT sets for partition " + std::to_string(partition_id) + ":");
+            for (size_t i = 0; i < pll_index_[partition_id]->IN.size(); ++i) {
+                if (pll_index_[partition_id]->IN[i].size() > 0) {
+                    std::stringstream ss;
+                    ss << "Node " << i << " IN: ";
+                    for (int in_node : pll_index_[partition_id]->IN[i]) {
+                        ss << in_node << " ";
+                    }
+                    lines.push_back(ss.str());
+                }
+            }
+
+            for (size_t i = 0; i < pll_index_[partition_id]->OUT.size(); ++i) {
+                if (pll_index_[partition_id]->OUT[i].empty()) continue;
+                std::stringstream ss;
+                ss << "Node " << i << " OUT: ";
+                for (int out_node : pll_index_[partition_id]->OUT[i]) {
+                    ss << out_node << " ";
+                }
+                lines.push_back(ss.str());
+            }
+        } else {
+            // 打印不可达邻接表
+            lines.push_back("Unreachable Adjacency List for partition " + std::to_string(partition_id) + ":");
+            const auto& unreachable_adj = unreachable_index_[partition_id];
+            for (size_t i = 0; i < unreachable_adj.size(); i++) {
+                std::stringstream ss;
+                ss << "Node " << i << ": ";
+                for (size_t j = 0; j < unreachable_adj[i].size(); j++) {
+                    ss << unreachable_adj[i][j] << " ";
+                }
+                lines.push_back(ss.str());
+            }
+        }
+    }
+
+    return lines;
 }

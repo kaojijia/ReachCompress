@@ -9,7 +9,7 @@ def read_edges_from_file(file_path):
     :return: edges (列表)
     """
     edges = []
-    with open(file_path, 'r', encoding='utf-8-sig') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         for line in file:
             parts = line.strip().split()
             if len(parts) >= 2:

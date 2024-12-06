@@ -1,7 +1,7 @@
 // CompressedSearch.h
 #ifndef COMPRESSED_SEARCH_H
 #define COMPRESSED_SEARCH_H
-
+#include <sstream>
 #include <bitset>
 #include <memory>
 #include <unordered_map>
@@ -54,7 +54,7 @@ public:
      * @return 如果可达返回 true，否则返回 false。
      */
     bool reachability_query(int source, int target) override;
-
+    std::vector<std::string> get_index_info();
 
     PartitionManager& get_partition_manager() {
         return partition_manager_;
@@ -104,7 +104,7 @@ private:
     /// @param num_vertices 
     void build_partition_index(float ratio, size_t num_vertices); ///< 构建分区索引
 
-    std::unique_ptr<BidirectionalBFS> part_bfs;           ///< 分区图上的双向BFS算法。
+    std::unique_ptr<BidirectionalBFS> part_bfs;           ///< 分区图上的双向BFS类。
     Graph &g;                                             ///< 处理的图。
     PartitionManager partition_manager_;                  ///< 分区管理器。
     std::unique_ptr<GraphPartitioner> partitioner_;       ///< 图分区器，支持多种分区算法。

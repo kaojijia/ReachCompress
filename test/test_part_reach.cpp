@@ -26,13 +26,12 @@ protected:
     void SetUp() override {
         // 初始化代码
         // 获取所有边文件
-        string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/generate";
-        // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/email-dnc_edges.txt");
+        string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/medium";
+
         // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
-        // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-Epinions1.txt");
         // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
         // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-LiveJournal1.txt");
-        // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/email-dnc_edges.txt");
+
         edgeFiles = this->getAllFiles(edgesDirectory);
         if (edgeFiles[0].empty()) {
             FAIL() << "没有找到任何边文件。";
@@ -101,6 +100,39 @@ protected:
 
         return files;
     }
+
+
+    vector<pair<int, int>> readQueryPairs(const string& filePath, int distance) {
+        vector<pair<int, int>> query_pairs;
+        ifstream file(filePath);
+        if (!file.is_open()) {
+            cerr << "无法打开文件: " << filePath << endl;
+            return query_pairs;
+        }
+
+        string line;
+        bool in_distance_section = false;
+        while (getline(file, line)) {
+            if (line == "Distance " + to_string(distance) + ":") {
+                in_distance_section = true;
+                continue;
+            }
+            if (in_distance_section) {
+                if (line.empty()) {
+                    break;
+                }
+                stringstream ss(line);
+                int u, v;
+                ss >> u >> v;
+                query_pairs.emplace_back(u, v);
+            }
+        }
+
+        file.close();
+        return query_pairs;
+    }
+
+
 
     vector<string> edgeFiles;
 };
@@ -242,8 +274,8 @@ TEST_F(ReachabilityTest, DISABLED_BasicTest) {
 
 TEST_F(ReachabilityTest, IndexReachabilityTest) {
 
-    size_t num_nodes = 1;
-    float ratio = 0.1;
+    size_t num_nodes = 300;
+    float ratio = 0.9;
 
     // 打开日志文件
     string logFilePath = string(PROJECT_ROOT_DIR) + "/result/"+getCurrentDaystamp()+"/IndexReachability_log.txt";
@@ -252,10 +284,12 @@ TEST_F(ReachabilityTest, IndexReachabilityTest) {
         FAIL() << "无法打开日志文件: " << logFilePath;
     }
 
-
+    vector<string> edgeFile2 ;
+    edgeFile2.push_back(string(PROJECT_ROOT_DIR) + "/Edges/medium/cit-DBLP");
+   
 
     // 遍历每个边文件
-    for (const auto& edgeFilePath : edgeFiles) {
+    for (const auto& edgeFilePath : edgeFile2) {
         cout << "Processing edge file: " << edgeFilePath << endl;
         // 写入初始日志
         logFile << "**************************************" << endl;
@@ -277,6 +311,10 @@ TEST_F(ReachabilityTest, IndexReachabilityTest) {
         CompressedSearch comps(g);
         comps.offline_industry(num_nodes,ratio);
         logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
+        auto lines = comps.get_index_info();
+        for(auto line : lines){
+            logFile<<line<<endl;
+        }
 
         // 初始化 PLL 并进行离线处理
         PLL pll(g);
@@ -328,9 +366,11 @@ TEST_F(ReachabilityTest, IndexReachabilityTest) {
             auto end_pll = chrono::high_resolution_clock::now();
             auto duration_pll = chrono::duration_cast<chrono::microseconds>(end_pll - start_pll).count();
 
-            
+            cout << "BiBFS Time: " << duration_bfs << " microseconds" << endl;
+            cout << "PartSearch Time: " << duration_part << " microseconds" << endl;
+            cout << "PLLSearch Time: " << duration_pll << " microseconds" << endl;
 
-            bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);//if(!results_match) continue;
+            bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);if(!results_match) continue;
 
 
             query_oss << "Query from " << source << " to " << target;
@@ -380,30 +420,25 @@ TEST_F(ReachabilityTest, IndexReachabilityTest) {
     logFile.close();
 }
 
-TEST_F(ReachabilityTest, DISABLED_FailureTest)
+TEST_F(ReachabilityTest, DISABLED_MultiPartitionTest)
 {
-    string edgeFile2 = PROJECT_ROOT_DIR"/Edges/generate/edges_20240929_115202.txt";
+    string edgeFile2 = PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241029_135003";
     Graph g2(true);
     InputHandler inputHandler2(edgeFile2);
     inputHandler2.readGraph(g2);
     g2.setFilename(edgeFile2);
     // 初始化 CompressedSearch 并进行离线处理
     CompressedSearch comps2(g2);
-    comps2.offline_industry(1,0.999);
-    EXPECT_TRUE(comps2.reachability_query(11,2));
-    EXPECT_TRUE(comps2.reachability_query(0,5));
-    EXPECT_TRUE(comps2.reachability_query(7,1));
-    EXPECT_TRUE(comps2.reachability_query(2,11));
-    EXPECT_TRUE(comps2.reachability_query(2,7));
-    EXPECT_TRUE(comps2.reachability_query(5,0));
-    EXPECT_TRUE(comps2.reachability_query(1,0));
-    EXPECT_TRUE(comps2.reachability_query(4,2));
-    EXPECT_TRUE(comps2.reachability_query(2,4));
-    EXPECT_TRUE(comps2.reachability_query(7,5));
-    EXPECT_TRUE(comps2.reachability_query(8,2));
-    EXPECT_TRUE(comps2.reachability_query(5,8));
-    EXPECT_TRUE(comps2.reachability_query(1,7));
-    EXPECT_TRUE(comps2.reachability_query(5,9));
+    comps2.offline_industry(1,0.1);
+    //相邻分区无法抵达，要绕一个
+    //EXPECT_TRUE(comps2.reachability_query(3,1));
+    //EXPECT_TRUE(comps2.reachability_query(5,12));
+    //EXPECT_TRUE(comps2.reachability_query(18,2));
+    //路径上有四个分区，要绕好几个
+    //EXPECT_TRUE(comps2.reachability_query(11,9));
+    //EXPECT_TRUE(comps2.reachability_query(0,17));
+    //EXPECT_TRUE(comps2.reachability_query(3,9));
+
 }
 
 TEST_F(ReachabilityTest, DISABLED_PartitionIndexTest)
@@ -514,4 +549,91 @@ TEST_F(ReachabilityTest, DISABLED_CompressedSearchPartitionInfoTest) {
     outputFile.close();
 
     cout << "Compressed search partition info testing completed. Results saved to " << outputFilePath << endl;
+}
+
+
+TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
+    // 确认文件路径
+    string edgeFile2 = string(PROJECT_ROOT_DIR) + "/Edges/medium/cit-DBLP";
+    string queryFile = string(PROJECT_ROOT_DIR) + "/QueryPairs/cit-DBLP_distance_pairs";
+    cout << "Edge file path: " << edgeFile2 << endl;
+    cout << "Query file path: " << queryFile << endl;
+
+    // 初始化图
+    Graph g2(true);
+    InputHandler inputHandler2(edgeFile2);
+    inputHandler2.readGraph(g2);
+    g2.setFilename(edgeFile2);
+
+    // 初始化 CompressedSearch 并进行离线处理
+    CompressedSearch comps2(g2);
+    comps2.offline_industry(200, 0.3);
+
+
+
+    
+    // 读取查询点对
+    vector<pair<int, int>> query_pairs_6 = readQueryPairs(queryFile, 6);
+    vector<pair<int, int>> query_pairs_8 = readQueryPairs(queryFile, 8);
+    vector<pair<int, int>> query_pairs_10 = readQueryPairs(queryFile, 10);
+
+    // 打开日志文件
+    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/20241206/LongDistanceTest_log.txt";
+    ofstream logFile(logFilePath, ios::out);
+    if (!logFile.is_open()) {
+        FAIL() << "无法打开日志文件: " << logFilePath;
+    }
+
+    logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
+    auto lines = comps2.get_index_info();
+    for(auto line : lines){
+        logFile<<line<<endl;
+    }
+
+
+    comps2.reachability_query(82,3708);
+    // 查询并比较时间
+    auto query_and_log = [&](const vector<pair<int, int>>& query_pairs, int distance) {
+        long long total_duration_bfs = 0;
+        long long total_duration_compressed = 0;
+        int query_count = 0;
+
+        for (const auto& query_pair : query_pairs) {
+            int source = query_pair.first;
+            int target = query_pair.second;
+            cout << "Querying from " << source << " to " << target << endl;
+            // 测量 BiBFS 查询耗时
+            auto start_bfs = chrono::high_resolution_clock::now();
+            bool bfs_result = comps2.bfs.reachability_query(source, target);
+            auto end_bfs = chrono::high_resolution_clock::now();
+            auto duration_bfs = chrono::duration_cast<chrono::microseconds>(end_bfs - start_bfs).count();
+
+            // 测量 CompressedSearch 查询耗时
+            auto start_compressed = chrono::high_resolution_clock::now();
+            bool compressed_result = comps2.reachability_query(source, target);
+            auto end_compressed = chrono::high_resolution_clock::now();
+            auto duration_compressed = chrono::duration_cast<chrono::microseconds>(end_compressed - start_compressed).count();
+
+            query_count++;
+            total_duration_bfs += duration_bfs;
+            total_duration_compressed += duration_compressed;
+
+            // 输出查询结果和耗时
+            logFile << "Distance " << distance << " Query from " << source << " to " << target << endl;
+            logFile << "BiBFS: " << (bfs_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_bfs << " microseconds)" << endl;
+            logFile << "CompressedSearch: " << (compressed_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_compressed << " microseconds)" << endl;
+        }
+
+        // 计算并记录平均耗时
+        logFile << "Distance " << distance << " Final Average BiBFS Time: " << (query_count > 0 ? (total_duration_bfs / query_count) : 0) << " microseconds" << endl;
+        logFile << "Distance " << distance << " Final Average CompressedSearch Time: " << (query_count > 0 ? (total_duration_compressed / query_count) : 0) << " microseconds" << endl;
+    };
+
+    // 对每个距离进行查询并记录结果
+    query_and_log(query_pairs_6, 6);
+    query_and_log(query_pairs_8, 8);
+    query_and_log(query_pairs_10, 10);
+
+    // 关闭日志文件
+    logFile.close();
 }

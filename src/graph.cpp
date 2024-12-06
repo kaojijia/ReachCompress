@@ -36,6 +36,12 @@ bool Graph::set_partition_id(int node, int part_id)
 // 添加边到图
 void Graph::addEdge(int u, int v, bool is_directed) {
     if (u==v) return;
+    //跳过已有边
+    if (u < vertices.size()) {
+        for(auto i:vertices[u].LOUT){
+            if(i==v)return;
+        }
+    }
     if (u >= vertices.size()) vertices.resize(u + 1);
     if (v >= vertices.size()) vertices.resize(v + 1);
 

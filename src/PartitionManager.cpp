@@ -106,6 +106,7 @@ void PartitionManager::update_partition_connections() {
             continue; // Skip nodes with no edges
         }
         int u_partition = g.get_partition_id(u);
+        if(u_partition == -1)continue;
         for (const auto &v : g.adjList[u]) {
             int v_partition = g.get_partition_id(v);
             if (u_partition != v_partition) {

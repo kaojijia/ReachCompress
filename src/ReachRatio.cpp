@@ -30,6 +30,7 @@ std::unordered_set<int> bfs_reachable(const std::vector<std::vector<int>>& adjLi
 
 // 计算所有分区子图的可达性比例
 std::unordered_map<int, float> compute_reach_ratios(const PartitionManager& pm) {
+    float total_ratio = compute_reach_ratio(pm.g);
     std::unordered_map<int, float> reach_ratios;
     for (auto& partition_pair : pm.partition_subgraphs) {
         int partition_id = partition_pair.first;
@@ -77,7 +78,8 @@ float compute_reach_ratio(Graph& graph) {
 
     // 计算可达性比例
     // 排除自身可达的情况，使用 n*(n-1)
-    float total = static_cast<float>(n * (n - 1));
+    auto num_nodes = graph.get_num_vertices();
+    float total = static_cast<float>(num_nodes * (num_nodes - 1));
     float ratio = (total > 0) ? (static_cast<float>(reachable - n) / total) : 0.0f;
     graph.set_ratio(ratio);
     return ratio;
