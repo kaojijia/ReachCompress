@@ -130,23 +130,19 @@ bool CompressedSearch::query_index_within_partition(int source, int target, int 
 
     cout<<getCurrentTimestamp()+"在"<<partition_id<<"分区内查询"<<source<<"到"<<target<<endl;
     //先过滤是否可达
-    if(source == target) return true;cout<<getCurrentTimestamp()<<endl;
-    auto &subgraph = partition_manager_.partition_subgraphs[partition_id];    cout<<getCurrentTimestamp()<<endl;
-    
+    if(source == target) return true;
     if(g.vertices[source].out_degree == 0 || g.vertices[target].in_degree == 0 ) return false;    
+    auto &subgraph = partition_manager_.partition_subgraphs[partition_id];
     // if(source >= subgraph.vertices.size() || target >= subgraph.vertices.size() || source < 0 || target < 0) {
     //     return false;
     // }
-    cout<<getCurrentTimestamp()<<"       1"<<endl;
     if(g.get_partition_id(source) != g.get_partition_id(target)) {
-        //cout<< "输入节点  "<<source<<"  "<<target<<"  不在同一分区内，无法进行可达性查询"<<endl;
         return false;
     }
-    cout<<getCurrentTimestamp()<<"       2"<<endl;
-
+    cout<<getCurrentTimestamp()<<"    start searching in index"<<endl;
     //在三个索引中查询
     if (subgraph.get_num_vertices() < this->num_vertices) {
-        cout<<getCurrentTimestamp()+"开始查询索引"<<endl;
+        cout<<getCurrentTimestamp()+"开始查询小索引"<<endl;
         // 使用 small_index_ 进行查询
         auto& node_to_index = small_mapping_[partition_id];
         if (node_to_index.find(source) == node_to_index.end() || node_to_index.find(target) == node_to_index.end()) {
@@ -166,6 +162,7 @@ bool CompressedSearch::query_index_within_partition(int source, int target, int 
         return result;
     } else {
         // 使用 unreachable_index_ 进行查询
+        cout<<getCurrentTimestamp()+"开始查询不可达索引"<<endl;
         auto& node_to_index = unreachable_mapping_[partition_id];
         if (node_to_index.find(source) == node_to_index.end()) {
             return true;
@@ -236,7 +233,8 @@ bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, in
 
     return false;
 }
-
+//TODO:构建索引的时候用全局搜索，避免两个点绕过一个分区来相连
+//但是如果分区方法用连通度来计算，会不会有情况是加进去的点都是相连的呢
 void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
 {
     #ifdef DEBUG
@@ -382,7 +380,11 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
     }
 
 }
-
+/**
+ * @brief 遍历所有分区并打印其索引以及ratio
+ * 
+ * @return std::vector<std::string> 
+ */
 std::vector<std::string> CompressedSearch::get_index_info() {
     std::vector<std::string> lines;
     lines.push_back("PRINTING INDEX INFO...........");

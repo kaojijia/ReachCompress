@@ -101,7 +101,44 @@ protected:
         return files;
     }
 
+    vector<pair<int, int>> readQueryPairs(const string& filePath, int distance, int num_pairs) {
+        vector<pair<int, int>> query_pairs;
+        ifstream file(filePath);
+        if (!file.is_open()) {
+            cerr << "无法打开文件: " << filePath << endl;
+            return query_pairs;
+        }
 
+        string line;
+        bool in_distance_section = false;
+        while (getline(file, line)) {
+            if (line == "Distance " + to_string(distance) + ":") {
+                in_distance_section = true;
+                continue;
+            }
+            if (in_distance_section) {
+                if (line.empty()) {
+                    break;
+                }
+                stringstream ss(line);
+                int u, v;
+                ss >> u >> v;
+                query_pairs.emplace_back(u, v);
+            }
+        }
+
+        file.close();
+
+        // 随机选择 num_pairs 个 pair
+        if (query_pairs.size() > num_pairs) {
+            random_device rd;
+            mt19937 g(rd());
+            shuffle(query_pairs.begin(), query_pairs.end(), g);
+            query_pairs.resize(num_pairs);
+        }
+
+        return query_pairs;
+    }
     vector<pair<int, int>> readQueryPairs(const string& filePath, int distance) {
         vector<pair<int, int>> query_pairs;
         ifstream file(filePath);
@@ -272,7 +309,7 @@ TEST_F(ReachabilityTest, DISABLED_BasicTest) {
     logFile.close();
 }
 
-TEST_F(ReachabilityTest, IndexReachabilityTest) {
+TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
 
     size_t num_nodes = 300;
     float ratio = 0.9;
@@ -370,7 +407,7 @@ TEST_F(ReachabilityTest, IndexReachabilityTest) {
             cout << "PartSearch Time: " << duration_part << " microseconds" << endl;
             cout << "PLLSearch Time: " << duration_pll << " microseconds" << endl;
 
-            bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);if(!results_match) continue;
+            bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);//if(!results_match) continue;
 
 
             query_oss << "Query from " << source << " to " << target;
@@ -552,10 +589,10 @@ TEST_F(ReachabilityTest, DISABLED_CompressedSearchPartitionInfoTest) {
 }
 
 
-TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
+TEST_F(ReachabilityTest, LongDistanceTest) {
     // 确认文件路径
     string edgeFile2 = string(PROJECT_ROOT_DIR) + "/Edges/medium/cit-DBLP";
-    string queryFile = string(PROJECT_ROOT_DIR) + "/QueryPairs/cit-DBLP_distance_pairs";
+    string queryFile = string(PROJECT_ROOT_DIR) + "/QueryPairs/cit-DBLP_distance_pairs_reachable";
     cout << "Edge file path: " << edgeFile2 << endl;
     cout << "Query file path: " << queryFile << endl;
 
@@ -567,18 +604,16 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
 
     // 初始化 CompressedSearch 并进行离线处理
     CompressedSearch comps2(g2);
-    comps2.offline_industry(200, 0.3);
+    comps2.offline_industry(300, 0.9);
 
-
-
-    
     // 读取查询点对
-    vector<pair<int, int>> query_pairs_6 = readQueryPairs(queryFile, 6);
-    vector<pair<int, int>> query_pairs_8 = readQueryPairs(queryFile, 8);
-    vector<pair<int, int>> query_pairs_10 = readQueryPairs(queryFile, 10);
+    vector<pair<int, int>> query_pairs_4 = readQueryPairs(queryFile, 4, 100);
+    vector<pair<int, int>> query_pairs_6 = readQueryPairs(queryFile, 6, 100);
+    vector<pair<int, int>> query_pairs_8 = readQueryPairs(queryFile, 8, 100);
+    vector<pair<int, int>> query_pairs_10 = readQueryPairs(queryFile, 10, 100);
 
     // 打开日志文件
-    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/20241206/LongDistanceTest_log.txt";
+    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/"+getCurrentDaystamp()+"/LongDistanceTest_log.txt";
     ofstream logFile(logFilePath, ios::out);
     if (!logFile.is_open()) {
         FAIL() << "无法打开日志文件: " << logFilePath;
@@ -590,13 +625,20 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
         logFile<<line<<endl;
     }
 
-
-    comps2.reachability_query(82,3708);
     // 查询并比较时间
     auto query_and_log = [&](const vector<pair<int, int>>& query_pairs, int distance) {
         long long total_duration_bfs = 0;
         long long total_duration_compressed = 0;
         int query_count = 0;
+
+        logFile<<"****************************************************"<<endl;
+        logFile<<"****************************************************"<<endl;
+        logFile<<"****************************************************"<<endl;
+        logFile<<"****************************************************"<<endl;
+        logFile<<"****************************************************"<<endl;
+        logFile<<"****************************************************"<<endl;
+        logFile<<"****************************************************"<<endl;
+        logFile<<"开始查询距离为 "<<distance<<"的可达点对"<<endl;
 
         for (const auto& query_pair : query_pairs) {
             int source = query_pair.first;
@@ -630,6 +672,7 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
     };
 
     // 对每个距离进行查询并记录结果
+    query_and_log(query_pairs_4, 4);
     query_and_log(query_pairs_6, 6);
     query_and_log(query_pairs_8, 8);
     query_and_log(query_pairs_10, 10);

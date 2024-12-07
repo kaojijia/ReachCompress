@@ -77,7 +77,7 @@ def main(input_dir, output_dir, distances):
 
     for filename in os.listdir(input_dir):
         input_file = os.path.join(input_dir, filename)
-        output_file = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}_distance_pairs.txt")
+        output_file = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}_distance_pairs_reachable")
         
         print(f"Processing file: {input_file}")
 
@@ -100,7 +100,7 @@ def main(input_dir, output_dir, distances):
     print("All files processed.")
 
 if __name__ == "__main__":
-    input_directory = "Edges/generate"      # 输入边文件目录
-    output_directory = "Pairs"              # 输出点对结果目录
-    distances = [2, 4, 6, 8, 10]            # 查询距离列表
+    input_directory = "Edges/medium"      # 输入边文件目录
+    output_directory = "QueryPairs"              # 输出点对结果目录
+    distances = [4, 6, 8, 10]            # 查询距离列表
     main(input_directory, output_directory, distances)

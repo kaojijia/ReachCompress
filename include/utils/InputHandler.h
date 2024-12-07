@@ -2,9 +2,10 @@
 #define INPUT_HANDLER_H
 
 #include "graph.h"
+#include "IOHandler.h"
 #include <string>
 
-class InputHandler {
+class InputHandler : public IOHandler{
 public:
     explicit InputHandler(const std::string& input_file);
     

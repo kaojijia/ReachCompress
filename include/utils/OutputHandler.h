@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include "IOHandler.h"
 #include "graph.h"
 #include "pll.h"
 #include "compression.h"
@@ -17,7 +18,7 @@
 #include <thread>
 #include <condition_variable>
 
-class OutputHandler {
+class OutputHandler: public IOHandler {
 public:
     // 静态方法：输出图的信息到控制台
     static void printGraphInfo(const Graph& graph);
