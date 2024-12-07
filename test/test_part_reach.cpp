@@ -26,7 +26,7 @@ protected:
     void SetUp() override {
         // 初始化代码
         // 获取所有边文件
-        string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/medium";
+        string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/large";
 
         // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
         // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
@@ -478,15 +478,15 @@ TEST_F(ReachabilityTest, DISABLED_MultiPartitionTest)
 
 }
 
-TEST_F(ReachabilityTest, DISABLED_PartitionIndexTest)
+TEST_F(ReachabilityTest, PartitionIndexTest)
 {
     // 打开日志文件
-    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/20241205/PartitionIndextest_log.txt";
+    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/"+getCurrentDaystamp()+"/PartitionIndextest_log.txt";
+
     ofstream logFile(logFilePath, ios::out);
     if (!logFile.is_open()) {
         FAIL() << "无法打开日志文件: " << logFilePath;
     }
-
 
     // 遍历每个边文件
     for (const auto& edgeFilePath : edgeFiles) {
@@ -512,7 +512,7 @@ TEST_F(ReachabilityTest, DISABLED_PartitionIndexTest)
         comps.offline_industry(100,0.9);
 
         // 获取分区管理器
-        auto pm = comps.get_partition_manager();
+        auto &pm = comps.get_partition_manager();
         auto reach_ratios = compute_reach_ratios(pm);
 
         // 输出分区信息
@@ -534,7 +534,6 @@ TEST_F(ReachabilityTest, DISABLED_PartitionIndexTest)
     // 关闭日志文件
     logFile.close();
 }
-
 
 TEST_F(ReachabilityTest, DISABLED_CompressedSearchPartitionInfoTest) {
 
@@ -589,7 +588,7 @@ TEST_F(ReachabilityTest, DISABLED_CompressedSearchPartitionInfoTest) {
 }
 
 
-TEST_F(ReachabilityTest, LongDistanceTest) {
+TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
     // 确认文件路径
     string edgeFile2 = string(PROJECT_ROOT_DIR) + "/Edges/medium/cit-DBLP";
     string queryFile = string(PROJECT_ROOT_DIR) + "/QueryPairs/cit-DBLP_distance_pairs_reachable";

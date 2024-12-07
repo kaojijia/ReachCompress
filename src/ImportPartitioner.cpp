@@ -22,7 +22,7 @@ void ImportPartitioner::partition(Graph& graph, PartitionManager& partition_mana
     }
 
     // 构建分区文件名
-    std::string partition_filename = PROJECT_ROOT_DIR"/Partitions/"+graph_filename + "_partitions_mincut.txt";
+    std::string partition_filename = PROJECT_ROOT_DIR"/Partitions/"+graph_filename + "_partitions_louvain.txt";
 
     // 打开分区文件
     std::ifstream partition_file(partition_filename);
