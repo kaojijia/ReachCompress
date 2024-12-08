@@ -25,6 +25,10 @@ public:
 
     // 设置节点的分区ID
     void set_partition(int node, int partitionId){
+        int old_partition = g.get_partition_id(node);
+        if (old_partition != partitionId) {
+            mapping[old_partition].erase(node);
+        }
         g.set_partition_id(node, partitionId);
         mapping[partitionId].insert(node);
     };

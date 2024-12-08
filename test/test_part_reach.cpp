@@ -457,28 +457,29 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
     logFile.close();
 }
 
-TEST_F(ReachabilityTest, DISABLED_MultiPartitionTest)
+TEST_F(ReachabilityTest, MultiPartitionTest)
 {
-    string edgeFile2 = PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241029_135003";
+    string edgeFile2 = PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241031_163820";
     Graph g2(true);
     InputHandler inputHandler2(edgeFile2);
     inputHandler2.readGraph(g2);
     g2.setFilename(edgeFile2);
     // 初始化 CompressedSearch 并进行离线处理
-    CompressedSearch comps2(g2);
+    CompressedSearch comps2(g2, "Louvain");
+
     comps2.offline_industry(1,0.1);
     //相邻分区无法抵达，要绕一个
-    //EXPECT_TRUE(comps2.reachability_query(3,1));
-    //EXPECT_TRUE(comps2.reachability_query(5,12));
-    //EXPECT_TRUE(comps2.reachability_query(18,2));
+    EXPECT_TRUE(comps2.reachability_query(3,1));
+    EXPECT_TRUE(comps2.reachability_query(5,12));
+    EXPECT_TRUE(comps2.reachability_query(18,2));
     //路径上有四个分区，要绕好几个
-    //EXPECT_TRUE(comps2.reachability_query(11,9));
-    //EXPECT_TRUE(comps2.reachability_query(0,17));
-    //EXPECT_TRUE(comps2.reachability_query(3,9));
+    EXPECT_TRUE(comps2.reachability_query(11,9));
+    EXPECT_TRUE(comps2.reachability_query(0,17));
+    EXPECT_TRUE(comps2.reachability_query(3,9));
 
 }
 
-TEST_F(ReachabilityTest, PartitionIndexTest)
+TEST_F(ReachabilityTest, DISABLED_PartitionIndexTest)
 {
     // 打开日志文件
     string logFilePath = string(PROJECT_ROOT_DIR) + "/result/"+getCurrentDaystamp()+"/PartitionIndextest_log.txt";
@@ -586,7 +587,6 @@ TEST_F(ReachabilityTest, DISABLED_CompressedSearchPartitionInfoTest) {
 
     cout << "Compressed search partition info testing completed. Results saved to " << outputFilePath << endl;
 }
-
 
 TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
     // 确认文件路径

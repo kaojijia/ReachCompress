@@ -17,10 +17,11 @@
 
 void CompressedSearch::set_partitioner(std::string partitioner_name)
 {
+    this->partitioner_name_ = partitioner_name;
     // 默认使用 Infomap 分区算法，可根据需要替换
     if (partitioner_name == "Louvain") {
         partitioner_ = std::unique_ptr<LouvainPartitioner>(new LouvainPartitioner());
-    } else if (partitioner_name == "Infomap") {
+    } else if (partitioner_name == "Import") {
         partitioner_ = std::unique_ptr<ImportPartitioner>(new ImportPartitioner());
         //partitioner_ = std::unique_ptr<GraphPartitioner>(new GraphPartitioner());
     } else {
@@ -43,8 +44,9 @@ void CompressedSearch::offline_industry() {
 void CompressedSearch::offline_industry(size_t num_vertices, float ratio)
 {
     partition_graph();  ///< 执行图分区算法
-    //建立每个分区的索引
+
     build_partition_index(ratio, num_vertices); 
+
     //建立分区相互联系的图
     part_bfs = std::unique_ptr<BidirectionalBFS>(new BidirectionalBFS(partition_manager_.part_g));
 }
@@ -189,11 +191,61 @@ bool CompressedSearch::query_across_partitions(int source, int target) {
     auto target_partition = g.get_partition_id(target);
     // 找分区的路径
     // TODO：这个路径不行就换一个路径，需要迭代一个个路径找下去，可能要把过程放到bfs里面，这个不行继续bfs遍历去找
+    // 版本1 直接输出所有路径然后去遍历，直到没有路径为止
+
     std::vector<int> path = part_bfs->findPath(source_partition,target_partition);
     if(path.empty())return false;
     auto edges = partition_manager_.get_partition_adjacency(path[0], path[1]);
     return dfs_partition_search(source, edges.original_edges, path, target);
 }
+
+
+bool CompressedSearch::query_across_partitions_with_all_paths(int source, int target) {
+    int source_partition = g.get_partition_id(source);
+    int target_partition = g.get_partition_id(target);
+    bool flag = false;
+    // 枚举所有路径
+    std::vector<std::vector<int>> all_paths;
+    std::vector<int> path;
+    std::unordered_set<int> visited;
+    bool result = dfs_paths_search(source_partition, target_partition, path, all_paths, visited, source, target);
+    return result;
+}
+
+
+bool CompressedSearch::dfs_paths_search(int current_partition, int target_partition, 
+                                          std::vector<int>& path, 
+                                          std::vector<std::vector<int>>& all_paths, 
+                                          std::unordered_set<int>& visited,
+                                          int source,
+                                          int target) {
+    visited.insert(current_partition);
+    path.push_back(current_partition);
+    bool result = false;
+    if (current_partition == target_partition) {
+        all_paths.push_back(path);
+        auto edges = partition_manager_.get_partition_adjacency(path[0], path[1]);
+        result = dfs_partition_search(source, edges.original_edges, path, target);
+        if(result) return true;
+        cout<<getCurrentTimestamp()<<" 分区可达，但顶点之间没有可达路径"<<endl;
+    } else {
+        // 获取当前分区的所有相邻分区
+        std::vector<int> neighbors = partition_manager_.part_g.vertices[current_partition].LOUT;
+        for (int neighbor : neighbors) {
+            if (visited.find(neighbor) == visited.end()) {
+                result = dfs_paths_search(neighbor, target_partition, path, all_paths, visited, source, target);
+                if(result) return true;
+            }
+        }
+    }
+
+    path.pop_back();
+    //当前的分区改成未访问，在以此为根的生成树中已经遍历完成，不需要防止重复遍历
+    //从别的分区还可以有边过来，也就是说从别的点为根的子树中可以被访问，等下次访问到再说防止重复遍历的事情
+    visited.erase(current_partition);
+    return result;
+}
+
 
 /**
  * @brief 辅助方法，执行分区间的迭代式DFS搜索。
@@ -244,6 +296,7 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
     // 打印 mapping 信息
     std::cout << "Partition to Node Mapping:" << std::endl;
     for (const auto& partition_pair : partition_manager_.mapping) {
+        if(partition_pair.second.size() ==1 )continue;
         std::cout << "Partition " << partition_pair.first << ": ";
         for (const auto& node : partition_pair.second) {
             std::cout << node << " ";
