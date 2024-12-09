@@ -13,6 +13,7 @@ add_library(reach_comp STATIC
     LouvainPartitioner.cpp
     ReachRatio.cpp
     ImportPartitioner.cpp
+    CSR.cpp
 )
 
 # 包含头文件目录

@@ -160,3 +160,8 @@ Edges/tweibo-edgelist.txt
 
 docs/
 QueryPairs/wikipedia_link_so_distance_pairs_reachable.txt
+QueryPairs/cit-DBLP_distance_pairs
+result/20241206/IndexReachability_log.txt
+result/20241206/LongDistanceTest_log.txt
+result/20241206/IndexReachability_log.txt.1
+result/20241209/IndexReachability_log.txt
