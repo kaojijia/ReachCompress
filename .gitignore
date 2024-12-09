@@ -160,3 +160,7 @@ Edges/tweibo-edgelist.txt
 
 docs/
 QueryPairs/wikipedia_link_so_distance_pairs_reachable.txt
+Edges/large/soc-Epinions1.txt
+Partitions/soc-Epinions1_partitions_louvain.txt
+Partitions/soc-Epinions1_partitions_mincut.txt
+result/20241207/PartitionIndextest_log.txt
