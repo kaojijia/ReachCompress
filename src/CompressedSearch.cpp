@@ -260,6 +260,7 @@ bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, in
     if (current_partition != g.get_partition_id(u)) {
         throw std::logic_error("Current partition from path[] does not match the partition of node u");
     }
+    bool result = false;
     for(auto &edge:edges){
         cout << getCurrentTimestamp() << "当前边: " << edge.first << " -> " << edge.second << endl;
         //上一个前序点无法到达这条边就下一轮循环
@@ -272,18 +273,20 @@ bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, in
         auto next_partition = path[1];
         if(g.get_partition_id(target) == next_partition){
             if(is_index){
-                return query_index_within_partition(edge.second, target, next_partition);
+                result =  query_index_within_partition(edge.second, target, next_partition);
             }
-            return query_within_partition(edge.second, target);
+            else result = query_within_partition(edge.second, target);
+            if(result) return true;
         }
         else{
             std::vector<int> remain_path(path.begin() + 1, path.end());
             auto next_edges = partition_manager_.get_partition_adjacency(remain_path[0],remain_path[1]);
-            return dfs_partition_search(edge.second,next_edges.original_edges,remain_path,target);
+            result = dfs_partition_search(edge.second,next_edges.original_edges,remain_path,target);
+            if(result) return true;
         }
     }
 
-    return false;
+    return result;
 }
 //TODO:构建索引的时候用全局搜索，避免两个点绕过一个分区来相连
 //但是如果分区方法用连通度来计算，会不会有情况是加进去的点都是相连的呢

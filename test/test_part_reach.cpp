@@ -26,7 +26,7 @@ protected:
     void SetUp() override {
         // 初始化代码
         // 获取所有边文件
-        string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/large";
+        string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/generate";
 
         // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
         // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
@@ -345,7 +345,7 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
         inputHandler.readGraph(g);
         g.setFilename(edgeFilePath);
         // 初始化 CompressedSearch 并进行离线处理
-        CompressedSearch comps(g);
+        CompressedSearch comps(g,"Louvain");
         comps.offline_industry(num_nodes,ratio);
         logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
         auto lines = comps.get_index_info();
@@ -459,7 +459,7 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
 
 TEST_F(ReachabilityTest, MultiPartitionTest)
 {
-    string edgeFile2 = PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241031_163820";
+    string edgeFile2 = PROJECT_ROOT_DIR"/Edges/medium/cit-DBLP";
     Graph g2(true);
     InputHandler inputHandler2(edgeFile2);
     inputHandler2.readGraph(g2);
@@ -467,7 +467,12 @@ TEST_F(ReachabilityTest, MultiPartitionTest)
     // 初始化 CompressedSearch 并进行离线处理
     CompressedSearch comps2(g2, "Louvain");
 
-    comps2.offline_industry(1,0.1);
+    comps2.offline_industry(300,0.9);
+    EXPECT_TRUE(comps2.reachability_query(7848,5659));
+    EXPECT_TRUE(comps2.reachability_query(7848,5659));
+    EXPECT_TRUE(comps2.reachability_query(7848,5659));
+    EXPECT_TRUE(comps2.reachability_query(7848,5659));
+
     //相邻分区无法抵达，要绕一个
     EXPECT_TRUE(comps2.reachability_query(3,1));
     EXPECT_TRUE(comps2.reachability_query(5,12));
