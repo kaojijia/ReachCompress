@@ -22,14 +22,15 @@ public:
     // 节点的分区信息
     int16_t* partitions;           // 存储每个节点的分区号，预设值为 -1
 
-    uint32_t num_nodes;            // 节点数量
+    uint32_t max_node_id;            // 最大节点id=数组长度-1
     uint32_t num_edges;            // 边数量
+    uint32_t num_nodes;            // 节点数量
 
     // 构造函数
     CSRGraph()
         : out_column_indices(nullptr), out_row_pointers(nullptr),
           in_column_indices(nullptr), in_row_pointers(nullptr),
-          partitions(nullptr), num_nodes(0), num_edges(0) {}
+          partitions(nullptr), max_node_id(0), num_edges(0), num_nodes(0) {}
 
     // 析构函数
     ~CSRGraph() {
@@ -71,7 +72,7 @@ public:
     bool removeEdge(uint32_t u, uint32_t v);
 
     // 修改节点的分区号
-    void setPartition(uint32_t node, int16_t partition);
+    bool setPartition(uint32_t node, int16_t partition);
 
     // 获取节点的分区号
     int16_t getPartition(uint32_t node) const;
@@ -82,15 +83,24 @@ public:
     // 打印图的所有信息
     void printAllInfo() const;
 
+    // 打印CSR结构
+    void printCSRs() const;
+
     // 返回CSR结构所占内存
     uint64_t getMemoryUsage() const;
+
+    // 检查节点是否存在
+    bool nodeExist(uint32_t node) const;
+    
+    // 统计顶点个数
+    uint32_t getNodesNum() const;
 
 private:
     // 辅助函数：构建 CSR 结构
     // void buildCSR(const std::vector<std::pair<uint32_t, uint32_t>>& edges, uint32_t max_node);
 
     // 辅助函数：重新分配和扩展 CSR 数组
-    // bool resizeGraph(uint32_t new_num_nodes, uint32_t new_num_edges);
+    // bool resizeGraph(uint32_t new_max_node_id, uint32_t new_num_edges);
 
     // 辅助函数：保持边的有序性
     // void sortEdges();

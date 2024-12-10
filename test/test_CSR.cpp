@@ -21,7 +21,7 @@
 using namespace std;
 
 TEST(CSRTest, BASIC_TEST){
-    string edgeFile2 = PROJECT_ROOT_DIR"/Edges/generate/test_123456_2";
+    string edgeFile2 = PROJECT_ROOT_DIR"/Edges/generate/test_SCC_1";
     Graph g2(true);
     InputHandler inputHandler2(edgeFile2);
     inputHandler2.readGraph(g2);
@@ -29,5 +29,14 @@ TEST(CSRTest, BASIC_TEST){
     CSRGraph csr;
     csr.fromGraph(g2);
     csr.printAllInfo();
+    auto i = csr.getNodesNum();
+    csr.addEdge(4,6);
+    csr.printAllInfo();
+    csr.removeEdge(4,6);
+    csr.printAllInfo();
+    csr.removeNode(4);
+    csr.printAllInfo();
+    csr.printCSRs();
 
+    cout<<"over"<<endl;
 }
