@@ -169,3 +169,5 @@ Edges/large/soc-Epinions1.txt
 Partitions/soc-Epinions1_partitions_louvain.txt
 Partitions/soc-Epinions1_partitions_mincut.txt
 result/20241207/PartitionIndextest_log.txt
+Edges/large/in.txt
+Edges/large/in_stat.txt
