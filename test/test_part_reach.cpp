@@ -26,7 +26,7 @@ protected:
     void SetUp() override {
         // 初始化代码
         // 获取所有边文件
-        string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/generate";
+        string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/test";
 
         // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
         // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
@@ -365,20 +365,22 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
         logFile << "[" << getCurrentTimestamp() << "] " << oss.str() << endl;
 
         // 生成查询对
-        int num_queries = 100;
+        int num_queries = 1000;
         int max_value = g.vertices.size();
         unsigned int seed = 42; // 可选的随机种子
 
         //改成允许重复的 query
         vector<pair<int, int>> query_pairs = RandomUtils::generateQueryPairs(num_queries, max_value, seed);
-
+        vector<pair<int, int>> query_pairs2 = RandomUtils::generateUniqueQueryPairs(num_queries, max_value, seed);
         // 计算每个方法的平均耗时
         long long total_duration_bfs = 0;
         long long total_duration_part = 0;
         long long total_duration_pll = 0;
         int query_count = 0;
 
-        for (const auto& query_pair : query_pairs) {
+
+
+        for (const auto& query_pair : query_pairs2) {
             int source = query_pair.first;
             int target = query_pair.second;
 
@@ -457,6 +459,8 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
     logFile.close();
 }
 
+
+//里氏记录
 TEST_F(ReachabilityTest, MultiPartitionTest)
 {
     string edgeFile2 = PROJECT_ROOT_DIR"/Edges/medium/cit-DBLP";
@@ -468,12 +472,26 @@ TEST_F(ReachabilityTest, MultiPartitionTest)
     CompressedSearch comps2(g2, "Louvain");
 
     comps2.offline_industry(300,0.9);
-    EXPECT_TRUE(comps2.reachability_query(7848,5659));
-    EXPECT_TRUE(comps2.reachability_query(7848,5659));
-    EXPECT_TRUE(comps2.reachability_query(7848,5659));
-    EXPECT_TRUE(comps2.reachability_query(7848,5659));
+    //跨分区DFS查询改完了
+    EXPECT_TRUE(comps2.reachability_query(6911,1631));
+    EXPECT_TRUE(comps2.reachability_query(4137,12191));
+    EXPECT_TRUE(comps2.reachability_query(1626,2433));
+    EXPECT_TRUE(comps2.reachability_query(1661,733));
+    EXPECT_TRUE(comps2.reachability_query(1626,9102));
+    EXPECT_TRUE(comps2.reachability_query(1583,401));
+    EXPECT_TRUE(comps2.reachability_query(1583,6216));
+    EXPECT_TRUE(comps2.reachability_query(9353,7538));
+    EXPECT_TRUE(comps2.reachability_query(6135,656));
+    //这三个还有错误
+    //同分区查询错误()
+    EXPECT_TRUE(comps2.reachability_query(11388,2877));
+    //同分区查询错误
+    EXPECT_TRUE(comps2.reachability_query(3673,2772));
+    //同分区查询错误
+    EXPECT_TRUE(comps2.reachability_query(3076,5657));
 
     //相邻分区无法抵达，要绕一个
+    //去哪了呢
     EXPECT_TRUE(comps2.reachability_query(3,1));
     EXPECT_TRUE(comps2.reachability_query(5,12));
     EXPECT_TRUE(comps2.reachability_query(18,2));
@@ -593,6 +611,7 @@ TEST_F(ReachabilityTest, DISABLED_CompressedSearchPartitionInfoTest) {
     cout << "Compressed search partition info testing completed. Results saved to " << outputFilePath << endl;
 }
 
+
 TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
     // 确认文件路径
     string edgeFile2 = string(PROJECT_ROOT_DIR) + "/Edges/medium/cit-DBLP";
@@ -607,7 +626,7 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
     g2.setFilename(edgeFile2);
 
     // 初始化 CompressedSearch 并进行离线处理
-    CompressedSearch comps2(g2);
+    CompressedSearch comps2(g2,"Louvain");
     comps2.offline_industry(300, 0.9);
 
     // 读取查询点对
@@ -663,11 +682,16 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
             query_count++;
             total_duration_bfs += duration_bfs;
             total_duration_compressed += duration_compressed;
-
+            EXPECT_EQ(bfs_result, compressed_result);
+            auto results_match = (bfs_result == compressed_result);
             // 输出查询结果和耗时
             logFile << "Distance " << distance << " Query from " << source << " to " << target << endl;
             logFile << "BiBFS: " << (bfs_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_bfs << " microseconds)" << endl;
             logFile << "CompressedSearch: " << (compressed_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_compressed << " microseconds)" << endl;
+            stringstream match_oss;
+            match_oss << "***** Does Result Match from " << source << " query to " << target << ": " << (results_match ? "Match" : "Not Match") << " *****";
+            logFile << "[" << getCurrentTimestamp() << "] " << match_oss.str() << endl;
+
         }
 
         // 计算并记录平均耗时

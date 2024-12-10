@@ -73,25 +73,26 @@ bool CompressedSearch::reachability_query(int source, int target) {
     //     return false;
     // }
 
-
+    bool result = false;
     int source_partition = g.get_partition_id(source);
     int target_partition = g.get_partition_id(target);
     cout<<getCurrentTimestamp()<<"分区确定"<<source_partition<<"  "<<target_partition<<endl;
     if (source_partition == target_partition) {
-        bool result;
+       
         if(this->is_index){
             result = query_index_within_partition(source, target, source_partition);  ///< 同分区带索引查询
         }
         else{
             result = query_within_partition(source, target);  ///< 同分区查询
         }
-        if(result) return true;
-        return false;
+        return result;
         //return bfs.reachability_query(source, target); //全图找
     }else if (source_partition == -1 || target_partition == -1) {
         return false;
     }else {
-        return query_across_partitions(source, target); ///< 跨分区查询
+        // result =  query_across_partitions(source, target); ///< 跨分区查询
+        result = query_across_partitions_with_all_paths(source, target); ///< 跨分区查询
+        return result;
     }
 }
 

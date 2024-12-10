@@ -38,7 +38,7 @@ public:
     }
 
     // 设置分区器
-    void set_partitioner(std::string partitioner_name = "Import");
+    void set_partitioner(std::string partitioner_name);
 
     /**
      * @brief 离线索引建立和其他辅助数据结构的初始化。
