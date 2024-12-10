@@ -24,6 +24,7 @@ bool CSRGraph::fromFile(const std::string& filename) {
 
     infile.close();
 
+<<<<<<< HEAD
     
     max_node_id = max_node;
     num_edges = edges.size();
@@ -34,6 +35,18 @@ bool CSRGraph::fromFile(const std::string& filename) {
     partitions = new int16_t[max_node_id];
     std::memset(out_row_pointers, 0, (max_node_id + 2) * sizeof(uint32_t));
     std::memset(in_row_pointers, 0, (max_node_id + 2) * sizeof(uint32_t));
+=======
+    // 设置节点数量
+    max_node_id = max_node + 1;
+    num_edges = edges.size();
+
+    // 分配内存
+    out_row_pointers = new uint32_t[max_node_id + 1];
+    in_row_pointers = new uint32_t[max_node_id + 1];
+    partitions = new int16_t[max_node_id];
+    std::memset(out_row_pointers, 0, (max_node_id + 1) * sizeof(uint32_t));
+    std::memset(in_row_pointers, 0, (max_node_id + 1) * sizeof(uint32_t));
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
     for (uint32_t i = 0; i < max_node_id; ++i) {
         partitions[i] = -1;
     }
@@ -94,8 +107,13 @@ bool CSRGraph::fromFile(const std::string& filename) {
 
 // 从现有Graph类创建CSR
 bool CSRGraph::fromGraph(const Graph& graph) {
+<<<<<<< HEAD
     // 设置最大节点 ID
     max_node_id = graph.vertices.size() - 1;
+=======
+    // 设置节点数量
+    max_node_id = graph.vertices.size();
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
 
     // 统计总边数（假设每条边在 LOUT 中记录一次）
     num_edges = 0;
@@ -104,26 +122,44 @@ bool CSRGraph::fromGraph(const Graph& graph) {
     }
 
     // 分配内存
+<<<<<<< HEAD
     out_row_pointers = new uint32_t[max_node_id + 2];
     in_row_pointers = new uint32_t[max_node_id + 2];
     partitions = new int16_t[max_node_id];
     std::memset(out_row_pointers, 0, (max_node_id + 2) * sizeof(uint32_t));
     std::memset(in_row_pointers, 0, (max_node_id + 2) * sizeof(uint32_t));
     for (uint32_t i = 0; i < max_node_id + 1; ++i) {
+=======
+    out_row_pointers = new uint32_t[max_node_id + 1];
+    in_row_pointers = new uint32_t[max_node_id + 1];
+    partitions = new int16_t[max_node_id];
+    std::memset(out_row_pointers, 0, (max_node_id + 1) * sizeof(uint32_t));
+    std::memset(in_row_pointers, 0, (max_node_id + 1) * sizeof(uint32_t));
+    for (uint32_t i = 0; i < max_node_id; ++i) {
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
         partitions[i] = graph.vertices[i].partition_id;
     }
     out_column_indices = new uint32_t[num_edges];
     in_column_indices = new uint32_t[num_edges];
 
     // 统计出边和入边的数量
+<<<<<<< HEAD
     std::vector<uint32_t> out_counts(max_node_id+1, 0);
     std::vector<uint32_t> in_counts(max_node_id+1, 0);
+=======
+    std::vector<uint32_t> out_counts(max_node_id, 0);
+    std::vector<uint32_t> in_counts(max_node_id, 0);
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
     for (size_t u = 0; u < graph.vertices.size(); u++) {
         if(graph.vertices[u].LOUT.size()==0)continue;
         for (size_t v_idx = 0; v_idx < graph.vertices[u].LOUT.size(); v_idx++) {
             uint32_t v = graph.vertices[u].LOUT[v_idx];
             out_counts[u]++;
+<<<<<<< HEAD
             if (v < max_node_id+1) { // 确保 v 不越界
+=======
+            if (v < max_node_id) { // 确保 v 不越界
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
                 in_counts[v]++;
             }
         }
@@ -132,14 +168,23 @@ bool CSRGraph::fromGraph(const Graph& graph) {
     // 构建 row_pointers
     out_row_pointers[0] = 0;
     in_row_pointers[0] = 0;
+<<<<<<< HEAD
     for (uint32_t i = 0; i < max_node_id+1; ++i) {
+=======
+    for (uint32_t i = 0; i < max_node_id; ++i) {
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
         out_row_pointers[i + 1] = out_row_pointers[i] + out_counts[i];
         in_row_pointers[i + 1] = in_row_pointers[i] + in_counts[i];
     }
 
     // 填充 column_indices
+<<<<<<< HEAD
     std::vector<uint32_t> out_offsets(max_node_id+1, 0);
     std::vector<uint32_t> in_offsets(max_node_id+1, 0);
+=======
+    std::vector<uint32_t> out_offsets(max_node_id, 0);
+    std::vector<uint32_t> in_offsets(max_node_id, 0);
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
     for (size_t u = 0; u < graph.vertices.size(); u++) {
         if(graph.vertices[u].LOUT.size()==0)continue;
         // 对出边进行排序
@@ -147,7 +192,11 @@ bool CSRGraph::fromGraph(const Graph& graph) {
         std::sort(sorted_LOUT.begin(), sorted_LOUT.end());
 
         for (const auto& v : sorted_LOUT) {
+<<<<<<< HEAD
             if (v >= max_node_id+1) continue; // 确保 v 不越界
+=======
+            if (v >= max_node_id) continue; // 确保 v 不越界
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
 
             // 添加出边
             out_column_indices[out_row_pointers[u] + out_offsets[u]] = v;
@@ -160,7 +209,11 @@ bool CSRGraph::fromGraph(const Graph& graph) {
     }
 
     // 对每个节点的入边进行排序
+<<<<<<< HEAD
     for (uint32_t i = 0; i < max_node_id+1; ++i) {
+=======
+    for (uint32_t i = 0; i < max_node_id; ++i) {
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
         uint32_t in_start = in_row_pointers[i];
         uint32_t in_end = in_row_pointers[i + 1];
         std::sort(in_column_indices + in_start, in_column_indices + in_end);
@@ -183,7 +236,11 @@ bool CSRGraph::fromGraph(const Graph& graph) {
 
 // 获取某个节点的所有出边
 uint32_t* CSRGraph::getOutgoingEdges(uint32_t node, uint32_t& degree) const {
+<<<<<<< HEAD
     if (node > max_node_id) {
+=======
+    if (node >= max_node_id) {
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
         degree = 0;
         return nullptr;
     }
@@ -193,7 +250,11 @@ uint32_t* CSRGraph::getOutgoingEdges(uint32_t node, uint32_t& degree) const {
 
 // 获取某个节点的所有入边
 uint32_t* CSRGraph::getIncomingEdges(uint32_t node, uint32_t& degree) const {
+<<<<<<< HEAD
     if (node > max_node_id) {
+=======
+    if (node >= max_node_id) {
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
         degree = 0;
         return nullptr;
     }
@@ -203,13 +264,21 @@ uint32_t* CSRGraph::getIncomingEdges(uint32_t node, uint32_t& degree) const {
 
 // 获取某个节点的出度
 uint32_t CSRGraph::getOutDegree(uint32_t node) const {
+<<<<<<< HEAD
     if (node > max_node_id) return 0;
+=======
+    if (node >= max_node_id) return 0;
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
     return out_row_pointers[node + 1] - out_row_pointers[node];
 }
 
 // 获取某个节点的入度
 uint32_t CSRGraph::getInDegree(uint32_t node) const {
+<<<<<<< HEAD
     if (node > max_node_id) return 0;
+=======
+    if (node >= max_node_id) return 0;
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
     return in_row_pointers[node + 1] - in_row_pointers[node];
 }
 
@@ -248,7 +317,9 @@ bool CSRGraph::addNode() {
 }
 
 // 删除节点
+
 bool CSRGraph::removeNode(uint32_t node) {
+<<<<<<< HEAD
     if (node > max_node_id) {
         std::cerr << "错误: 节点 " << node << " 超出范围." << std::endl;
         return false;
@@ -338,10 +409,100 @@ bool CSRGraph::removeNode(uint32_t node) {
         while (max_node_id > 0 &&
                out_row_pointers[max_node_id + 1] == out_row_pointers[max_node_id] &&
                in_row_pointers[max_node_id + 1] == in_row_pointers[max_node_id]) {
+=======
+    if (node >= max_node_id) return false;
+
+    // 检查节点是否已经被删除
+    if (out_row_pointers[node] == out_row_pointers[node + 1] &&
+        in_row_pointers[node] == in_row_pointers[node + 1]) {
+        // 节点已经没有边，无需重复删除
+        return false;
+    }
+
+    // 移除所有出边
+    uint32_t out_start = out_row_pointers[node];
+    uint32_t out_end = out_row_pointers[node + 1];
+    uint32_t out_degree = out_end - out_start;
+
+    for (uint32_t i = out_start; i < out_end; ++i) {
+        // target是node的一个后继
+        uint32_t target = out_column_indices[i];
+        
+        // 找到target的入边集合
+        uint32_t in_start = in_row_pointers[target];
+        uint32_t in_end = in_row_pointers[target + 1];
+        uint32_t in_degree = in_end - in_start;
+
+        // 找到并移除node
+        uint32_t* in_ptr = in_column_indices + in_start;
+        uint32_t* pos = std::find(in_ptr, in_ptr + in_degree, node);
+        if (pos != in_ptr + in_degree) {
+            // 将后续元素左移以覆盖被删除的元素
+            std::memmove(pos, pos + 1, (in_end - (pos - in_column_indices) - 1) * sizeof(uint32_t));
+            // 更新 in_row_pointers
+            for (uint32_t j = target + 1; j <= max_node_id; ++j) {
+                in_row_pointers[j]--;
+            }
+            num_edges--;
+        }
+    }
+
+    // 移除所有入边
+    uint32_t in_start = in_row_pointers[node];
+    uint32_t in_end = in_row_pointers[node + 1];
+    uint32_t in_degree = in_end - in_start;
+
+    for (uint32_t i = in_start; i < in_end; ++i) {
+        uint32_t source = in_column_indices[i];
+        // 移除对应的出边
+        uint32_t out_start_source = out_row_pointers[source];
+        uint32_t out_end_source = out_row_pointers[source + 1];
+        uint32_t out_degree_source = out_end_source - out_start_source;
+
+        // 找到并移除目标节点
+        uint32_t* out_ptr = out_column_indices + out_start_source;
+        uint32_t* pos_out = std::find(out_ptr, out_ptr + out_degree_source, node);
+        if (pos_out != out_ptr + out_degree_source) {
+            // 将后续元素左移以覆盖被删除的元素
+            std::memmove(pos_out, pos_out + 1, (out_end_source - (pos_out - out_column_indices) - 1) * sizeof(uint32_t));
+            // 更新 out_row_pointers
+            for (uint32_t j = source + 1; j <= max_node_id; ++j) {
+                out_row_pointers[j]--;
+            }
+            num_edges--;
+        }
+    }
+
+    // 将 node 的出边和入边从 out_column_indices 和 in_column_indices 中移除
+    // 重新分配 out_column_indices
+    uint32_t* new_out_column_indices = new uint32_t[num_edges];
+    std::memcpy(new_out_column_indices, out_column_indices, out_start * sizeof(uint32_t));
+    std::memcpy(new_out_column_indices + out_start, out_column_indices + out_end, (num_edges - out_end) * sizeof(uint32_t));
+    delete[] out_column_indices;
+    out_column_indices = new_out_column_indices;
+
+    // 重新分配 in_column_indices
+    uint32_t* new_in_column_indices = new uint32_t[num_edges];
+    std::memcpy(new_in_column_indices, in_column_indices, in_start * sizeof(uint32_t));
+    std::memcpy(new_in_column_indices + in_start, in_column_indices + in_end, (num_edges - in_end) * sizeof(uint32_t));
+    delete[] in_column_indices;
+    in_column_indices = new_in_column_indices;
+
+    // 将 row_pointers 的起始和结束位置设置为相同，表示节点已删除
+    out_row_pointers[node] = out_row_pointers[node + 1];
+    in_row_pointers[node] = in_row_pointers[node + 1];
+
+    // 更新 num_nodes 和 max_node_id
+    num_nodes--;
+    if (node == max_node_id - 1) {
+        while (max_node_id > 0 && out_row_pointers[max_node_id - 1] == out_row_pointers[max_node_id] &&
+               in_row_pointers[max_node_id - 1] == in_row_pointers[max_node_id]) {
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
             max_node_id--;
         }
     }
 
+<<<<<<< HEAD
     if(in_num_edges != out_num_edges){
         std::cout<<"逻辑错误"<<std::endl;
         return false;
@@ -350,14 +511,22 @@ bool CSRGraph::removeNode(uint32_t node) {
     num_edges = out_num_edges;
     out_row_pointers[max_node_id+1] = num_edges;
     std::cout << "节点 " << node << " 删除完成." << std::endl;
-
+=======
     return true;
 }
+
+
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
+
 
 // 增加边（假定新点的id不会大于当前最大节点的id）
 bool CSRGraph::addEdge(uint32_t u, uint32_t v) {
     
+<<<<<<< HEAD
     if (u > max_node_id || v > max_node_id) return false;
+=======
+    if (u >= max_node_id || v >= max_node_id) return false;
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
     if(u==v)return false;
 
     // 更新顶点数目
@@ -431,7 +600,11 @@ bool CSRGraph::addEdge(uint32_t u, uint32_t v) {
 
 // 删除边
 bool CSRGraph::removeEdge(uint32_t u, uint32_t v) {
+<<<<<<< HEAD
     if (u > max_node_id || v > max_node_id) return false;
+=======
+    if (u >= max_node_id || v >= max_node_id) return false;
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
 
     // 删除出边
     uint32_t out_start = out_row_pointers[u];
@@ -499,14 +672,22 @@ bool CSRGraph::removeEdge(uint32_t u, uint32_t v) {
 
 // 修改节点的分区号
 bool CSRGraph::setPartition(uint32_t node, int16_t partition) {
+<<<<<<< HEAD
     if (node > max_node_id) return false;
+=======
+    if (node >= max_node_id) return false;
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
     partitions[node] = partition;
     return true;
 }
 
 // 获取节点的分区号
 int16_t CSRGraph::getPartition(uint32_t node) const {
+<<<<<<< HEAD
     if (node > max_node_id) return -1;
+=======
+    if (node >= max_node_id) return -1;
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
     return partitions[node];
 }
 
@@ -522,6 +703,7 @@ void CSRGraph::printAllInfo() const {
     std::cout << "CSRGraph Information:" << std::endl;
     std::cout << "Number of nodes: " << num_nodes << std::endl;    
     std::cout << "Number of edges: " << num_edges << std::endl;
+<<<<<<< HEAD
 
     std::cout << "Edges:" << std::endl;
     for (uint32_t u = 0; u < max_node_id+1; ++u) {
@@ -540,6 +722,14 @@ void CSRGraph::printAllInfo() const {
     }
     std::cout << "Outgoing edges:" << std::endl;
     for (uint32_t u = 0; u < max_node_id+1; ++u) {
+=======
+    std::cout << "Partitions:" << std::endl;
+    for (uint32_t i = 0; i < max_node_id; ++i) {
+        std::cout << "  Node " << i << ": Partition " << partitions[i] << std::endl;
+    }
+    std::cout << "Outgoing edges:" << std::endl;
+    for (uint32_t u = 0; u < max_node_id; ++u) {
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
         uint32_t out_start = out_row_pointers[u];
         uint32_t out_end = out_row_pointers[u + 1];
         if(out_end - out_start == 0)continue;
@@ -550,7 +740,11 @@ void CSRGraph::printAllInfo() const {
         std::cout << std::endl;
     }
     std::cout << "Incoming edges:" << std::endl;
+<<<<<<< HEAD
     for (uint32_t u = 0; u < max_node_id+1; ++u) {
+=======
+    for (uint32_t u = 0; u < max_node_id; ++u) {
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
         uint32_t in_start = in_row_pointers[u];
         uint32_t in_end = in_row_pointers[u + 1];
         if(in_end - in_start == 0)continue;
@@ -600,7 +794,11 @@ uint64_t CSRGraph::getMemoryUsage() const
     memoryUsage += num_edges * sizeof(uint32_t) * 2; // out_column_indices 和 in_column_indices
 
     // 计算出边和入边的行指针数组所占内存
+<<<<<<< HEAD
     memoryUsage += (max_node_id + 2) * sizeof(uint32_t) * 2; // out_row_pointers 和 in_row_pointers
+=======
+    memoryUsage += (max_node_id + 1) * sizeof(uint32_t) * 2; // out_row_pointers 和 in_row_pointers
+>>>>>>> 29f5613ab93a674795c383ae4f3fd8d4a5928211
 
     // 计算分区数组所占内存
     memoryUsage += max_node_id * sizeof(int16_t); // partitions
