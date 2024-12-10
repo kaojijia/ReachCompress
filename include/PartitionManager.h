@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <vector>
+#include <cstdint>
 #include "graph.h"
 
 //TODO: mapping 在分区变化的函数中没有正确维护，仅在建立分区图的时候有初始化
@@ -64,6 +65,11 @@ public:
     // 更新分区之间的连接
     void update_partition_connections();
 
+    void print_equivalence_mapping() const;
+
+    // 从文件中读取节点的分区信息，更新到图中，有些从边集没有读取到的边会在这里补全
+    void read_equivalance_info(const std::string& filename);
+
 
     // 获取分区和点的映射关系
     const std::unordered_map<int, std::unordered_set<int>>& get_mapping() const {
@@ -81,6 +87,9 @@ public:
 
     // 分区ID到子图的映射
     std::unordered_map<int, Graph> partition_subgraphs;
+
+    // 等价类的二维数组映射
+    uint32_t** equivalence_mapping;
  
 private:
 

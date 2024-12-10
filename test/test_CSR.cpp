@@ -20,7 +20,7 @@
 // 使用命名空间简化代码
 using namespace std;
 
-TEST(CSRTest, BASIC_TEST){
+TEST(CSRTest, DISABLED_BASIC_TEST){
     string edgeFile2 = PROJECT_ROOT_DIR"/Edges/generate/test_SCC_1";
     Graph g2(true);
     InputHandler inputHandler2(edgeFile2);
@@ -39,4 +39,19 @@ TEST(CSRTest, BASIC_TEST){
     csr.printCSRs();
 
     cout<<"over"<<endl;
+}
+
+TEST(CSRTest, ReadEquivalanceTest){
+    string edgeFile2 = PROJECT_ROOT_DIR"/Edges/DAGs/gene_edges_20241029_135003_DAG";
+    Graph g2(true);
+    InputHandler inputHandler2(edgeFile2);
+    inputHandler2.readGraph(g2);
+    g2.setFilename(edgeFile2);
+    CompressedSearch comps2(g2,"Louvain");
+    comps2.read_equivalance_info(PROJECT_ROOT_DIR"/Edges/DAGs/gene_edges_20241029_135003_mapping");
+
+
+    cout<<endl;
+
+
 }

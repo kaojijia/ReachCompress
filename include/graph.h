@@ -1,6 +1,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 #include <string>
+#include <cstdint>
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
@@ -12,6 +13,7 @@ struct Vertex {
     std::vector<int> LIN;   // 入度
     int in_degree = 0;
     int out_degree = 0;
+    uint32_t equivalance = -1; //等价类ID（强连通分量压缩用）
 };
 
 // 图的结构，支持可选的邻接表逆邻接表存储

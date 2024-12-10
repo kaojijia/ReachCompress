@@ -171,3 +171,7 @@ Partitions/soc-Epinions1_partitions_mincut.txt
 result/20241207/PartitionIndextest_log.txt
 Edges/large/in.txt
 Edges/large/in_stat.txt
+Edges/DAGs/in_DAG
+Edges/DAGs/in_mapping
+Edges/large/tweibo-edgelist.txt
+Partitions/in_partitions_louvain.txt

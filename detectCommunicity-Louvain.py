@@ -148,8 +148,8 @@ def main(input_dir, output_dir, resolution_parameter=1.0, min_community_size=10)
     print("All files processed.")
 
 if __name__ == "__main__":
-    input_directory = "Edges/medium"      # 输入边文件目录
+    input_directory = "Edges/large"      # 输入边文件目录
     output_directory = "Partitions"       # 输出分区结果目录
     resolution_parameter = 0.7              # 分辨率参数
-    min_community_size = 100               # 最小社区大小
+    min_community_size = 1000               # 最小社区大小
     main(input_directory, output_directory, resolution_parameter, min_community_size)

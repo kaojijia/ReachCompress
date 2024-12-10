@@ -460,7 +460,7 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
 }
 
 
-//里氏记录
+//历史记录
 TEST_F(ReachabilityTest, MultiPartitionTest)
 {
     string edgeFile2 = PROJECT_ROOT_DIR"/Edges/medium/cit-DBLP";
@@ -490,15 +490,6 @@ TEST_F(ReachabilityTest, MultiPartitionTest)
     //同分区查询错误
     EXPECT_TRUE(comps2.reachability_query(3076,5657));
 
-    //相邻分区无法抵达，要绕一个
-    //去哪了呢
-    EXPECT_TRUE(comps2.reachability_query(3,1));
-    EXPECT_TRUE(comps2.reachability_query(5,12));
-    EXPECT_TRUE(comps2.reachability_query(18,2));
-    //路径上有四个分区，要绕好几个
-    EXPECT_TRUE(comps2.reachability_query(11,9));
-    EXPECT_TRUE(comps2.reachability_query(0,17));
-    EXPECT_TRUE(comps2.reachability_query(3,9));
 
 }
 

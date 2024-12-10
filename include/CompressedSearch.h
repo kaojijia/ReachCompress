@@ -47,6 +47,8 @@ public:
     
     void offline_industry(size_t num_vertices, float ratio);
 
+    void construct_filter();
+
     /**
      * @brief 在线查询，判断两个节点之间的可达性。
      * @param source 源节点。
@@ -67,6 +69,12 @@ public:
 
         return {};
     }
+
+    void read_equivalance_info(string filename){
+        this->partition_manager_.read_equivalance_info(filename);
+        this->partition_manager_.print_equivalence_mapping();
+    }
+
 
     float ratio = -1;
     size_t num_vertices = 0;

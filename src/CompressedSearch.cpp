@@ -44,12 +44,24 @@ void CompressedSearch::offline_industry() {
 void CompressedSearch::offline_industry(size_t num_vertices, float ratio)
 {
     partition_graph();  ///< 执行图分区算法
+    construct_filter(); ///< 构建过滤器
 
     build_partition_index(ratio, num_vertices); 
 
     //建立分区相互联系的图
     part_bfs = std::unique_ptr<BidirectionalBFS>(new BidirectionalBFS(partition_manager_.part_g));
 }
+
+void CompressedSearch::construct_filter(){
+    float ratio = compute_reach_ratio(g);
+    if(ratio > 0.9){
+        //TODO:构建不可达索引
+    }
+    else{
+        //TODO:构建可达索引
+    }
+}
+
 
 /**
  * @brief 在线查询，判断两个节点之间的可达性。

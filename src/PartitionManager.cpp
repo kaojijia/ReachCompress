@@ -1,6 +1,9 @@
 #include "PartitionManager.h"
 #include "ReachRatio.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cstdint>
 
 
 /**
@@ -123,6 +126,81 @@ void PartitionManager::update_partition_connections() {
             }
         }
     }
+}
+
+void PartitionManager::print_equivalence_mapping() const {
+    if (equivalence_mapping == nullptr) {
+        std::cerr << "Equivalence mapping is not initialized." << std::endl;
+        return;
+    }
+
+    for (size_t i = 0; i < g.vertices.size(); ++i) {
+        std::cout << "Node " << i << ": ";
+        if (equivalence_mapping[i] != nullptr) {
+            std::cout << equivalence_mapping[i][0]; // Assuming each node has at least one equivalence
+        } else {
+            std::cout << "No equivalence";
+        }
+        std::cout << std::endl;
+    }
+}
+void PartitionManager::read_equivalance_info(const std::string &filename)
+{
+    std::ifstream mapping_file(filename);
+    if (!mapping_file.is_open()) {
+        std::cerr << "Failed to open mapping file: " << filename << std::endl;
+        return;
+    }
+
+    std::string line;
+    std::vector<std::vector<uint32_t>> temp_mapping;
+
+    while (std::getline(mapping_file, line)) {
+        std::istringstream iss(line);
+        int node;
+        uint32_t equivalance;
+        if (!(iss >> node >> equivalance)) {
+            std::cerr << "Invalid line format in equivalence file: " << line << std::endl;
+            continue;
+        }
+
+        // 如果大于了要做扩展，因为g读取的文件是强连通分量压缩后的文件，所以可能会有节点记录不全
+        // mapping中的是全的，可以拿来对g做补全
+        if (node >= g.vertices.size()) {
+            int size = g.vertices.size();
+            g.vertices.resize(node + 1);
+            for (int i = size; i <= node; ++i) {
+                g.vertices[i].partition_id = -1;
+                g.vertices[i].LIN.clear();
+                g.vertices[i].LOUT.clear();
+                g.vertices[i].in_degree = 0;
+                g.vertices[i].out_degree = 0;
+                g.vertices[i].equivalance = -1;
+            }
+        }
+
+        // 更新 Graph 中的 vertices
+        g.vertices[node].equivalance = equivalance;
+
+        // 添加到临时映射
+        if (node >= temp_mapping.size()) {
+            temp_mapping.resize(node + 1);
+        }
+        temp_mapping[node].push_back(equivalance);
+    }
+
+    mapping_file.close();
+
+    // 将临时映射转换为二维 uint32_t 数组
+    equivalence_mapping = new uint32_t*[temp_mapping.size()];
+    for (size_t i = 0; i < temp_mapping.size(); ++i) {
+        equivalence_mapping[i] = new uint32_t[temp_mapping[i].size()];
+        for (size_t j = 0; j < temp_mapping[i].size(); ++j) {
+            equivalence_mapping[i][j] = temp_mapping[i][j];
+        }
+    }
+
+    std::cout << "Mapping completed using file: " << filename << std::endl;
 }
 
 const std::unordered_map<int, PartitionEdge>& PartitionManager::getPartitionConnections(int partitionId) const {
