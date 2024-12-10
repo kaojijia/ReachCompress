@@ -165,3 +165,7 @@ result/20241206/IndexReachability_log.txt
 result/20241206/LongDistanceTest_log.txt
 result/20241206/IndexReachability_log.txt.1
 result/20241209/IndexReachability_log.txt
+Edges/large/soc-Epinions1.txt
+Partitions/soc-Epinions1_partitions_louvain.txt
+Partitions/soc-Epinions1_partitions_mincut.txt
+result/20241207/PartitionIndextest_log.txt
