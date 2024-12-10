@@ -350,9 +350,11 @@ bool CSRGraph::removeNode(uint32_t node) {
 
     num_edges = out_num_edges;
     out_row_pointers[max_node_id+1] = num_edges;
+    printAllInfo();
+    printCSRs();
     std::cout << "节点 " << node << " 删除完成." << std::endl;
 
-
+}
 // 增加边（假定新点的id不会大于当前最大节点的id）
 bool CSRGraph::addEdge(uint32_t u, uint32_t v) {
     
