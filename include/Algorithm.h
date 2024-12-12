@@ -7,6 +7,8 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <sys/resource.h>
+
 using namespace std;
 
 class Algorithm {
@@ -33,6 +35,16 @@ public:
         ss << "." << std::setw(6) << std::setfill('0') << now_us.count();
         return ss.str();
     }
+
+    //返回内存占用
+    std::string print_memory_usage() {
+        struct rusage usage;
+        getrusage(RUSAGE_SELF, &usage);
+        std::stringstream ss;
+        ss << "Memory usage: " << usage.ru_maxrss << " KB" << std::endl;
+        return ss.str();
+    }
+
 };
 
 #endif // ALGORIGHM_H

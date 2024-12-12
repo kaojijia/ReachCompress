@@ -37,7 +37,7 @@ def compress_scc(graph):
 
     return compressed_graph, scc_map
 
-def main(input_file, output_dir):
+def process_file(input_file, output_dir):
     edges = read_edges_from_file(input_file)
     graph = nx.DiGraph(edges)
 
@@ -53,7 +53,16 @@ def main(input_file, output_dir):
     print(f"Compressed graph edges written to: {output_edges_file}")
     print(f"Node mapping written to: {output_mapping_file}")
 
+def main(input_dir, output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    for filename in os.listdir(input_dir):
+        input_file = os.path.join(input_dir, filename)
+        if os.path.isfile(input_file):
+            process_file(input_file, output_dir)
+
 if __name__ == "__main__":
-    input_file = "Edges/large/tweibo-edgelist.txt"  # 输入边文件路径
-    output_dir = "Edges/DAGs"     # 输出目录
-    main(input_file, output_dir)
+    input_dir = "Edges/large"  # 输入边文件目录
+    output_dir = "Edges/DAGs"  # 输出目录
+    main(input_dir, output_dir)

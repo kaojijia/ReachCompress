@@ -8,6 +8,7 @@
 class RandomUtils {
 public:
     // 生成不重复的随机查询对
+        // 生成不重复的随机查询对,容易死循环，因为要一直找不重复的但是找不到，推荐用下面那个，可能会重复但不会死循环
     static std::vector<std::pair<int, int>> generateUniqueQueryPairs(int num_queries, int max_value, unsigned int seed = std::random_device{}()) {
         std::vector<std::pair<int, int>> query_pairs;
         query_pairs.reserve(num_queries);

@@ -83,13 +83,16 @@ vector<string> getAllFiles(const string& directoryPath) {
 }
 
 TEST(ReachabilityTest, TotalReachabilityRatioTest) {
-    string edgesDirectory = PROJECT_ROOT_DIR"/Edges/medium";  // 根据实际路径修改
+    string edgesDirectory = PROJECT_ROOT_DIR"/Edges/DAGs/medium";  // 根据实际路径修改
     
-    string outputFilePath = string(PROJECT_ROOT_DIR)+"/result/"+getCurrentDaystamp()+"/reach_ratio_results.csv";      
+    string outputFilePath = string(PROJECT_ROOT_DIR)+"/result/"+getCurrentDaystamp()+"/reach_ratio_results_2.csv";      
 
+    string file2 = "/home/reco/Projects/ReachCompress/Edges/large/tweibo-edgelist.txt";
     // 获取所有边文件
-    vector<string> edgeFiles = getAllFiles(edgesDirectory);
+    // vector<string> edgeFiles = getAllFiles(edgesDirectory);
 
+    vector<string> edgeFiles; 
+    edgeFiles.push_back(file2);
     if (edgeFiles.empty()) {
         cout << "[" << getCurrentTimestamp() << "] " << "没有找到任何边文件。" << endl;
         return;
@@ -113,7 +116,6 @@ TEST(ReachabilityTest, TotalReachabilityRatioTest) {
     // 遍历每个边文件
     for (const auto& edgeFilePath : edgeFiles) {
         cout << "[" << getCurrentTimestamp() << "] " << "正在处理: " << edgeFilePath << endl;
-
         // 初始化图
         Graph g(true);  // 确保存储边集
 

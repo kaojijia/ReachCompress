@@ -43,8 +43,12 @@ void CompressedSearch::offline_industry() {
 
 void CompressedSearch::offline_industry(size_t num_vertices, float ratio)
 {
-    partition_graph();  ///< 执行图分区算法
+
     construct_filter(); ///< 构建过滤器
+    compute_reach_ratio(g); ///< 计算可达性比例
+    //TODO：执行压缩
+    
+    partition_graph();  ///< 执行图分区算法
 
     build_partition_index(ratio, num_vertices); 
 
@@ -338,7 +342,7 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
         //ratio >= 传进来的ratio,那么就建立不可达的邻接表,对子图做V*V的循环,每个里面调用一次双边BFS,如果不可达就记录下来
         //建立索引的方案是,在CompressSearch中建立三个数据结构
         if(subgraph.second.get_num_vertices() < num_vertices) {
-            // 构建可达索引:邻接矩阵
+            // 构建可达索引:可达矩阵
             //映射后的号
             size_t index = 0;
             // 第一位是源节点，第二位是索引中的序号
