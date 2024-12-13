@@ -97,7 +97,7 @@ bool CSRGraph::fromGraph(const Graph& graph) {
     // 设置最大节点 ID
     max_node_id = graph.vertices.size() - 1;
 
-    // 统计总边数（假设每条边在 LOUT 中记录一次）
+    // 统计总边数
     num_edges = 0;
     for (size_t u = 0; u < graph.vertices.size(); u++) {
         num_edges += graph.vertices[u].LOUT.size();
@@ -172,7 +172,11 @@ bool CSRGraph::fromGraph(const Graph& graph) {
         num_nodes++;
     }
 
-
+    //获取每个节点的分区号
+    this->partitions = new int16_t[max_node_id+1];
+    for(auto node:graph.vertices){
+        this->partitions[node.partition_id] = node.partition_id;
+    }
     // if(graph.vertices[0].LOUT.size()==0 && graph.vertices[0].LIN.size()==0){
     //     removeNode(0);
     // }

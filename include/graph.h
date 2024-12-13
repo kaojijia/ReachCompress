@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <unordered_map>
 
+
+
 // 表示节点的结构
 struct Vertex {
     int partition_id = -1;  // 分区ID
@@ -61,6 +63,7 @@ public:
     size_t get_num_vertices() const{
         return num_vertices;
     }
+
 private:
 
     bool store_edges;  // 控制是否存储边集
@@ -68,6 +71,7 @@ private:
     float ratio;
     size_t num_vertices;
     size_t num_edges;
+    
 };
 
 #endif  // GRAPH_H

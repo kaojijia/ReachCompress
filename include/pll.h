@@ -2,6 +2,7 @@
 #define PLL_H
 
 #include "graph.h"
+#include "CSR.h"
 #include "Algorithm.h"
 #include <vector>
 
@@ -12,13 +13,17 @@ public:
 
     void offline_industry() override;
     bool reachability_query(int source, int target) override;
-    
+
+
+
     // 构建PLL标签
     void buildPLLLabels();
     // 完全体标签
     void buildPLLLabelsUnpruned();
     // 可达性查询
     bool query(int u, int v);
+    // 用构造的数组做可达性查询
+    bool queryinArray(int source, int target);
 
     std::vector<std::vector<int>> IN;
     std::vector<std::vector<int>> OUT;
@@ -41,6 +46,11 @@ private:
     std::vector<std::vector<int>> adjList;         // 正向邻接表
     std::vector<std::vector<int>> reverseAdjList;  // 逆邻接表
 
+    uint32_t* in_pointers;
+    uint32_t* out_pointers;
+    uint32_t* in_sets;
+    uint32_t* out_sets;
+
     void buildAdjList();
     void buildInOut();
     
@@ -55,6 +65,10 @@ private:
 
     //确定剪枝顺序    
     std::vector<int> orderByDegree();
+
+
+    //转换成类CSR格式用于查询
+    bool convertToArray();
 };
 
 #endif

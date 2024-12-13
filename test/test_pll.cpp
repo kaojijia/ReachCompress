@@ -8,7 +8,7 @@
 #include <string>
 
 
-TEST(PLLTest, DISABLED_BIGVertexTest) {
+TEST(PLLTest, BIGVertexTest) {
     Graph g(true);
     g.addEdge(1, 2);
     g.addEdge(2, 3);
@@ -16,14 +16,16 @@ TEST(PLLTest, DISABLED_BIGVertexTest) {
     g.addEdge(4, 100);
     PLL pll(g);
     pll.offline_industry();
+    pll.getCurrentTimestamp();
     EXPECT_TRUE(pll.reachability_query(1, 4));
     EXPECT_TRUE(pll.reachability_query(1, 100));
     EXPECT_FALSE(pll.reachability_query(1, 5));
     EXPECT_FALSE(pll.reachability_query(1, 6));
     EXPECT_FALSE(pll.reachability_query(123, 68));
     EXPECT_FALSE(pll.reachability_query(43, 1));
+    pll.getCurrentTimestamp();
 }
-TEST(PLLTest, DISABLED_ReachabilityTest) {
+TEST(PLLTest, ReachabilityTest) {
     Graph g1(true);
     Graph g2(true);
 
@@ -59,13 +61,14 @@ TEST(PLLTest, DISABLED_ReachabilityTest) {
     unsigned int seed = 42; // 可选的随机种子
         std::vector<std::pair<int, int>> query_pairs = RandomUtils::generateUniqueQueryPairs(num_queries, max_value, seed);
 
-    
+    cout<<pll2.getCurrentTimestamp()<<endl;
     for (const auto& query_pair : query_pairs) {
         int source = query_pair.first;
         int target = query_pair.second;
         bool result = pll2.query(source, target);
         std::cout << "Query from " << source << " to " << target << ": " << (result ? "Reachable" : "Not Reachable") << std::endl;
     }
+    cout<<pll2.getCurrentTimestamp()<<endl;
 
 
 }

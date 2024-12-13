@@ -9,20 +9,21 @@
 #include <algorithm>
 #include <cstring> // for memcpy
 
-#include "graph.h"
+#include "graph.h" 
+
 
 class CSRGraph {
 public:
     // 出边和入边的 CSR 结构
     uint32_t* out_column_indices;  // 存储出边的列索引
-    uint32_t* out_row_pointers;    // 存储出边的每一行的起始位置索引
+    uint32_t* out_row_pointers;    // 存储出边的每一行的起始位置索引,从0开始，最后一位是总边数，倒数第二位的index是max_node_id
     uint32_t* in_column_indices;   // 存储入边的列索引
     uint32_t* in_row_pointers;     // 存储入边的每一行的起始位置索引
 
     // 节点的分区信息
     int16_t* partitions;           // 存储每个节点的分区号，预设值为 -1
 
-    uint32_t max_node_id;            // 最大节点id=数组长度-1
+    uint32_t max_node_id;            // 最大节点id=数组长度-2
     uint32_t num_edges;            // 边数量
     uint32_t num_nodes;            // 节点数量
 

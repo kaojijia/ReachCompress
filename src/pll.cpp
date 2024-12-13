@@ -11,7 +11,6 @@ PLL::PLL(Graph& graph) : g(graph) {
     buildAdjList(); 
     //做IN表和OUT表
     buildInOut();
-
 }
 
 void PLL::offline_industry()
@@ -19,11 +18,35 @@ void PLL::offline_industry()
     buildPLLLabels();
     adjList.clear();
     reverseAdjList.clear();
+    convertToArray();
 }
 
 bool PLL::reachability_query(int source, int target)
 {
     return query(source, target);
+    // 数组比vector的访问时间慢了不少，平均一个查询分别是5微秒和6微秒
+    // return queryinArray(source, target);
+}
+
+bool PLL::queryinArray(int u, int v)
+{
+    uint32_t num_node = g.vertices.size();
+    if (u > num_node || v > num_node) return false;
+    if (u == v) return true;
+    // 检查 IN 和 OUT 集合
+    for (int i = in_pointers[v]; i < in_pointers[v + 1]; ++i) {
+        if (in_sets[i] == u) return true;
+    }
+    for (int i = out_pointers[u]; i < out_pointers[u + 1]; ++i) {
+        if (out_sets[i] == v) return true;
+    }
+    for (int i = out_pointers[u]; i < out_pointers[u + 1]; ++i) {
+        for (int j = in_pointers[v]; j < in_pointers[v + 1]; ++j) {
+            if (out_sets[i] == in_sets[j]) return true;
+        }
+    }
+
+    return false;  // 无交集，不可达
 }
 
 
@@ -74,6 +97,50 @@ std::vector<int> PLL::orderByDegree() {
     });
 
     return nodes;
+}
+
+
+bool PLL::convertToArray() {
+    // 分配内存
+    int max_node_id = g.vertices.size();
+    in_pointers = new uint32_t[max_node_id + 1];
+    out_pointers = new uint32_t[max_node_id + 1];
+
+    size_t in_total_size = 0;
+    size_t out_total_size = 0;
+
+    for (const auto& in_set : IN) {
+        in_total_size += in_set.size();
+    }
+    for (const auto& out_set : OUT) {
+        out_total_size += out_set.size();
+    }
+
+
+    in_sets = new uint32_t[in_total_size];
+    out_sets = new uint32_t[out_total_size];
+
+    // 填充 in_pointers 和 in_sets
+    size_t in_index = 0;
+    in_pointers[0] = 0;
+    for (size_t i = 0; i < IN.size(); ++i) {
+        in_pointers[i + 1] = in_pointers[i] + IN[i].size();
+        for (size_t j = 0; j < IN[i].size(); ++j) {
+            in_sets[in_index++] = IN[i][j];
+        }
+    }
+
+    // 填充 out_pointers 和 out_sets
+    size_t out_index = 0;
+    out_pointers[0] = 0;
+    for (size_t i = 0; i < OUT.size(); ++i) {
+        out_pointers[i + 1] = out_pointers[i] + OUT[i].size();
+        for (size_t j = 0; j < OUT[i].size(); ++j) {
+            out_sets[out_index++] = OUT[i][j];
+        }
+    }
+
+    return true;
 }
 
 

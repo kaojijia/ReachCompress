@@ -38,7 +38,7 @@ void CompressedSearch::offline_industry() {
     // bloom_filter_.build(g);
     // 构建 Node Embedding
     // node_embedding_.build(g);
-    part_bfs = std::unique_ptr<BidirectionalBFS>(new BidirectionalBFS(partition_manager_.part_g));
+    part_bfs = std::unique_ptr<BiBFSCSR>(new BiBFSCSR(partition_manager_.part_g));
 }
 
 void CompressedSearch::offline_industry(size_t num_vertices, float ratio)
@@ -53,7 +53,8 @@ void CompressedSearch::offline_industry(size_t num_vertices, float ratio)
     build_partition_index(ratio, num_vertices); 
 
     //建立分区相互联系的图
-    part_bfs = std::unique_ptr<BidirectionalBFS>(new BidirectionalBFS(partition_manager_.part_g));
+    //part_bfs = std::unique_ptr<BidirectionalBFS>(new BidirectionalBFS(partition_manager_.part_g));
+    part_bfs = std::unique_ptr<BiBFSCSR>(new BiBFSCSR(partition_manager_.part_g));
 }
 
 void CompressedSearch::construct_filter(){

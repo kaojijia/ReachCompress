@@ -14,6 +14,7 @@ add_library(reach_comp STATIC
     ReachRatio.cpp
     ImportPartitioner.cpp
     CSR.cpp
+    BiBFSCSR.cpp
 )
 
 # 包含头文件目录

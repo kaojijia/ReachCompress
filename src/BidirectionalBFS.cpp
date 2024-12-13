@@ -6,7 +6,8 @@
 #include <algorithm>
 
 // 构造函数，传入图并构建邻接表和逆邻接表
-BidirectionalBFS::BidirectionalBFS(Graph& graph) : g(graph) {
+BidirectionalBFS::BidirectionalBFS(Graph& graph) : g(graph){
+    this->csr.fromGraph(g);
     buildAdjList();  // 构建邻接表和逆邻接表
 }
 

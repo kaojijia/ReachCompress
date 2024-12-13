@@ -2,6 +2,7 @@
 #define BIDIRECTIONAL_BFS_H
 
 #include "graph.h"
+#include "CSR.h"
 #include "Algorithm.h"
 #include <vector>
 #include <queue>
@@ -25,6 +26,7 @@ public:
 
 private:
     Graph& g;
+    CSRGraph csr;
     std::vector<std::vector<int>> adjList;         // 正向邻接表
     std::vector<std::vector<int>> reverseAdjList;  // 逆邻接表
 
