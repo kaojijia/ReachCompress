@@ -2,4 +2,6 @@
 
 void NodeEmbedding::build(const Graph &graph)
 {
+    
+
 }

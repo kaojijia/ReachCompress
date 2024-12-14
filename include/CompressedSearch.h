@@ -175,7 +175,7 @@ private:
     Graph &g;                                       ///< 处理的图。
     PartitionManager partition_manager_;            ///< 分区管理器。
     std::unique_ptr<GraphPartitioner> partitioner_; ///< 图分区器，支持多种分区算法。
-    BloomFilter bloom_filter_;                      ///< Bloom Filter，用于快速判断节点间可能的连接。
+    //BloomFilter bloom_filter_;                      ///< Bloom Filter，用于快速判断节点间可能的连接。
     NodeEmbedding node_embedding_;                  ///< 节点嵌入，用于压缩邻接矩阵。
     std::string partitioner_name_;
     unordered_map<size_t, vector<vector<size_t>>> unreachable_index_;          ///< 不可达分区索引，存储分区内的不可达点对的邻接表。

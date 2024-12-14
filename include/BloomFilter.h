@@ -3,15 +3,16 @@
 #define BLOOM_FILTER_H
 
 #include "graph.h"
+#include "Algorithm.h"
 #include <vector>
 
-class BloomFilter {
+class BloomFilter : public Algorithm {
 public:
-    void build(const Graph& graph);
-    bool possibly_connected(int source, int target) const;
+    // BloomFilter(Graph& graph);
+    // void offline_industry();
+    // bool reachability_query(int source, int target);
 private:
-    std::vector<bool> bitArray_;
-    // ...existing code...
+    // std::vector<bool> bitArray_;
 };
 
 #endif // BLOOM_FILTER_H
