@@ -127,7 +127,7 @@ TEST(ReachabilityTest, TotalReachabilityRatioTest) {
         // OutputHandler::printGraphInfo(g);
 
         // 计算全图的可达性比例
-        float total_ratio = compute_reach_ratio(g);
+        float total_ratio = compute_reach_ratio_pll(g);
         cout << "[" << getCurrentTimestamp() << "] " << "Total reach ratio: " << total_ratio << endl;
 
         // 写入结果到CSV

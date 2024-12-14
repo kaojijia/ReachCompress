@@ -19,6 +19,8 @@ std::unordered_map<int, float> compute_reach_ratios(const PartitionManager& pm);
 // 返回：可达性比例（float）
 float compute_reach_ratio(Graph& graph);
 
+//使用pll方法计算全图可达比例
+float compute_reach_ratio_pll(Graph& graph);
 
 
 #endif // REACH_RATIO_H
