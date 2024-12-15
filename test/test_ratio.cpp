@@ -123,6 +123,8 @@ TEST(ReachabilityTest, TotalReachabilityRatioTest) {
         InputHandler inputHandler(edgeFilePath);
         inputHandler.readGraph(g);
 
+        BidirectionalBFS bfs(g);
+        // bfs.set_reachable_matrix();
         // 输出图信息（可选）
         // OutputHandler::printGraphInfo(g);
 

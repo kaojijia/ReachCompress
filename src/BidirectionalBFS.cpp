@@ -4,6 +4,9 @@
 #include <unordered_set>
 #include <vector>
 #include <algorithm>
+#include <thread>
+#include <atomic>
+using namespace std;
 
 // 构造函数，传入图并构建邻接表和逆邻接表
 BidirectionalBFS::BidirectionalBFS(Graph& graph) : g(graph){
@@ -220,4 +223,40 @@ std::vector<int> BidirectionalBFS::findPath(int source, int target, int partitio
     path.insert(path.end(), backward_path.begin(), backward_path.end());
 
     return path;
+}
+
+uint32_t BidirectionalBFS::count_reachable() {
+    uint32_t numVertices = g.vertices.size();
+    std::atomic<uint32_t> count(0); // 使用原子变量进行线程安全的累加
+    size_t numThreads = std::thread::hardware_concurrency(); // 获取可用硬件线程数
+    if (numThreads == 0) numThreads = 4; // 如果获取失败，默认使用 4 个线程
+
+    // 分块处理顶点范围
+    auto worker = [&](size_t start, size_t end) {
+        for (size_t i = start; i < end; ++i) {
+            if (g.vertices[i].LOUT.empty()) continue;
+            for (size_t j = 0; j < numVertices; ++j) {
+                if (g.vertices[j].LIN.empty()) continue;
+                if (reachability_query(i, j)) {
+                    count++; // 原子操作，线程安全
+                }
+            }
+        }
+    };
+
+    // 创建线程
+    std::vector<std::thread> threads;
+    size_t chunkSize = (numVertices + numThreads - 1) / numThreads; // 块大小
+    for (size_t t = 0; t < numThreads; ++t) {
+        size_t start = t * chunkSize;
+        size_t end = std::min(start + chunkSize, numVertices);
+        threads.emplace_back(worker, start, end); // 分配任务
+    }
+
+    // 等待所有线程完成
+    for (auto& th : threads) {
+        th.join();
+    }
+
+    return count.load(); // 返回计数结果
 }
