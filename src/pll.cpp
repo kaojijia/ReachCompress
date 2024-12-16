@@ -289,3 +289,51 @@ void PLL::simplifyInOutSets() {
         out_set.assign(unique_out.begin(), unique_out.end());
     }
 }
+PLL::~PLL() {
+    // 释放动态数组
+    // if (in_pointers != nullptr) {
+    //     delete[] in_pointers;
+    //     in_pointers = nullptr;
+    // }
+    // if (out_pointers != nullptr) {
+    //     delete[] out_pointers;
+    //     out_pointers = nullptr;
+    // }
+    // if (in_sets != nullptr) {
+    //     delete[] in_sets;
+    //     in_sets = nullptr;
+    // }
+    // if (out_sets != nullptr) {
+    //     delete[] out_sets;
+    //     out_sets = nullptr;
+    // }
+
+    // 清空 IN 和 OUT 容器
+    if (!IN.empty()) {
+        std::cout << "Clearing IN..." << std::endl;
+        for (auto& inSet : IN) {
+            inSet.clear(); // 清空每个子向量
+        }
+        IN.clear(); // 清空主向量
+    }
+
+    if (!OUT.empty()) {
+        std::cout << "Clearing OUT..." << std::endl;
+        for (auto& outSet : OUT) {
+            outSet.clear();
+        }
+        OUT.clear();
+    }
+
+    // 清空邻接表
+    if (!adjList.empty()) {
+        std::cout << "Clearing adjList..." << std::endl;
+        adjList.clear();
+    }
+    if (!reverseAdjList.empty()) {
+        std::cout << "Clearing reverseAdjList..." << std::endl;
+        reverseAdjList.clear();
+    }
+
+    std::cout << "PLL destructor completed." << std::endl;
+}

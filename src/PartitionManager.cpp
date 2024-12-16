@@ -118,6 +118,7 @@ void PartitionManager::build_partition_graph()
     std::cout << "Partition graph constructed with " << temp_edges.size() << " partitions." << std::endl;
 }
 
+//TODO:与图的临界边集解耦
 void PartitionManager::update_partition_connections()
 {
     for (size_t u = 0; u < g.adjList.size(); ++u)

@@ -63,6 +63,6 @@ def main(input_dir, output_dir):
             process_file(input_file, output_dir)
 
 if __name__ == "__main__":
-    input_dir = "Edges/large"  # 输入边文件目录
-    output_dir = "Edges/DAGs"  # 输出目录
+    input_dir = "Edges/generate"  # 输入边文件目录
+    output_dir = "Edges/DAGs/generate"  # 输出目录
     main(input_dir, output_dir)

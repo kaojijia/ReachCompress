@@ -108,7 +108,7 @@ def write_multi_level_partitions_to_file(partition, output_file):
     """
     with open(output_file, 'w') as file:
         for node, (community, sub_community) in partition.items():
-            file.write(f"{node} {community} {sub_community}\n")
+            file.write(f"{node} {community} \n")
 
 def main(input_dir, output_dir, resolution_parameter=1.0, min_community_size=10):
     """
@@ -148,8 +148,8 @@ def main(input_dir, output_dir, resolution_parameter=1.0, min_community_size=10)
     print("All files processed.")
 
 if __name__ == "__main__":
-    input_directory = "Edges/large"      # 输入边文件目录
+    input_directory = "Edges/DAGs/medium"      # 输入边文件目录
     output_directory = "Partitions"       # 输出分区结果目录
     resolution_parameter = 0.7              # 分辨率参数
-    min_community_size = 1000               # 最小社区大小
+    min_community_size = 300               # 最小社区大小
     main(input_directory, output_directory, resolution_parameter, min_community_size)

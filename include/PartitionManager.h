@@ -76,6 +76,11 @@ public:
     // 从文件中读取节点的分区信息，更新到图中，有些从边集没有读取到的边会在这里补全
     void read_equivalance_info(const std::string &filename);
 
+    uint32_t get_equivalance_mapping(int node) const{
+        uint32_t eq = *equivalence_mapping[node];
+        return ((eq==4156623648)?static_cast<uint32_t>(node):eq);
+    };
+
     uint32_t get_equivalence_mapping_size() const
     {
         uint32_t total_size = 0;
@@ -110,7 +115,7 @@ public:
     std::unordered_map<int, Graph> partition_subgraphs;
     std::map<uint32_t, std::shared_ptr<CSRGraph>> partition_subgraphs_csr;
 
-    // 等价类的二维数组映射
+    // 等价类的二维数组映射,第一位是原始节点，第二位是映射后的节点。在g中的vertex结构体里也有这个
     uint32_t **equivalence_mapping;
 
 private:

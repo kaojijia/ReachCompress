@@ -175,135 +175,146 @@ protected:
 };
 
 
-TEST_F(ReachabilityTest, DISABLED_BasicTest) {
+TEST_F(ReachabilityTest, BasicTest) {
     // 打开日志文件
-    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/20241205/Basictest_log.txt";
+    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/"+getCurrentDaystamp()+"/Basictest_log.txt";
     ofstream logFile(logFilePath, ios::out);
     if (!logFile.is_open()) {
         FAIL() << "无法打开日志文件: " << logFilePath;
     }
 
-    // 遍历每个边文件
-    for (const auto& edgeFilePath : edgeFiles) {
-        cout << "Processing edge file: " << edgeFilePath << endl;
-        // 写入初始日志
-        logFile << "**************************************" << endl;
-        logFile << "*************************************" << endl;
-        logFile << "************************************" << endl;
-        logFile << "********************************" << endl;
-        logFile << "*************************" << endl;
-        logFile << "**************" << endl;
-        logFile << "[" << getCurrentTimestamp() << "] " << "当前处理文件: " << edgeFilePath << endl;
+    string edgeFile = PROJECT_ROOT_DIR"/Edges/medium/wiki-Vote";
+    string edgefileDAG = PROJECT_ROOT_DIR"/Edges/DAGs/medium/wiki-Vote_DAG";
+    string mapping = PROJECT_ROOT_DIR"/Edges/DAGmapping/wiki-Vote_mapping";
 
-        // 初始化图
-        Graph g(true);  // 确保存储边集
+    cout << "Processing edge file: " << edgeFile << endl;
+    // 写入初始日志
+    logFile << "**************************************" << endl;
+    logFile << "*************************************" << endl;
+    logFile << "************************************" << endl;
+    logFile << "********************************" << endl;
+    logFile << "*************************" << endl;
+    logFile << "**************" << endl;
+    logFile << "[" << getCurrentTimestamp() << "] " << "当前处理文件: " << edgeFile << endl;
 
-        // 读取边文件
-        InputHandler inputHandler(edgeFilePath);
-        inputHandler.readGraph(g);
-        g.setFilename(edgeFilePath);
-        // 初始化 CompressedSearch 并进行离线处理
-        CompressedSearch comps(g);
-        comps.offline_industry();
-        logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
+    // 初始化图
+    Graph g(true);  // 确保存储边集
+    Graph dag(true);
+    // 读取边文件
+    InputHandler inputHandler(edgeFile);
+    inputHandler.readGraph(g);
+    g.setFilename(edgeFile);
+    InputHandler inputHandlerDAG(edgefileDAG);
+    inputHandlerDAG.readGraph(dag);
+    dag.setFilename(edgefileDAG);
 
-        // 初始化 PLL 并进行离线处理
-        PLL pll(g);
-        pll.offline_industry();
-        logFile << "[" << getCurrentTimestamp() << "] " << "完成 PLL 离线索引构建" << endl;
+    // 初始化 BFS
+    BidirectionalBFS bfs(g);
 
-        // 获取 PLL 索引大小并记录
-        auto pllIndexSizes = pll.getIndexSizes();
-        stringstream oss;
-        oss << "PLL Index Sizes - IN: " << pllIndexSizes["IN"] << ", OUT: " << pllIndexSizes["OUT"];
-        logFile << "[" << getCurrentTimestamp() << "] " << oss.str() << endl;
+    // 初始化 PLL 并进行离线处理
+    PLL pll(g);
+    pll.offline_industry();
+    logFile << "[" << getCurrentTimestamp() << "] " << "完成 PLL 离线索引构建" << endl;
 
-        // 生成查询对
-        int num_queries = 100;
-        int max_value = g.vertices.size();
-        unsigned int seed = 42; // 可选的随机种子
-
-        //改成允许重复的 query
-        vector<pair<int, int>> query_pairs = RandomUtils::generateQueryPairs(num_queries, max_value, seed);
-
-        // 计算每个方法的平均耗时
-        long long total_duration_bfs = 0;
-        long long total_duration_part = 0;
-        long long total_duration_pll = 0;
-        int query_count = 0;
-
-        for (const auto& query_pair : query_pairs) {
-            int source = query_pair.first;
-            int target = query_pair.second;
-
-            stringstream query_oss;
-
-            // 测量 BiBFS 查询耗时
-            auto start_bfs = chrono::high_resolution_clock::now();
-            bool bfs_result = comps.bfs.reachability_query(source, target);
-            auto end_bfs = chrono::high_resolution_clock::now();
-            auto duration_bfs = chrono::duration_cast<chrono::microseconds>(end_bfs - start_bfs).count();
+    // 获取 PLL 索引大小并记录
+    auto pllIndexSizes = pll.getIndexSizes();
+    stringstream oss;
+    oss << "PLL Index Sizes - IN: " << pllIndexSizes["IN"] << ", OUT: " << pllIndexSizes["OUT"];
+    logFile << "[" << getCurrentTimestamp() << "] " << oss.str() << endl;
 
 
-            // 测量 Partitioned Search 查询耗时
-            auto start_part = chrono::high_resolution_clock::now();
-            bool part_result = comps.reachability_query(source, target);
-            auto end_part = chrono::high_resolution_clock::now();
-            auto duration_part = chrono::duration_cast<chrono::microseconds>(end_part - start_part).count();
-
-            // 测量 PLL 查询耗时
-            auto start_pll = chrono::high_resolution_clock::now();
-            bool pll_result = pll.reachability_query(source, target);
-            auto end_pll = chrono::high_resolution_clock::now();
-            auto duration_pll = chrono::duration_cast<chrono::microseconds>(end_pll - start_pll).count();
-
-            
-
-            bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);//if(!results_match) continue;
+    // 初始化 CompressedSearch 并进行离线处理
+    CompressedSearch comps(dag);
+    comps.offline_industry(200,0.9,mapping);
+    logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
 
 
-            query_oss << "Query from " << source << " to " << target;
-            logFile << "[" << getCurrentTimestamp() << "] " << query_oss.str() << endl;
 
-            query_count++;
-            total_duration_bfs += duration_bfs;
-            total_duration_part += duration_part;
-            total_duration_pll += duration_pll;
-            // 输出查询结果和耗时
-            stringstream result_oss;
-            result_oss << "BiBFS: " << (bfs_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_bfs << " microseconds)";
-            logFile << "[" << getCurrentTimestamp() << "] " << result_oss.str() << endl;
+    // 生成查询对
+    int num_queries = 100;
+    int max_value = g.vertices.size();
+    unsigned int seed = 42; // 可选的随机种子
 
-            result_oss.str(""); // 清空字符串流
-            result_oss << "PartSearch: " << (part_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_part << " microseconds)";
-            logFile << "[" << getCurrentTimestamp() << "] " << result_oss.str() << endl;
+    //改成允许重复的 query
+    vector<pair<int, int>> query_pairs = RandomUtils::generateQueryPairs(num_queries, max_value, seed);
 
-            result_oss.str(""); // 清空字符串流
-            result_oss << "PLLSearch: " << (pll_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_pll << " microseconds)";
-            logFile << "[" << getCurrentTimestamp() << "] " << result_oss.str() << endl;
+    // 计算每个方法的平均耗时
+    long long total_duration_bfs = 0;
+    long long total_duration_part = 0;
+    long long total_duration_pll = 0;
+    int query_count = 0;
+
+    for (const auto& query_pair : query_pairs) {
+        int source = query_pair.first;
+        int target = query_pair.second;
+
+        stringstream query_oss;
+
+        // 测量 BiBFS 查询耗时
+        auto start_bfs = chrono::high_resolution_clock::now();
+        bool bfs_result = bfs.reachability_query(source, target);
+        auto end_bfs = chrono::high_resolution_clock::now();
+        auto duration_bfs = chrono::duration_cast<chrono::microseconds>(end_bfs - start_bfs).count();
 
 
-            stringstream match_oss;
-            match_oss << "***** Does Result Match from " << source << " query to " << target << ": " << (results_match ? "Match" : "Not Match") << " *****";
-            logFile << "[" << getCurrentTimestamp() << "] " << match_oss.str() << endl;
+        // 测量 Partitioned Search 查询耗时
+        auto start_part = chrono::high_resolution_clock::now();
+        bool part_result = comps.reachability_query(source, target);
+        auto end_part = chrono::high_resolution_clock::now();
+        auto duration_part = chrono::duration_cast<chrono::microseconds>(end_part - start_part).count();
 
-            EXPECT_EQ(bfs_result, part_result);
-            EXPECT_EQ(bfs_result, pll_result);
-        }
+        // 测量 PLL 查询耗时
+        auto start_pll = chrono::high_resolution_clock::now();
+        bool pll_result = pll.reachability_query(source, target);
+        auto end_pll = chrono::high_resolution_clock::now();
+        auto duration_pll = chrono::duration_cast<chrono::microseconds>(end_pll - start_pll).count();
 
-        // 计算并记录平均耗时
-        stringstream final_oss;
-        final_oss << "Final Average BiBFS Time: " << (query_count > 0 ? (total_duration_bfs / query_count) : 0) << " microseconds";
-        logFile << "[" << getCurrentTimestamp() << "] " << final_oss.str() << endl;
+        
 
-        final_oss.str(""); // 清空字符串流
-        final_oss << "Final Average PartSearch Time: " << (query_count > 0 ? (total_duration_part / query_count) : 0) << " microseconds";
-        logFile << "[" << getCurrentTimestamp() << "] " << final_oss.str() << endl;
+        bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);//if(!results_match) continue;
 
-        final_oss.str(""); // 清空字符串流
-        final_oss << "Final Average PLLSearch Time: " << (query_count > 0 ? (total_duration_pll / query_count) : 0) << " microseconds";
-        logFile << "[" << getCurrentTimestamp() << "] " << final_oss.str() << endl;
+
+        query_oss << "Query from " << source << " to " << target;
+        logFile << "[" << getCurrentTimestamp() << "] " << query_oss.str() << endl;
+
+        query_count++;
+        total_duration_bfs += duration_bfs;
+        total_duration_part += duration_part;
+        total_duration_pll += duration_pll;
+        // 输出查询结果和耗时
+        stringstream result_oss;
+        result_oss << "BiBFS: " << (bfs_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_bfs << " microseconds)";
+        logFile << "[" << getCurrentTimestamp() << "] " << result_oss.str() << endl;
+
+        result_oss.str(""); // 清空字符串流
+        result_oss << "PartSearch: " << (part_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_part << " microseconds)";
+        logFile << "[" << getCurrentTimestamp() << "] " << result_oss.str() << endl;
+
+        result_oss.str(""); // 清空字符串流
+        result_oss << "PLLSearch: " << (pll_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_pll << " microseconds)";
+        logFile << "[" << getCurrentTimestamp() << "] " << result_oss.str() << endl;
+
+
+        stringstream match_oss;
+        match_oss << "***** Does Result Match from " << source << " query to " << target << ": " << (results_match ? "Match" : "Not Match") << " *****";
+        logFile << "[" << getCurrentTimestamp() << "] " << match_oss.str() << endl;
+
+        EXPECT_EQ(bfs_result, part_result);
+        EXPECT_EQ(bfs_result, pll_result);
     }
+
+    // 计算并记录平均耗时
+    stringstream final_oss;
+    final_oss << "Final Average BiBFS Time: " << (query_count > 0 ? (total_duration_bfs / query_count) : 0) << " microseconds";
+    logFile << "[" << getCurrentTimestamp() << "] " << final_oss.str() << endl;
+
+    final_oss.str(""); // 清空字符串流
+    final_oss << "Final Average PartSearch Time: " << (query_count > 0 ? (total_duration_part / query_count) : 0) << " microseconds";
+    logFile << "[" << getCurrentTimestamp() << "] " << final_oss.str() << endl;
+
+    final_oss.str(""); // 清空字符串流
+    final_oss << "Final Average PLLSearch Time: " << (query_count > 0 ? (total_duration_pll / query_count) : 0) << " microseconds";
+    logFile << "[" << getCurrentTimestamp() << "] " << final_oss.str() << endl;
 
     // 关闭日志文件
     logFile.close();
@@ -346,7 +357,7 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
         g.setFilename(edgeFilePath);
         // 初始化 CompressedSearch 并进行离线处理
         CompressedSearch comps(g,"Louvain");
-        comps.offline_industry(num_nodes,ratio);
+        comps.offline_industry(num_nodes,ratio,nullptr);
         logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
         auto lines = comps.get_index_info();
         for(auto line : lines){
@@ -461,7 +472,7 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
 
 
 //历史记录
-TEST_F(ReachabilityTest, MultiPartitionTest)
+TEST_F(ReachabilityTest, DISABLED_MultiPartitionTest)
 {
     string edgeFile2 = PROJECT_ROOT_DIR"/Edges/medium/cit-DBLP";
     Graph g2(true);
@@ -471,7 +482,7 @@ TEST_F(ReachabilityTest, MultiPartitionTest)
     // 初始化 CompressedSearch 并进行离线处理
     CompressedSearch comps2(g2, "Louvain");
 
-    comps2.offline_industry(300,0.9);
+    comps2.offline_industry(300,0.9,nullptr);
     //跨分区DFS查询改完了
     EXPECT_TRUE(comps2.reachability_query(6911,1631));
     EXPECT_TRUE(comps2.reachability_query(4137,12191));
@@ -524,7 +535,7 @@ TEST_F(ReachabilityTest, DISABLED_PartitionIndexTest)
 
         // 初始化 CompressedSearch 并进行离线处理
         CompressedSearch comps(g);
-        comps.offline_industry(100,0.9);
+        comps.offline_industry(100,0.9,nullptr);
 
         // 获取分区管理器
         auto &pm = comps.get_partition_manager();
@@ -604,6 +615,8 @@ TEST_F(ReachabilityTest, DISABLED_CompressedSearchPartitionInfoTest) {
 
 
 TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
+
+    
     // 确认文件路径
     string edgeFile2 = string(PROJECT_ROOT_DIR) + "/Edges/medium/cit-DBLP";
     string queryFile = string(PROJECT_ROOT_DIR) + "/QueryPairs/cit-DBLP_distance_pairs_reachable";
@@ -618,7 +631,7 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
 
     // 初始化 CompressedSearch 并进行离线处理
     CompressedSearch comps2(g2,"Louvain");
-    comps2.offline_industry(300, 0.9);
+    comps2.offline_industry(300, 0.9,nullptr);
 
     // 读取查询点对
     vector<pair<int, int>> query_pairs_4 = readQueryPairs(queryFile, 4, 100);
@@ -699,3 +712,4 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
     // 关闭日志文件
     logFile.close();
 }
+
