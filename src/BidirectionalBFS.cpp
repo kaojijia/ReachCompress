@@ -272,7 +272,7 @@ uint32_t BidirectionalBFS::count_reachable() {
     size_t chunkSize = (numVertices + numThreads - 1) / numThreads; // 块大小
     for (size_t t = 0; t < numThreads; ++t) {
         size_t start = t * chunkSize;
-        size_t end = std::min(start + chunkSize, numVertices);
+        size_t end = std::min(static_cast<size_t>(start + chunkSize), static_cast<size_t>(numVertices));
         threads.emplace_back(worker, start, end); // 分配任务
     }
 

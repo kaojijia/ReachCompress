@@ -10,7 +10,8 @@
 class PLL : public Algorithm{
 public:
     PLL(Graph& graph);  // 构造函数，传入图的引用
-
+    ~PLL();
+    
     void offline_industry() override;
     bool reachability_query(int source, int target) override;
 
@@ -29,7 +30,7 @@ public:
     std::vector<std::vector<int>> OUT;
 
     
-    std::unordered_map<std::string, size_t> getIndexSizes() const override{
+    std::unordered_map<std::string, size_t> getIndexSizes() const override {
         size_t inSize = 0;
         size_t outSize = 0;
         for (const auto& inSet : IN) {
@@ -38,6 +39,9 @@ public:
         for (const auto& outSet : OUT) {
             outSize += outSet.size();
         }
+        // 假设每个整数占用 4 字节
+        inSize *= sizeof(int);
+        outSize *= sizeof(int);
         return {{"IN", inSize}, {"OUT", outSize}};
     }
 private:

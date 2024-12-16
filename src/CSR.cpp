@@ -173,10 +173,10 @@ bool CSRGraph::fromGraph(const Graph& graph) {
     // }
     num_nodes = graph.get_num_vertices();
     //获取每个节点的分区号
-    this->partitions = new int16_t[max_node_id+1];
-    for(auto node:graph.vertices){
-        this->partitions[node.partition_id] = node.partition_id;
-    }
+    // this->partitions = new int16_t[max_node_id+1];
+    // for(auto node:graph.vertices){
+    //     this->partitions[node.partition_id] = node.partition_id;
+    // }
     // if(graph.vertices[0].LOUT.size()==0 && graph.vertices[0].LIN.size()==0){
     //     removeNode(0);
     // }

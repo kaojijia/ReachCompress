@@ -14,6 +14,7 @@
 #include "NodeEmbedding.h"
 #include "BidirectionalBFS.h"
 #include "BiBFSCSR.h"
+#include "TreeCover.h"
 
 using namespace std;
 /**
@@ -32,7 +33,8 @@ public:
           partition_manager_(graph),
           bfs(graph),
           part_bfs(nullptr),
-          is_index(is_index)
+          is_index(is_index),
+          filter_name_("")
     {
         set_partitioner(partitioner_name);
     }
@@ -42,9 +44,9 @@ public:
 
     void offline_industry() override;
 
-    void offline_industry(size_t num_vertices, float ratio);
+    void offline_industry(size_t num_vertices, float ratio, string mapping_file);
 
-    void construct_filter();
+
     
     bool reachability_query(int source, int target) override;
 
@@ -124,14 +126,18 @@ private:
     bool dfs_paths_search(int current_partition, int target_partition, std::vector<int> &path, std::vector<std::vector<int>> &all_paths, std::unordered_set<int> &visited, int source, int target);
     bool dfs_partition_search(int u, std::vector<std::pair<int, int>> edges, std::vector<int> path, int target);
     void build_partition_index(float ratio, size_t num_vertices); ///< 构建分区索引
-
+    void construct_filter(float ratio);
+    
     // std::unique_ptr<BidirectionalBFS> part_bfs;           ///< 分区图上的双向BFS类。
-    std::unique_ptr<BiBFSCSR> part_bfs;
+    std::unique_ptr<Algorithm> filter;              ///< 过滤器，看a来实现
+    std::string filter_name_;
+    std::unique_ptr<BidirectionalBFS> part_bfs;
+    std::unique_ptr<BiBFSCSR> part_bfs_csr;
     Graph &g;                                       ///< 处理的图。
     PartitionManager partition_manager_;            ///< 分区管理器。
     std::unique_ptr<GraphPartitioner> partitioner_; ///< 图分区器，支持多种分区算法。
     // BloomFilter bloom_filter_;                      ///< Bloom Filter，用于快速判断节点间可能的连接。
-    NodeEmbedding node_embedding_; ///< 节点嵌入，用于压缩邻接矩阵。
+    // NodeEmbedding node_embedding_; ///< 节点嵌入，用于压缩邻接矩阵。
     std::string partitioner_name_;
     unordered_map<size_t, vector<vector<size_t>>> unreachable_index_;          ///< 不可达分区索引，存储分区内的不可达点对的邻接表。
     unordered_map<size_t, unordered_map<size_t, size_t>> unreachable_mapping_; ///< 不可达分区里面的点的映射关系，不连续点到连续的数据结构的映射关系

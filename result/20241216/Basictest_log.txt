@@ -1,0 +1,513 @@
+**************************************
+*************************************
+************************************
+********************************
+*************************
+**************
+[2024-12-16 17:22:10] 当前处理文件: /home/reco/Projects/ReachCompress/Edges/medium/wiki-Vote
+[2024-12-16 17:22:10] 完成 PLL 离线索引构建
+[2024-12-16 17:22:10] PLL Index Sizes - IN: 14324, OUT: 26400
+[2024-12-16 17:22:13] 完成 Compress 离线索引构建
+[2024-12-16 17:22:13] Query from 3107 to 6609
+[2024-12-16 17:22:13] BiBFS: Not Reachable (Time: 10 microseconds)
+[2024-12-16 17:22:13] PartSearch: Not Reachable (Time: 26 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 3107 query to 6609: Match *****
+[2024-12-16 17:22:13] Query from 7889 to 1522
+[2024-12-16 17:22:13] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:13] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 7889 query to 1522: Match *****
+[2024-12-16 17:22:13] Query from 6074 to 6469
+[2024-12-16 17:22:13] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:13] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 6074 query to 6469: Match *****
+[2024-12-16 17:22:13] Query from 4967 to 4952
+[2024-12-16 17:22:13] BiBFS: Not Reachable (Time: 134 microseconds)
+[2024-12-16 17:22:13] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 4967 query to 4952: Match *****
+[2024-12-16 17:22:13] Query from 1294 to 3699
+[2024-12-16 17:22:13] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] PartSearch: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 1294 query to 3699: Match *****
+[2024-12-16 17:22:13] Query from 1294 to 829
+[2024-12-16 17:22:13] BiBFS: Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:13] PartSearch: Reachable (Time: 4832 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Reachable (Time: 4 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 1294 query to 829: Match *****
+[2024-12-16 17:22:13] Query from 481 to 3810
+[2024-12-16 17:22:13] BiBFS: Not Reachable (Time: 12 microseconds)
+[2024-12-16 17:22:13] PartSearch: Not Reachable (Time: 20 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 481 query to 3810: Match *****
+[2024-12-16 17:22:13] Query from 7187 to 2769
+[2024-12-16 17:22:13] BiBFS: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:13] PartSearch: Not Reachable (Time: 6 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 7187 query to 2769: Match *****
+[2024-12-16 17:22:13] Query from 4988 to 1185
+[2024-12-16 17:22:13] BiBFS: Reachable (Time: 53 microseconds)
+[2024-12-16 17:22:13] PartSearch: Reachable (Time: 17257 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 4988 query to 1185: Match *****
+[2024-12-16 17:22:13] Query from 5875 to 5401
+[2024-12-16 17:22:13] BiBFS: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:13] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 5875 query to 5401: Match *****
+[2024-12-16 17:22:13] Query from 170 to 468
+[2024-12-16 17:22:13] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:13] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:13] ***** Does Result Match from 170 query to 468: Match *****
+[2024-12-16 17:22:18] Query from 8048 to 5991
+[2024-12-16 17:22:18] BiBFS: Reachable (Time: 29 microseconds)
+[2024-12-16 17:22:18] PartSearch: Reachable (Time: 5406967 microseconds)
+[2024-12-16 17:22:18] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:18] ***** Does Result Match from 8048 query to 5991: Match *****
+[2024-12-16 17:22:18] Query from 6907 to 7788
+[2024-12-16 17:22:18] BiBFS: Reachable (Time: 70 microseconds)
+[2024-12-16 17:22:18] PartSearch: Reachable (Time: 19 microseconds)
+[2024-12-16 17:22:18] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:18] ***** Does Result Match from 6907 query to 7788: Match *****
+[2024-12-16 17:22:18] Query from 1761 to 6
+[2024-12-16 17:22:18] BiBFS: Reachable (Time: 41 microseconds)
+[2024-12-16 17:22:18] PartSearch: Reachable (Time: 34 microseconds)
+[2024-12-16 17:22:18] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:18] ***** Does Result Match from 1761 query to 6: Match *****
+[2024-12-16 17:22:18] Query from 1508 to 8233
+[2024-12-16 17:22:18] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:18] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:18] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:18] ***** Does Result Match from 1508 query to 8233: Match *****
+[2024-12-16 17:22:18] Query from 1521 to 5123
+[2024-12-16 17:22:18] BiBFS: Reachable (Time: 37 microseconds)
+[2024-12-16 17:22:18] PartSearch: Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:18] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:18] ***** Does Result Match from 1521 query to 5123: Match *****
+[2024-12-16 17:22:25] Query from 2524 to 5075
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 81 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 6709962 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2524 query to 5075: Match *****
+[2024-12-16 17:22:25] Query from 4354 to 58
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 7 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 18 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4354 query to 58: Match *****
+[2024-12-16 17:22:25] Query from 3584 to 191
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 3584 query to 191: Match *****
+[2024-12-16 17:22:25] Query from 2416 to 4354
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 20 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2416 query to 4354: Match *****
+[2024-12-16 17:22:25] Query from 5077 to 3318
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 5077 query to 3318: Match *****
+[2024-12-16 17:22:25] Query from 1157 to 387
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 1157 query to 387: Match *****
+[2024-12-16 17:22:25] Query from 2424 to 8080
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2424 query to 8080: Match *****
+[2024-12-16 17:22:25] Query from 3040 to 1931
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 4 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 3040 query to 1931: Match *****
+[2024-12-16 17:22:25] Query from 3784 to 751
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 3784 query to 751: Match *****
+[2024-12-16 17:22:25] Query from 6515 to 5131
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6515 query to 5131: Match *****
+[2024-12-16 17:22:25] Query from 1656 to 3173
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 60 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 104 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 1656 query to 3173: Match *****
+[2024-12-16 17:22:25] Query from 4267 to 8158
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4267 query to 8158: Match *****
+[2024-12-16 17:22:25] Query from 4915 to 3873
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 40 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 4856 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4915 query to 3873: Match *****
+[2024-12-16 17:22:25] Query from 385 to 7135
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 385 query to 7135: Match *****
+[2024-12-16 17:22:25] Query from 5041 to 5645
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 5041 query to 5645: Match *****
+[2024-12-16 17:22:25] Query from 1415 to 3738
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 1415 query to 3738: Match *****
+[2024-12-16 17:22:25] Query from 539 to 110
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 8 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 539 query to 110: Match *****
+[2024-12-16 17:22:25] Query from 7873 to 7818
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 6 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 7873 query to 7818: Match *****
+[2024-12-16 17:22:25] Query from 8012 to 4674
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 8012 query to 4674: Match *****
+[2024-12-16 17:22:25] Query from 6708 to 3198
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6708 query to 3198: Match *****
+[2024-12-16 17:22:25] Query from 2527 to 132
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 36 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 147 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2527 query to 132: Match *****
+[2024-12-16 17:22:25] Query from 810 to 1915
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 87 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 18 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 810 query to 1915: Match *****
+[2024-12-16 17:22:25] Query from 5677 to 2000
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 5677 query to 2000: Match *****
+[2024-12-16 17:22:25] Query from 3652 to 5669
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 3652 query to 5669: Match *****
+[2024-12-16 17:22:25] Query from 1012 to 5061
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 62 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 17 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 1012 query to 5061: Match *****
+[2024-12-16 17:22:25] Query from 4108 to 6913
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 34 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 66 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4108 query to 6913: Match *****
+[2024-12-16 17:22:25] Query from 285 to 1438
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 4 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 22 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 285 query to 1438: Match *****
+[2024-12-16 17:22:25] Query from 7545 to 3245
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 4 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 46833 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 7545 query to 3245: Match *****
+[2024-12-16 17:22:25] Query from 2147 to 1512
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2147 query to 1512: Match *****
+[2024-12-16 17:22:25] Query from 5497 to 6267
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 4 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 14 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 5497 query to 6267: Match *****
+[2024-12-16 17:22:25] Query from 2586 to 3527
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2586 query to 3527: Match *****
+[2024-12-16 17:22:25] Query from 4315 to 1725
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 14 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4315 query to 1725: Match *****
+[2024-12-16 17:22:25] Query from 4536 to 4710
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 30 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4536 query to 4710: Match *****
+[2024-12-16 17:22:25] Query from 1533 to 259
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 26 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 1533 query to 259: Match *****
+[2024-12-16 17:22:25] Query from 8045 to 6989
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 8045 query to 6989: Match *****
+[2024-12-16 17:22:25] Query from 6432 to 3732
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 14 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6432 query to 3732: Match *****
+[2024-12-16 17:22:25] Query from 7795 to 3278
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 7795 query to 3278: Match *****
+[2024-12-16 17:22:25] Query from 7425 to 7689
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 14 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 7425 query to 7689: Match *****
+[2024-12-16 17:22:25] Query from 4961 to 6034
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4961 query to 6034: Match *****
+[2024-12-16 17:22:25] Query from 7649 to 2709
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 14 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 7649 query to 2709: Match *****
+[2024-12-16 17:22:25] Query from 734 to 4733
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 734 query to 4733: Match *****
+[2024-12-16 17:22:25] Query from 1626 to 4321
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 1626 query to 4321: Match *****
+[2024-12-16 17:22:25] Query from 375 to 7975
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 14 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 375 query to 7975: Match *****
+[2024-12-16 17:22:25] Query from 2699 to 7007
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 25 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2699 query to 7007: Match *****
+[2024-12-16 17:22:25] Query from 3225 to 6201
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 7 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 22 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 3225 query to 6201: Match *****
+[2024-12-16 17:22:25] Query from 2251 to 4478
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 10 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2251 query to 4478: Match *****
+[2024-12-16 17:22:25] Query from 6876 to 4868
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6876 query to 4868: Match *****
+[2024-12-16 17:22:25] Query from 2960 to 8009
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2960 query to 8009: Match *****
+[2024-12-16 17:22:25] Query from 2331 to 5037
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 23 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 13 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2331 query to 5037: Match *****
+[2024-12-16 17:22:25] Query from 4503 to 2290
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 29 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 12 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4503 query to 2290: Match *****
+[2024-12-16 17:22:25] Query from 1169 to 2458
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 12 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 1169 query to 2458: Match *****
+[2024-12-16 17:22:25] Query from 6656 to 1371
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6656 query to 1371: Match *****
+[2024-12-16 17:22:25] Query from 618 to 129
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 618 query to 129: Match *****
+[2024-12-16 17:22:25] Query from 8189 to 3513
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 8189 query to 3513: Match *****
+[2024-12-16 17:22:25] Query from 6408 to 3276
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 102 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 92 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6408 query to 3276: Match *****
+[2024-12-16 17:22:25] Query from 1648 to 2435
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 14 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 1648 query to 2435: Match *****
+[2024-12-16 17:22:25] Query from 45 to 116
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 5 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 45 query to 116: Match *****
+[2024-12-16 17:22:25] Query from 6766 to 1649
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 76 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 40557 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6766 query to 1649: Match *****
+[2024-12-16 17:22:25] Query from 5865 to 5902
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 5865 query to 5902: Match *****
+[2024-12-16 17:22:25] Query from 6049 to 6556
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6049 query to 6556: Match *****
+[2024-12-16 17:22:25] Query from 6400 to 5028
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 34 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6400 query to 5028: Match *****
+[2024-12-16 17:22:25] Query from 614 to 7686
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 7 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 614 query to 7686: Match *****
+[2024-12-16 17:22:25] Query from 2974 to 5402
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2974 query to 5402: Match *****
+[2024-12-16 17:22:25] Query from 961 to 7592
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 961 query to 7592: Match *****
+[2024-12-16 17:22:25] Query from 7162 to 7053
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 7162 query to 7053: Match *****
+[2024-12-16 17:22:25] Query from 5172 to 3729
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 13 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 5172 query to 3729: Match *****
+[2024-12-16 17:22:25] Query from 2745 to 791
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2745 query to 791: Match *****
+[2024-12-16 17:22:25] Query from 527 to 3077
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 527 query to 3077: Match *****
+[2024-12-16 17:22:25] Query from 2580 to 5550
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2580 query to 5550: Match *****
+[2024-12-16 17:22:25] Query from 2698 to 5525
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 7 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 2698 query to 5525: Match *****
+[2024-12-16 17:22:25] Query from 6054 to 4906
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 18 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6054 query to 4906: Match *****
+[2024-12-16 17:22:25] Query from 5290 to 2279
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 5290 query to 2279: Match *****
+[2024-12-16 17:22:25] Query from 7362 to 4657
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 7362 query to 4657: Match *****
+[2024-12-16 17:22:25] Query from 3918 to 3177
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 3918 query to 3177: Match *****
+[2024-12-16 17:22:25] Query from 992 to 8063
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 992 query to 8063: Match *****
+[2024-12-16 17:22:25] Query from 5918 to 7044
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 5918 query to 7044: Match *****
+[2024-12-16 17:22:25] Query from 6312 to 5988
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 4 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6312 query to 5988: Match *****
+[2024-12-16 17:22:25] Query from 4657 to 1958
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4657 query to 1958: Match *****
+[2024-12-16 17:22:25] Query from 6397 to 2124
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 15 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 6397 query to 2124: Match *****
+[2024-12-16 17:22:25] Query from 4097 to 335
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4097 query to 335: Match *****
+[2024-12-16 17:22:25] Query from 4337 to 5897
+[2024-12-16 17:22:25] BiBFS: Reachable (Time: 27 microseconds)
+[2024-12-16 17:22:25] PartSearch: Reachable (Time: 78 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 4337 query to 5897: Match *****
+[2024-12-16 17:22:25] Query from 3547 to 920
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 3 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 16 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 3547 query to 920: Match *****
+[2024-12-16 17:22:25] Query from 210 to 3645
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 34 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 50437 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 2 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 210 query to 3645: Match *****
+[2024-12-16 17:22:25] Query from 895 to 1673
+[2024-12-16 17:22:25] BiBFS: Not Reachable (Time: 1 microseconds)
+[2024-12-16 17:22:25] PartSearch: Not Reachable (Time: 4 microseconds)
+[2024-12-16 17:22:25] PLLSearch: Not Reachable (Time: 0 microseconds)
+[2024-12-16 17:22:25] ***** Does Result Match from 895 query to 1673: Match *****
+[2024-12-16 17:22:25] Final Average BiBFS Time: 14 microseconds
+[2024-12-16 17:22:25] Final Average PartSearch Time: 122833 microseconds
+[2024-12-16 17:22:25] Final Average PLLSearch Time: 0 microseconds
