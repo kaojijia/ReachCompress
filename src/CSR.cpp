@@ -167,11 +167,11 @@ bool CSRGraph::fromGraph(const Graph& graph) {
     }
 
     // 获取总节点数
-    for(auto i:graph.vertices){
-        if(i.in_degree==0&&i.out_degree==0)continue;
-        num_nodes++;
-    }
-
+    // for(auto i:graph.vertices){
+    //     if(i.in_degree==0&&i.out_degree==0)continue;
+    //     num_nodes++;
+    // }
+    num_nodes = graph.get_num_vertices();
     //获取每个节点的分区号
     this->partitions = new int16_t[max_node_id+1];
     for(auto node:graph.vertices){

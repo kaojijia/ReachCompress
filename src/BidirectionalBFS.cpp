@@ -7,7 +7,7 @@
 
 // 构造函数，传入图并构建邻接表和逆邻接表
 BidirectionalBFS::BidirectionalBFS(Graph& graph) : g(graph){
-    this->csr.fromGraph(g);
+    //this->csr.fromGraph(g);
     buildAdjList();  // 构建邻接表和逆邻接表
 }
 
@@ -220,4 +220,28 @@ std::vector<int> BidirectionalBFS::findPath(int source, int target, int partitio
     path.insert(path.end(), backward_path.begin(), backward_path.end());
 
     return path;
+}
+
+
+void BidirectionalBFS::set_reachable_matrix()
+{   
+    uint32_t size_nodes = g.vertices.size();
+    uint32_t count = 0;
+    vector<vector<bool>> visited(g.vertices.size(),vector<bool>(g.vertices.size(),false));
+    for(int i=0;i<g.vertices.size();i++){
+        if(g.vertices[i].LOUT.empty()) continue;
+        for(int j=0;j<g.vertices.size();j++){
+            if(g.vertices[j].LIN.empty()) continue;
+            if(!visited[i][j]){
+                vector<int> path = findPath(i,j);
+                for(int u=0;u<path.size()-1;u++)
+                    for(int v = u+1;v<path.size();v++){
+                        visited[path[u]][path[v]] = true;
+                        count+=1;
+                    }
+            }
+
+        }
+    }
+    return count;
 }

@@ -2,12 +2,36 @@
 #include <iostream>
 #include <algorithm>  // 确保包含算法库
 #include <fstream>
+#include <sstream>
+using namespace std;
+
+//输出当前时间
+std::string getCurrentTimestampofGraph() {
+    auto now = std::chrono::system_clock::now();
+    auto now_time_t = std::chrono::system_clock::to_time_t(now);
+    auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1000000;
+    tm local_tm;
+#if defined(_WIN32) || defined(_WIN64)
+    localtime_s(&local_tm, &now_time_t);
+#else
+    localtime_r(&now_time_t, &local_tm);
+#endif
+
+    std::stringstream ss;
+    ss << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S");
+    ss << "." << std::setw(6) << std::setfill('0') << now_us.count();
+    return ss.str();
+}
 
 // 构造函数，指定是否存储边集
 Graph::Graph(bool store_edges) : store_edges(store_edges) {
     this->num_edges=0;
     this->num_vertices=0;
 }
+
+
+
+
 
 long Graph::get_partition_degree(int target_patition) const
 {
@@ -35,6 +59,7 @@ bool Graph::set_partition_id(int node, int part_id)
 
 // 添加边到图
 void Graph::addEdge(int u, int v, bool is_directed) {
+    //cout<<getCurrentTimestampofGraph()<<"   start"<<endl;
     if (u==v) return;
     //跳过已有边
     if (u < vertices.size()) {
@@ -42,22 +67,26 @@ void Graph::addEdge(int u, int v, bool is_directed) {
             if(i==v)return;
         }
     }
-    if (u >= vertices.size()) vertices.resize(u + 1);
-    if (v >= vertices.size()) vertices.resize(v + 1);
+    //cout<<getCurrentTimestampofGraph()<<"   判断是否要resize"<<endl;
+    if (u >= vertices.size()) 
+        vertices.resize(u + 1);
+    if (v >= vertices.size()) 
+        vertices.resize(v + 1);
 
+    //cout<<getCurrentTimestampofGraph()<<"   添加边"<<endl;
     vertices[u].LOUT.push_back(v);
     vertices[v].LIN.push_back(u);
     vertices[u].out_degree++;
     vertices[v].in_degree++;
 
-
     // 更新顶点和边的数量
+    //cout<<getCurrentTimestampofGraph()<<"   更新点的数量"<<endl;
     this->num_edges++;
-    this->num_vertices=0;
-    for(auto i:vertices){
-        if(i.in_degree==0&&i.out_degree==0)continue;
+    if(vertices[u].out_degree==1&&vertices[u].in_degree==0)
         this->num_vertices++;
-    }
+    if(vertices[v].out_degree==0&&vertices[v].in_degree==1)
+        this->num_vertices++;
+    //cout<<getCurrentTimestampofGraph()<<"   完成更新点的数量"<<endl;
 
     // 如果需要存储边集，确保 adjList 和 reverseAdjList 也被正确调整
     if (store_edges) {

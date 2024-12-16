@@ -1,5 +1,6 @@
 // ReachRatio.cpp
 #include "ReachRatio.h"
+#include "BidirectionalBFS.h"
 #include "pll.h"
 #include <vector>
 #include <iostream>
@@ -86,26 +87,25 @@ float compute_reach_ratio(Graph& graph) {
     return ratio;
 }
 
-float compute_reach_ratio_pll(Graph& graph){
-    PLL pll(graph);
-    cout<<"build labels"<<endl;
-    pll.getCurrentTimestamp();
-    pll.offline_industry();
-    cout<<"reachability query"<<endl;
-    pll.getCurrentTimestamp();
-    uint32_t num_nodes = 0;
-    for (auto& v : graph.vertices) {
-        if(v.in_degree==0&&v.out_degree==0)continue;
-        num_nodes++;
-    }
-
+float compute_reach_ratio_bfs(Graph& graph){
+    // PLL pll(graph);
+    // cout<<"build labels"<<endl;
+    // pll.getCurrentTimestamp();
+    // pll.offline_industry();
+    // cout<<"reachability query"<<endl;
+    // pll.getCurrentTimestamp();
+    
+    BidirectionalBFS bfs(graph);
+    uint32_t num_nodes = graph.get_num_vertices();
     uint32_t reachable = 0;
     for(uint32_t u = 0; u < graph.vertices.size(); u++){
+        if(u%100==1)
+            cout<<bfs.getCurrentTimestamp()<<"    正在构建第"<<u<<"行"<<endl;
         if(graph.vertices[u].in_degree==0&&graph.vertices[u].out_degree==0)continue;
         for(uint32_t v = 0; v < graph.vertices.size(); v++){
             if(u==v)continue;
             if(graph.vertices[v].in_degree==0&&graph.vertices[v].out_degree==0)continue;
-            if(pll.reachability_query(u,v)){
+            if(bfs.reachability_query(u,v)){
                 reachable++;
             }
         }

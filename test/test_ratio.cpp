@@ -87,7 +87,7 @@ TEST(ReachabilityTest, TotalReachabilityRatioTest) {
     
     string outputFilePath = string(PROJECT_ROOT_DIR)+"/result/"+getCurrentDaystamp()+"/reach_ratio_results_2.csv";      
 
-    string file2 = "/home/reco/Projects/ReachCompress/Edges/large/tweibo-edgelist.txt";
+    string file2 = "/home/reco/Projects/ReachCompress/Edges/DAGs/large/tweibo-edgelist_DAG";
     // 获取所有边文件
     // vector<string> edgeFiles = getAllFiles(edgesDirectory);
 
@@ -117,17 +117,19 @@ TEST(ReachabilityTest, TotalReachabilityRatioTest) {
     for (const auto& edgeFilePath : edgeFiles) {
         cout << "[" << getCurrentTimestamp() << "] " << "正在处理: " << edgeFilePath << endl;
         // 初始化图
-        Graph g(true);  // 确保存储边集
+        Graph g(false);
 
         // 读取边文件
         InputHandler inputHandler(edgeFilePath);
         inputHandler.readGraph(g);
-
+        BidirectionalBFS bfs(g);
+        bfs.set_reachable_matrix();
         // 输出图信息（可选）
         // OutputHandler::printGraphInfo(g);
 
         // 计算全图的可达性比例
-        float total_ratio = compute_reach_ratio_pll(g);
+        cout << "[" << getCurrentTimestamp() << "] " << "Computing reach ratio..." << endl;
+        float total_ratio = compute_reach_ratio_bfs(g);
         cout << "[" << getCurrentTimestamp() << "] " << "Total reach ratio: " << total_ratio << endl;
 
         // 写入结果到CSV

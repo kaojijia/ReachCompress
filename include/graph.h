@@ -5,7 +5,11 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
-
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+#include <sys/resource.h>
 
 
 // 表示节点的结构
@@ -26,6 +30,11 @@ public:
     std::vector<std::vector<int>> reverseAdjList; //逆邻接表
     // 构造函数，控制是否存储边集
     Graph(bool store_edges = true);
+    void set_max_node_id(uint32_t max_node_id){
+        this->max_node_id = max_node_id;
+        this->vertices.resize(max_node_id + 1);
+    };
+
     // 添加边
     void addEdge(int u, int v, bool is_directed = true);
 
@@ -64,8 +73,11 @@ public:
         return num_vertices;
     }
 
+    size_t get_num_edges() const{
+        return num_edges;
+    }
 private:
-
+    uint32_t max_node_id = 0;
     bool store_edges;  // 控制是否存储边集
     std::string filename;
     float ratio;
