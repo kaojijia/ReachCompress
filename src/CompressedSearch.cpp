@@ -49,7 +49,7 @@ void CompressedSearch::offline_industry()
 void CompressedSearch::offline_industry(size_t num_vertices, float ratio, string mapping_file)
 {
 
-    // TODO：执行压缩
+    // TODO：执  行压缩
 
     if (mapping_file != "")
         partition_manager_.read_equivalance_info(mapping_file); ///< 读取等价信息

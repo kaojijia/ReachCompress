@@ -28,3 +28,6 @@ find_package(Threads REQUIRED)
 # 启用测试
 enable_testing()
 add_subdirectory(test)
+
+
+add_executable(cal_ratio src/cal_ratio.cpp)
