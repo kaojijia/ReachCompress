@@ -39,7 +39,7 @@ public:
         delete[] out_row_pointers;
         delete[] in_column_indices;
         delete[] in_row_pointers;
-        delete[] partitions;
+        //delete[] partitions;
     }
 
     // 从边集文件中读取图数据并构建 CSR 结构

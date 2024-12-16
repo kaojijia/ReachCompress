@@ -4,6 +4,9 @@
 #include <unordered_set>
 #include <vector>
 #include <algorithm>
+#include <thread>
+#include <atomic>
+using namespace std;
 
 // 构造函数，传入图并构建邻接表和逆邻接表
 BidirectionalBFS::BidirectionalBFS(Graph& graph) : g(graph){
@@ -223,25 +226,60 @@ std::vector<int> BidirectionalBFS::findPath(int source, int target, int partitio
 }
 
 
-void BidirectionalBFS::set_reachable_matrix()
-{   
-    uint32_t size_nodes = g.vertices.size();
-    uint32_t count = 0;
-    vector<vector<bool>> visited(g.vertices.size(),vector<bool>(g.vertices.size(),false));
-    for(int i=0;i<g.vertices.size();i++){
-        if(g.vertices[i].LOUT.empty()) continue;
-        for(int j=0;j<g.vertices.size();j++){
-            if(g.vertices[j].LIN.empty()) continue;
-            if(!visited[i][j]){
-                vector<int> path = findPath(i,j);
-                for(int u=0;u<path.size()-1;u++)
-                    for(int v = u+1;v<path.size();v++){
-                        visited[path[u]][path[v]] = true;
-                        count+=1;
-                    }
-            }
+// void BidirectionalBFS::set_reachable_matrix()
+// {   
+//     uint32_t size_nodes = g.vertices.size();
+//     uint32_t count = 0;
+//     vector<vector<bool>> visited(g.vertices.size(),vector<bool>(g.vertices.size(),false));
+//     for(int i=0;i<g.vertices.size();i++){
+//         if(g.vertices[i].LOUT.empty()) continue;
+//         for(int j=0;j<g.vertices.size();j++){
+//             if(g.vertices[j].LIN.empty()) continue;
+//             if(!visited[i][j]){
+//                 vector<int> path = findPath(i,j);
+//                 for(int u=0;u<path.size()-1;u++)
+//                     for(int v = u+1;v<path.size();v++){
+//                         visited[path[u]][path[v]] = true;
+//                         count+=1;
+//                     }
+//             }
 
+//         }
+//     }
+//     return count;
+// }
+uint32_t BidirectionalBFS::count_reachable() {
+    uint32_t numVertices = g.vertices.size();
+    std::atomic<uint32_t> count(0); // 使用原子变量进行线程安全的累加
+    size_t numThreads = std::thread::hardware_concurrency(); // 获取可用硬件线程数
+    if (numThreads == 0) numThreads = 4; // 如果获取失败，默认使用 4 个线程
+
+    // 分块处理顶点范围
+    auto worker = [&](size_t start, size_t end) {
+        for (size_t i = start; i < end; ++i) {
+            if (g.vertices[i].LOUT.empty()) continue;
+            for (size_t j = 0; j < numVertices; ++j) {
+                if (g.vertices[j].LIN.empty()) continue;
+                if (reachability_query(i, j)) {
+                    count++; // 原子操作，线程安全
+                }
+            }
         }
+    };
+
+    // 创建线程
+    std::vector<std::thread> threads;
+    size_t chunkSize = (numVertices + numThreads - 1) / numThreads; // 块大小
+    for (size_t t = 0; t < numThreads; ++t) {
+        size_t start = t * chunkSize;
+        size_t end = std::min(start + chunkSize, numVertices);
+        threads.emplace_back(worker, start, end); // 分配任务
     }
-    return count;
+
+    // 等待所有线程完成
+    for (auto& th : threads) {
+        th.join();
+    }
+
+    return count.load(); // 返回计数结果
 }

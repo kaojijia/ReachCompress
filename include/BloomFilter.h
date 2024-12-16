@@ -1,17 +1,26 @@
-
 #ifndef BLOOM_FILTER_H
 #define BLOOM_FILTER_H
 
 #include "graph.h"
+#include "Algorithm.h"
 #include <vector>
+#include <bitset>
 
-class BloomFilter {
+class BloomFilter : public Algorithm {
 public:
-    void build(const Graph& graph);
-    bool possibly_connected(int source, int target) const;
+    BloomFilter(Graph& graph);
+    void offline_industry() override;
+    bool reachability_query(int source, int target) override;
+    double false_positive_rate(int vertex); // 计算某个顶点的假阳性率
+    std::unordered_map<std::string, size_t> getIndexSizes() const override; // 计算索引大小
+
 private:
-    std::vector<bool> bitArray_;
-    // ...existing code...
+    Graph& graph;
+    std::vector<std::bitset<64>> filters;
+    size_t numHashFunctions;
+    std::vector<size_t> insertedElements; // 记录每个顶点插入的元素数量
+
+    std::vector<size_t> generateHashes(int key) const;
 };
 
 #endif // BLOOM_FILTER_H

@@ -23,7 +23,7 @@ public:
     std::unordered_map<std::string, size_t> getIndexSizes() const override {
         return {};
     }
-
+    uint32_t count_reachable();
 private:
     Graph& g;
     CSRGraph csr;
@@ -34,7 +34,6 @@ private:
     bool bfsStep(std::queue<int>& queue, std::unordered_set<int>& visited, 
                  std::unordered_set<int>& opposite_visited, 
                  const std::vector<std::vector<int>>& adjList); // 增加邻接表参数，用于选择正向或逆向邻接表
-
 };
 
 #endif  // BIDIRECTIONAL_BFS_H

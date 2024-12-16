@@ -15,6 +15,8 @@ add_library(reach_comp STATIC
     ImportPartitioner.cpp
     CSR.cpp
     BiBFSCSR.cpp
+    filters/BloomFilter.cpp
+    filters/TreeCover.cpp
 )
 
 # 包含头文件目录
