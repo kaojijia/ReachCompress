@@ -10,6 +10,7 @@
 #include "Algorithm.h"
 #include "PartitionManager.h"
 #include "GraphPartitioner.h"
+#include "ReachRatioPartitioner.h"
 #include "BloomFilter.h"
 #include "NodeEmbedding.h"
 #include "BidirectionalBFS.h"

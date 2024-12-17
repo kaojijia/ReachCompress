@@ -27,6 +27,9 @@ void CompressedSearch::set_partitioner(std::string partitioner_name)
         partitioner_ = std::unique_ptr<ImportPartitioner>(new ImportPartitioner());
         // partitioner_ = std::unique_ptr<GraphPartitioner>(new GraphPartitioner());
     }
+    else if (partitioner_name == "ReachRatio"){
+        partitioner_ = std::unique_ptr<ReachRatioPartitioner>(new ReachRatioPartitioner());
+    }
     else
     {
         throw std::invalid_argument("Unsupported partitioner name");
