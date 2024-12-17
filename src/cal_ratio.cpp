@@ -2,58 +2,20 @@
 #include <fstream>
 #include <vector>
 #include <queue>
-#include <set>
-#include <cstring>  // 使用 memset
-#include <dirent.h> // 使用 dirent.h 替代 filesystem
-#include <algorithm>
-#include <map>
-#include <unordered_map>
 #include <string>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-#include <sys/resource.h>
+#include <algorithm>
+#include "graph.h"  
+#include "utils/InputHandler.h"
+#include "utils/OutputHandler.h"
+
 
 using namespace std;
 
-struct ReachableArray {
-    int* data;
-    int size;
-    int capacity;
-
-    ReachableArray() : data(nullptr), size(0), capacity(0) {}
-
-    ~ReachableArray() {
-        delete[] data;
-    }
-
-
-
-
-    void add(int value) {
-        if (!exists(value)) {
-            if (size == capacity) {
-                capacity = (capacity == 0) ? 2 : capacity * 2;
-                int* newData = new int[capacity];
-                memcpy(newData, data, size * sizeof(int));
-                delete[] data;
-                data = newData;
-            }
-            data[size++] = value;
-        }
-    }
-
-    bool exists(int value) const {
-        for (int i = 0; i < size; ++i) {
-            if (data[i] == value) {
-                return true;
-            }
-        }
-        return false;
-    }
-};
-
+// 获取当前时间戳
 std::string getCurrentTimestamp() {
     auto now = std::chrono::system_clock::now();
     auto now_time_t = std::chrono::system_clock::to_time_t(now);
@@ -71,50 +33,15 @@ std::string getCurrentTimestamp() {
     return ss.str();
 }
 
-void loadGraph(const string& filename, vector<vector<int>>& adjList, int& numNodes) {
-    ifstream file(filename);
-    if (!file.is_open()) {
-        cerr << "无法打开文件: " << filename << endl;
-        return;
-    }
-
-    set<int> uniqueNodes; // 存储所有有入度或出度的节点
-    vector<pair<int, int>> edges;
-    string line;
-    while (getline(file, line)) {
-        int source, target;
-        sscanf(line.c_str(), "%d %d", &source, &target);
-        edges.emplace_back(source, target);
-        uniqueNodes.insert(source);
-        uniqueNodes.insert(target);
-    }
-    file.close();
-
-    // 有效节点数为 uniqueNodes 的大小
-    numNodes = uniqueNodes.size();
-
-    // 创建邻接表
-    adjList.resize(numNodes);
-    map<int, int> nodeMapping;
-    int index = 0;
-    for (int node : uniqueNodes) {
-        nodeMapping[node] = index++;
-    }
-
-    for (const auto& edge : edges) {
-        int mappedSource = nodeMapping[edge.first];
-        int mappedTarget = nodeMapping[edge.second];
-        adjList[mappedSource].push_back(mappedTarget);
-    }
-}
-
-bool topologicalSort(const vector<vector<int>>& adjList, vector<int>& topoOrder) {
-    int n = adjList.size();
+// 拓扑排序 (Kahn 算法)
+bool topologicalSort(const Graph& g, vector<int>& topoOrder) {
+    int n = g.vertices.size();
     vector<int> inDegree(n, 0);
 
-    for (const auto& neighbors : adjList) {
-        for (int neighbor : neighbors) {
-            ++inDegree[neighbor];
+    // 计算每个节点的入度
+    for (const auto& v : g.vertices) {
+        for (int neighbor : v.LOUT) {
+            inDegree[neighbor]++;
         }
     }
 
@@ -130,7 +57,7 @@ bool topologicalSort(const vector<vector<int>>& adjList, vector<int>& topoOrder)
         zeroInDegree.pop();
         topoOrder.push_back(node);
 
-        for (int neighbor : adjList[node]) {
+        for (int neighbor : g.vertices[node].LOUT) {
             if (--inDegree[neighbor] == 0) {
                 zeroInDegree.push(neighbor);
             }
@@ -140,86 +67,68 @@ bool topologicalSort(const vector<vector<int>>& adjList, vector<int>& topoOrder)
     return topoOrder.size() == n;
 }
 
-double computeReachRatio(const vector<vector<int>>& adjList, const vector<int>& topoOrder) {
-    int n = adjList.size();
-    vector<ReachableArray> reachable(n);
+// 计算可达性比例（存储可达节点数量）
+// 计算可达性比例（使用 unordered_set 避免重复）
+double computeReachRatio(const Graph& g, const vector<int>& topoOrder) {
+    int n = g.vertices.size();
+    vector<unordered_set<int>> reachableSets(n); // 每个节点的可达节点集合
 
+    // 反向拓扑排序遍历
     for (auto it = topoOrder.rbegin(); it != topoOrder.rend(); ++it) {
         int node = *it;
-        for (int neighbor : adjList[node]) {
-            for (int i = 0; i < reachable[neighbor].size; ++i) {
-                reachable[node].add(reachable[neighbor].data[i]);
-            }
-            reachable[node].add(neighbor);
+
+        // 遍历所有后继节点，合并可达节点集合
+        for (int neighbor : g.vertices[node].LOUT) {
+            reachableSets[node].insert(neighbor); // 直接加入后继节点本身
+            reachableSets[node].insert(reachableSets[neighbor].begin(), reachableSets[neighbor].end());
         }
-        reachable[node].add(node);
     }
 
+    // 计算总的可达点对数
     long long reachablePairs = 0;
-    for (const auto& arr : reachable) {
-        reachablePairs += arr.size - 1;
+    for (const auto& reachableSet : reachableSets) {
+        reachablePairs += reachableSet.size();
     }
 
-    long long totalPairs = static_cast<long long>(n) * (n - 1);
-    return totalPairs > 0 ? static_cast<double>(reachablePairs) / totalPairs : 0.0;
-}
-
-bool hasCycle(const vector<vector<int>>& adjList) {
-    vector<int> topoOrder;
-    return !topologicalSort(adjList, topoOrder);
-}
-
-void processDirectory(const string& path, const string& outputFile) {
-    ofstream outFile(outputFile);
-    if (!outFile.is_open()) {
-        cerr << "无法打开输出文件: " << outputFile << endl;
-        return;
-    }
-
-    DIR* dir = opendir(path.c_str());
-    if (!dir) {
-        cerr << "无法打开目录: " << path << endl;
-        return;
-    }
-
-    struct dirent* entry;
-    while ((entry = readdir(dir)) != nullptr) {
-        string fileName = entry->d_name;
-
-        if (fileName == "." || fileName == "..") {
-            continue;
-        }
-
-        string filePath = path + "/" + fileName;
-        cout << "处理文件: " << filePath << endl;
-
-        vector<vector<int>> adjList;
-        int numNodes;
-        loadGraph(filePath, adjList, numNodes);
-
-        if (hasCycle(adjList)) {
-            cout << "输入图包含环，跳过文件: " << filePath << endl;
-            outFile << "文件: " << filePath << ", 错误: 输入图包含环\n";
-        } else {
-            cout <<getCurrentTimestamp()<< "  开始处理文件: " << filePath << endl;
-            vector<int> topoOrder;
-            topologicalSort(adjList, topoOrder);
-            double reachRatio = computeReachRatio(adjList, topoOrder);
-            cout <<getCurrentTimestamp()<< "    文件: " << filePath << ", 可达性比例: " << reachRatio << endl;
-            outFile <<getCurrentTimestamp()<< "     文件: " << filePath << ", 可达性比例: " << reachRatio << "\n";
-        }
-    }
-
-    closedir(dir);
-    outFile.close();
+    n = g.get_num_vertices();
+    // 计算可达性比例
+    long long totalPairs = static_cast<long long>(n) * (n - 1); // 排除自身
+    return totalPairs > 0 ? static_cast<double>(reachablePairs) / static_cast<double>(totalPairs) : 0.0;
 }
 
 
 int main() {
-    string directoryPath = PROJECT_ROOT_DIR"/Edges/DAGs/large";
-    string outputFile = PROJECT_ROOT_DIR"/ratio_results.txt";
+    // 输入与输出路径
+    string inputFile = PROJECT_ROOT_DIR "/Edges/DAGs/large/tweibo-edgelist_DAG";
+    string outputFile = PROJECT_ROOT_DIR "/ratio_results.txt";
 
-    processDirectory(directoryPath, outputFile);
+    // 读取图
+    cout << getCurrentTimestamp() << "  开始读取图数据: " << inputFile << endl;
+    Graph g(false);
+    InputHandler inputHandler(inputFile);
+    inputHandler.readGraph(g);
+    cout << getCurrentTimestamp() << "  图数据读取完成。" << endl;
+
+    // 执行拓扑排序
+    vector<int> topoOrder;
+    if (!topologicalSort(g, topoOrder)) {
+        cerr << "图包含环，无法计算可达性比例: " << inputFile << endl;
+        return -1;
+    }
+
+    // 计算可达性比例
+    double reachRatio = computeReachRatio(g, topoOrder);
+    cout << getCurrentTimestamp() << "  文件: " << inputFile << ", 可达性比例: " << reachRatio << endl;
+
+    // 输出结果
+    ofstream outFile(outputFile, ios::app);
+    if (outFile.is_open()) {
+        outFile << getCurrentTimestamp() << "  文件: " << inputFile << ", 可达性比例: " << reachRatio << "\n";
+        outFile.close();
+    } else {
+        cerr << "无法打开输出文件: " << outputFile << endl;
+        return -1;
+    }
 
     return 0;
 }

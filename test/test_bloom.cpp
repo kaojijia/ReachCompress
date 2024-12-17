@@ -6,7 +6,7 @@
 #include "utils/OutputHandler.h"
 
 TEST(BloomFilter, test_BLOOM) {
-    Graph g(false);  // 确保存储边集    
+    Graph g(false);   
     InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/gene_edges_20241029_135003");
     inputHandler.readGraph(g);
     OutputHandler::printGraphInfo(g);

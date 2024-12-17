@@ -31,3 +31,4 @@ add_subdirectory(test)
 
 
 add_executable(cal_ratio src/cal_ratio.cpp)
+target_link_libraries(cal_ratio reach_comp)
