@@ -1,8 +1,8 @@
 #include "CompressedSearch.h"
 #include "ReachRatio.h"
-#include "GraphPartitioner.h"
-#include "LouvainPartitioner.h"
-#include "ImportPartitioner.h"
+#include "partitioner/GraphPartitioner.h"
+#include "partitioner/LouvainPartitioner.h"
+#include "partitioner/ImportPartitioner.h"
 #include "BloomFilter.h"
 #include "NodeEmbedding.h"
 #include <memory>

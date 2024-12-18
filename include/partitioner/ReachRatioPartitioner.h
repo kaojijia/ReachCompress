@@ -20,8 +20,7 @@ private:
     // PartitionManager &partition_manager;
     double computeFirstTerm(const Graph& graph);
     double computeSecondTerm(const Graph& graph, const PartitionManager& partition_manager);
-    std::vector<int> topologicalSort(const Graph& graph, const std::vector<int>& nodes);
-    void computeReachability(const Graph& graph, std::unordered_map<int, std::set<int>>& reachable,
-                             const std::vector<int>& topoOrder);
+    void computeReachability(const Graph &graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes);
+    std::vector<int> topologicalSort(const Graph &graph, const std::vector<int> &nodes);
     Graph buildPartitionGraph(const Graph& graph, const PartitionManager& partition_manager);
 };

@@ -1,4 +1,4 @@
-#include "ImportPartitioner.h"
+#include "partitioner/ImportPartitioner.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>

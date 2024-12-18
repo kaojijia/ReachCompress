@@ -1,5 +1,5 @@
 // LouvainPartitioner.cpp
-#include "LouvainPartitioner.h"
+#include "partitioner/LouvainPartitioner.h"
 #include "PartitionManager.h"
 #include "graph.h"
 #include <unordered_map>

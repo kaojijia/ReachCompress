@@ -48,6 +48,7 @@ void OutputHandler::printPartitionInfo(const PartitionManager &partition_manager
     const auto& mapping = partition_manager.get_mapping();
 
     for (const auto& pair : mapping) {
+        if(pair.first == -1) continue;
         std::cout << "Partition " << pair.first << ":" << std::endl;
         std::cout << "  Nodes: ";
         for (int node : pair.second) {

@@ -93,6 +93,7 @@ public:
             if (equivalence_mapping[i] != nullptr)
             {
                 total_size +=  sizeof(uint32_t);
+                
             }
             total_size +=  sizeof(uint32_t);
         }

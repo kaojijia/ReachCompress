@@ -5,7 +5,7 @@
 #include "PartitionManager.h"
 #include <unordered_set>
 
-// 计算所有点对之间的可达性比例（弗洛伊德算法）
+// 计算所有点对之间的可达性比（弗洛伊德算法）
 // 参数：
 // - pm：分区管理器对象
 // - target_partition：目标分区ID

@@ -19,7 +19,11 @@ add_subdirectory(external/googletest)
 # add_subdirectory(external/infomap)  
 
 # 包含include目录和GoogleTest头文件
-include_directories(${gtest_SOURCE_DIR}/include  ${gtest_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/external/infomap/src)
+include_directories(
+    ${gtest_SOURCE_DIR}/include  
+    ${CMAKE_SOURCE_DIR}/include 
+    #${CMAKE_SOURCE_DIR}/external/infomap/src
+    )
 
 
 # 查找 pthread 库

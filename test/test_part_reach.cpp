@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "graph.h"
 #include "PartitionManager.h"
-#include "LouvainPartitioner.h"
+#include "partitioner/LouvainPartitioner.h"
 #include "utils/OutputHandler.h"
 #include "utils/RandomUtils.h"
 #include "utils/InputHandler.h"

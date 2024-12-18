@@ -111,7 +111,7 @@ double computeReachRatio(const Graph& g, const vector<int>& topoOrder) {
     int count = 0;
     for (auto it = topoOrder.rbegin(); it != topoOrder.rend(); ++it) {
         int node = *it;
-        if(++count%1000==1){
+        if(++count%10000==1){
             cout<<getCurrentTimestamp()<<"  计算到第"<<count<<"个节点reachableSets"<<endl;
             logFile<<getCurrentTimestamp()<<"  计算到第"<<count<<"个节点reachableSets"<<endl;
         }
