@@ -76,7 +76,7 @@ public:
     bool setPartition(uint32_t node, int16_t partition);
 
     // 获取节点的分区号
-    int16_t getPartition(uint32_t node) const;
+    int getPartition(uint32_t node) const;
 
     // 打印图的基本信息
     void printInfo() const;

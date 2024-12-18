@@ -56,12 +56,12 @@ void PartitionManager::build_partition_graph()
         for (const auto &target_pair : targets)
         {
             int target_partition = target_pair.first;
-            // 无论 edge_count 有多大，只添加一次边
             part_g.addEdge(source_partition, target_partition, true);
-            // std::cout << "Added edge to partition graph: " << source_partition
-            //           << " -> " << target_partition << std::endl;
         }
     }
+    part_g.set_max_node_id(part_g.vertices.size());
+    this->part_csr = new CSRGraph();
+    part_csr->fromGraph(part_g);
 
     // 为每个分区创建一个子图对象
     for (const auto &partition_pair : mapping)

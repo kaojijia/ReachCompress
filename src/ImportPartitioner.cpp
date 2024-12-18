@@ -22,8 +22,8 @@ void ImportPartitioner::partition(Graph& graph, PartitionManager& partition_mana
     }
 
     // 构建分区文件名
-    std::string partition_filename = PROJECT_ROOT_DIR"/Partitions/"+graph_filename + "_partitions_louvain.txt";
-
+    std::string partition_filename = PROJECT_ROOT_DIR"/Partitions/"+graph_filename + "_partitions_mincut.txt";
+    std::cout<< "Partitioning graph using file: " << partition_filename << std::endl;
     // 打开分区文件
     std::ifstream partition_file(partition_filename);
     if (!partition_file.is_open()) {
@@ -43,7 +43,7 @@ void ImportPartitioner::partition(Graph& graph, PartitionManager& partition_mana
 
         // 更新 Graph 中的 vertices
         if (!graph.set_partition_id(node, partition_id)) {
-            std::cerr << "Failed to set partition id for node: " << node << std::endl;
+            //std::cerr << "Failed to set partition id for node: " << node << std::endl;
             continue;
         }
 

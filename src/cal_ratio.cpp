@@ -11,6 +11,7 @@
 #include "graph.h"  
 #include "utils/InputHandler.h"
 #include "utils/OutputHandler.h"
+#include <set>
 
 
 using namespace std;
@@ -69,32 +70,108 @@ bool topologicalSort(const Graph& g, vector<int>& topoOrder) {
 
 // 计算可达性比例（存储可达节点数量）
 // 计算可达性比例（使用 unordered_set 避免重复）
-double computeReachRatio(const Graph& g, const vector<int>& topoOrder) {
-    int n = g.vertices.size();
-    vector<unordered_set<int>> reachableSets(n); // 每个节点的可达节点集合
+// double computeReachRatio(const Graph& g, const vector<int>& topoOrder) {
+//     int n = g.vertices.size();
+//     vector<set<int>> reachableSets(n); // 每个节点的可达节点集合
 
+//     // 反向拓扑排序遍历
+//     for (auto it = topoOrder.rbegin(); it != topoOrder.rend(); ++it) {
+//         int node = *it;
+
+//         // 遍历所有后继节点，合并可达节点集合
+//         for (int neighbor : g.vertices[node].LOUT) {
+//             reachableSets[node].insert(neighbor); // 直接加入后继节点本身
+//             reachableSets[node].insert(reachableSets[neighbor].begin(), reachableSets[neighbor].end());
+//         }
+//     }
+
+//     // 计算总的可达点对数
+//     long long reachablePairs = 0;
+//     for (const auto& reachableSet : reachableSets) {
+//         reachablePairs += reachableSet.size();
+//     }
+
+//     n = g.get_num_vertices();
+//     // 计算可达性比例
+//     long long totalPairs = static_cast<long long>(n) * (n - 1); // 排除自身
+//     return totalPairs > 0 ? static_cast<double>(reachablePairs) / static_cast<double>(totalPairs) : 0.0;
+// }
+
+#include <unordered_set>
+
+double computeReachRatio(const Graph& g, const vector<int>& topoOrder) {
+    
+    string logFilePath = PROJECT_ROOT_DIR "/ratio_log.txt";
+    ofstream logFile(logFilePath, ios::out);
+    int n = g.vertices.size();
+    vector<int*> reachableSets(n, nullptr); // 每个节点的可达节点数组
+    vector<int> reachableSizes(n, 0);      // 每个节点的可达节点数组大小
+    int num = g.get_num_vertices();
     // 反向拓扑排序遍历
+    int count = 0;
     for (auto it = topoOrder.rbegin(); it != topoOrder.rend(); ++it) {
         int node = *it;
-
-        // 遍历所有后继节点，合并可达节点集合
+        if(++count%1000==1){
+            cout<<getCurrentTimestamp()<<"  计算到第"<<count<<"个节点reachableSets"<<endl;
+            logFile<<getCurrentTimestamp()<<"  计算到第"<<count<<"个节点reachableSets"<<endl;
+        }
+        
+        // 使用unordered_set去重计算可达节点集合
+        std::unordered_set<int> uniqueReachable;
+        
+        // 包含后继节点自身
         for (int neighbor : g.vertices[node].LOUT) {
-            reachableSets[node].insert(neighbor); // 直接加入后继节点本身
-            reachableSets[node].insert(reachableSets[neighbor].begin(), reachableSets[neighbor].end());
+            if (neighbor >= 0 && neighbor < n) { // 合法性检查
+                uniqueReachable.insert(neighbor);
+                for (int j = 0; j < reachableSizes[neighbor]; ++j) {
+                    uniqueReachable.insert(reachableSets[neighbor][j]);
+                }
+            }
+        }
+
+        // 计算去重后的集合大小
+        int totalSize = uniqueReachable.size();
+
+        // 回收当前节点旧的数组（如果存在）
+        if (reachableSets[node] != nullptr) {
+            delete[] reachableSets[node];
+        }
+
+        // 分配新的数组，存储所有可达节点
+        reachableSets[node] = new int[totalSize];
+        int* curArray = reachableSets[node];
+        reachableSizes[node] = totalSize;
+
+        // 将去重后的节点存入数组
+        int idx = 0;
+        for (int reachableNode : uniqueReachable) {
+            if (idx < totalSize) { // 防止越界写入
+                curArray[idx++] = reachableNode;
+            }
         }
     }
 
+    logFile.close();
+
     // 计算总的可达点对数
     long long reachablePairs = 0;
-    for (const auto& reachableSet : reachableSets) {
-        reachablePairs += reachableSet.size();
+    for (int i = 0; i < n; ++i) {
+        reachablePairs += reachableSizes[i];
     }
 
-    n = g.get_num_vertices();
+    // 清理内存
+    for (int i = 0; i < n; ++i) {
+        if (reachableSets[i] != nullptr) {
+            delete[] reachableSets[i];
+            reachableSets[i] = nullptr;
+        }
+    }
+
     // 计算可达性比例
-    long long totalPairs = static_cast<long long>(n) * (n - 1); // 排除自身
+    long long totalPairs = static_cast<long long>(num) * (num - 1); // 排除自身
     return totalPairs > 0 ? static_cast<double>(reachablePairs) / static_cast<double>(totalPairs) : 0.0;
 }
+
 
 
 int main() {

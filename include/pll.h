@@ -30,20 +30,39 @@ public:
     std::vector<std::vector<int>> OUT;
 
     
+    // std::unordered_map<std::string, size_t> getIndexSizes() const override {
+    //     size_t inSize = 0;
+    //     size_t outSize = 0;
+    //     for (const auto& inSet : IN) {
+    //         inSize += inSet.size();
+    //     }
+    //     for (const auto& outSet : OUT) {
+    //         outSize += outSet.size();
+    //     }
+    //     // 假设每个整数占用 4 字节
+    //     inSize *= sizeof(int);
+    //     outSize *= sizeof(int);
+    //     return {{"IN", inSize}, {"OUT", outSize}};
+    // }
+
     std::unordered_map<std::string, size_t> getIndexSizes() const override {
-        size_t inSize = 0;
-        size_t outSize = 0;
-        for (const auto& inSet : IN) {
-            inSize += inSet.size();
-        }
-        for (const auto& outSet : OUT) {
-            outSize += outSet.size();
-        }
-        // 假设每个整数占用 4 字节
-        inSize *= sizeof(int);
-        outSize *= sizeof(int);
-        return {{"IN", inSize}, {"OUT", outSize}};
-    }
+    size_t inPointersSize = 0;
+    size_t outPointersSize = 0;
+    size_t inSetsSize = 0;
+    size_t outSetsSize = 0;
+
+    // 使用 pointer_length 来计算 in_pointers 和 out_pointers 的大小
+    inPointersSize = pointer_length * sizeof(uint32_t);
+    outPointersSize = pointer_length * sizeof(uint32_t);
+
+    // 使用 in_sets_length 和 out_sets_length 来计算 in_sets 和 out_sets 的大小
+    inSetsSize = in_sets_length * sizeof(uint32_t);
+    outSetsSize = out_sets_length * sizeof(uint32_t);
+
+    return {{"in_pointers", inPointersSize}, {"out_pointers", outPointersSize},
+            {"in_sets", inSetsSize}, {"out_sets", outSetsSize}};
+}
+
 private:
     Graph& g;  // 引用图
 
@@ -54,6 +73,13 @@ private:
     uint32_t* out_pointers;
     uint32_t* in_sets;
     uint32_t* out_sets;
+
+    //pointer的长度
+    uint32_t pointer_length;
+
+    //in和out sets的长度
+    uint32_t in_sets_length;
+    uint32_t out_sets_length;
 
     void buildAdjList();
     void buildInOut();

@@ -49,7 +49,7 @@ void CompressedSearch::offline_industry()
 void CompressedSearch::offline_industry(size_t num_vertices, float ratio, string mapping_file)
 {
 
-    // TODO：执  行压缩
+    // TODO：执行压缩
 
     if (mapping_file != "")
         partition_manager_.read_equivalance_info(mapping_file); ///< 读取等价信息
@@ -112,6 +112,7 @@ bool CompressedSearch::reachability_query(int origin_source, int origin_target)
         {
             if (filter_result == false)
             {
+                cout << getCurrentTimestamp() << "过滤不可达" << endl;
                 return false;
             }
         }
@@ -119,14 +120,17 @@ bool CompressedSearch::reachability_query(int origin_source, int origin_target)
         {
             if (filter_result == true)
             {
+                cout << getCurrentTimestamp() << "过滤可达" << endl;
                 return true;
             }
         }
     }
 
     bool result = false;
-    int source_partition = g.get_partition_id(source);
-    int target_partition = g.get_partition_id(target);
+    int source_partition = partition_manager_.get_partition_id(source);
+    int target_partition = partition_manager_.get_partition_id(target);    
+    // int source_partition = g.get_partition_id(source);
+    // int target_partition = g.get_partition_id(target);
     cout << getCurrentTimestamp() << "分区确定" << source_partition << "  " << target_partition << endl;
     if (source_partition == target_partition)
     {

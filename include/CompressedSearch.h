@@ -61,28 +61,39 @@ public:
     std::unordered_map<std::string, size_t> getIndexSizes() const override
     {
         std::unordered_map<std::string, size_t> index_sizes;
-        index_sizes["PLL"] = 0;
-        index_sizes["Small Index"] = 0;
-        index_sizes["Unreachable Index"] = 0;
-        index_sizes["G'CSR"] = 0;
-        index_sizes["Partition Mapping"] = 0;
-        index_sizes["Partition Connection"] = 0;
         index_sizes["Equivalence Mapping"] = 0;
+        index_sizes["G'CSR"] = 0;
+        index_sizes["Partition id"] = g.vertices.size() * sizeof(uint16_t);
+        index_sizes["Partition Connection"] = 0;
+        index_sizes["PLL_in_pointers"] = 0;
+        index_sizes["PLL_out_pointers"] = 0;
+        index_sizes["PLL_in_sets"] = 0;
+        index_sizes["PLL_out_sets"] = 0;
+        index_sizes["Reachable Matrix"] = 0;
+        index_sizes["Unreachable Index"] = 0;
+        index_sizes["Total"] = 0;
+
 
         // 计算 PLL 索引的大小
-        for (const auto &pll : pll_index_)
-        {
+        // for (const auto &pll : pll_index_)
+        // {
+        //     auto i = pll.second->getIndexSizes();
+        //     index_sizes["PLL"] += i["IN"] + i["OUT"];
+        // }
+        // 计算 PLL 索引的大小
+        for (const auto &pll : pll_index_) {
             auto i = pll.second->getIndexSizes();
-            index_sizes["PLL"] += i["IN"] + i["OUT"];
+            index_sizes["PLL_in_pointers"] += i["in_pointers"];
+            index_sizes["PLL_out_pointers"] += i["out_pointers"];
+            index_sizes["PLL_in_sets"] += i["in_sets"];
+            index_sizes["PLL_out_sets"] += i["out_sets"];
         }
 
         // 计算小分区索引的大小
         for (const auto &small_index : small_index_)
         {
-            for (const auto &row : small_index.second)
-            {
-                index_sizes["Small Index"] += row.size() * sizeof(std::bitset<1>);
-            }
+            int a = small_index.second.size();
+            index_sizes["Reachable Matrix"] += a*a;
         }
 
         // 计算不可达索引的大小
@@ -90,12 +101,12 @@ public:
         {
             for (const auto &row : unreachable_index.second)
             {
-                index_sizes["Unreachable Index"] += row.size() * sizeof(size_t);
+                index_sizes["Unreachable adjList"] += row.size() * sizeof(size_t);
             }
         }
 
         // 计算分区图的大小
-        index_sizes["G'CSR"] += part_bfs->getIndexSizes()["G'CSR"];
+        index_sizes["G'CSR"] += partition_manager_.part_csr->getMemoryUsage();
 
         // 计算分区信息的大小
         index_sizes["Partition Mapping"] += partition_manager_.mapping.size() * sizeof(std::unordered_set<int>);
@@ -105,6 +116,12 @@ public:
 
         // 计算等价类大小
         index_sizes["Equivalence Mapping"] += partition_manager_.get_equivalence_mapping_size();
+
+        uint32_t total = 0;
+        for(auto i : index_sizes){
+            total += i.second;
+        }
+        index_sizes["Total"] = total;
 
         return index_sizes;
     }

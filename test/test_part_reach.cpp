@@ -183,9 +183,9 @@ TEST_F(ReachabilityTest, BasicTest) {
         FAIL() << "无法打开日志文件: " << logFilePath;
     }
 
-    string edgeFile = PROJECT_ROOT_DIR"/Edges/medium/wiki-Vote";
-    string edgefileDAG = PROJECT_ROOT_DIR"/Edges/DAGs/medium/wiki-Vote_DAG";
-    string mapping = PROJECT_ROOT_DIR"/Edges/DAGmapping/wiki-Vote_mapping";
+    string edgeFile = PROJECT_ROOT_DIR"/Edges/medium/cit-DBLP";
+    string edgefileDAG = PROJECT_ROOT_DIR"/Edges/DAGs/medium/cit-DBLP_DAG";
+    string mapping = PROJECT_ROOT_DIR"/Edges/DAGmapping/cit-DBLP_mapping";
 
     cout << "Processing edge file: " << edgeFile << endl;
     // 写入初始日志
@@ -228,10 +228,20 @@ TEST_F(ReachabilityTest, BasicTest) {
     comps.offline_industry(200,0.9,mapping);
     logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
 
+    logFile <<"     PLL index size: "<<endl;
+    auto indices =  pll.getIndexSizes();
+    for(auto &index: indices){
+        logFile << "[" << getCurrentTimestamp() << "] " << index.first << ": " << index.second << endl;
+    }
+    logFile <<"     Comps index size: "<<endl;
+    indices = comps.getIndexSizes();
+    for(auto &index: indices){
+        logFile << "[" << getCurrentTimestamp() << "] " << index.first << ": " << index.second << endl;
+    }
 
 
     // 生成查询对
-    int num_queries = 100;
+    int num_queries = 1000;
     int max_value = g.vertices.size();
     unsigned int seed = 42; // 可选的随机种子
 
@@ -271,7 +281,7 @@ TEST_F(ReachabilityTest, BasicTest) {
 
         
 
-        bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);//if(!results_match) continue;
+        bool results_match = (bfs_result == part_result) && (bfs_result == pll_result);if(!results_match) continue;
 
 
         query_oss << "Query from " << source << " to " << target;

@@ -97,27 +97,34 @@ bool CSRGraph::fromGraph(const Graph& graph) {
     // 设置最大节点 ID
     max_node_id = graph.vertices.size() - 1;
 
-    // 统计总边数
-    num_edges = 0;
-    for (size_t u = 0; u < graph.vertices.size(); u++) {
-        num_edges += graph.vertices[u].LOUT.size();
-    }
+    // 填充 column_indices的vector
+    std::vector<uint32_t> out_offsets(max_node_id+1, 0);
+    std::vector<uint32_t> in_offsets(max_node_id+1, 0);
+    
+    // 统计出边和入边的数量
+    std::vector<uint32_t> out_counts(max_node_id+1, 0);
+    std::vector<uint32_t> in_counts(max_node_id+1, 0);
 
-    // 分配内存
+    // CSR的顶点行
     out_row_pointers = new uint32_t[max_node_id + 2];
     in_row_pointers = new uint32_t[max_node_id + 2];
-    partitions = new int16_t[max_node_id];
+    partitions = new int16_t[max_node_id+1];
+
+    // 统计总边数
+    num_edges = graph.get_num_edges();
+
+    out_column_indices = new uint32_t[num_edges];
+    in_column_indices = new uint32_t[num_edges];
+
+
     std::memset(out_row_pointers, 0, (max_node_id + 2) * sizeof(uint32_t));
     std::memset(in_row_pointers, 0, (max_node_id + 2) * sizeof(uint32_t));
     for (uint32_t i = 0; i < max_node_id + 1; ++i) {
         partitions[i] = graph.vertices[i].partition_id;
     }
-    out_column_indices = new uint32_t[num_edges];
-    in_column_indices = new uint32_t[num_edges];
 
-    // 统计出边和入边的数量
-    std::vector<uint32_t> out_counts(max_node_id+1, 0);
-    std::vector<uint32_t> in_counts(max_node_id+1, 0);
+
+
     for (size_t u = 0; u < graph.vertices.size(); u++) {
         if(graph.vertices[u].LOUT.size()==0)continue;
         for (size_t v_idx = 0; v_idx < graph.vertices[u].LOUT.size(); v_idx++) {
@@ -137,9 +144,7 @@ bool CSRGraph::fromGraph(const Graph& graph) {
         in_row_pointers[i + 1] = in_row_pointers[i] + in_counts[i];
     }
 
-    // 填充 column_indices
-    std::vector<uint32_t> out_offsets(max_node_id+1, 0);
-    std::vector<uint32_t> in_offsets(max_node_id+1, 0);
+
     for (size_t u = 0; u < graph.vertices.size(); u++) {
         if(graph.vertices[u].LOUT.size()==0)continue;
         // 对出边进行排序
@@ -513,7 +518,7 @@ bool CSRGraph::setPartition(uint32_t node, int16_t partition) {
 }
 
 // 获取节点的分区号
-int16_t CSRGraph::getPartition(uint32_t node) const {
+int CSRGraph::getPartition(uint32_t node) const {
     if (node > max_node_id) return -1;
     return partitions[node];
 }

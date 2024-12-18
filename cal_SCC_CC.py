@@ -83,7 +83,7 @@ def load_graph_from_edges_file(edges_file):
     return citation_graph
 
 if __name__ == "__main__":
-    edges_folder = 'Edges/DAGs/large'
+    edges_folder = 'Edges/large'
     components_folder = 'Components'
 
     # 确保 Components 文件夹存在

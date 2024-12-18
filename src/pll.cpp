@@ -140,6 +140,9 @@ bool PLL::convertToArray() {
         }
     }
 
+    this->in_sets_length = in_total_size;
+    this->out_sets_length = out_total_size;
+    this->pointer_length = max_node_id + 1;
     return true;
 }
 

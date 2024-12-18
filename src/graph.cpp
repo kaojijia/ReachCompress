@@ -53,6 +53,7 @@ int Graph::get_partition_id(int node) const
 bool Graph::set_partition_id(int node, int part_id)
 {
     if (node >= vertices.size()) return false;
+    if (vertices[node].in_degree==0&&vertices[node].out_degree==0)return false;
     vertices[node].partition_id = part_id;
     return true;
 }

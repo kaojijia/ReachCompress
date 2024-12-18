@@ -53,6 +53,15 @@ def process_file(input_file, output_dir):
     print(f"Compressed graph edges written to: {output_edges_file}")
     print(f"Node mapping written to: {output_mapping_file}")
 
+        # 计算压缩后图的节点数和边数
+    num_nodes = compressed_graph.number_of_nodes()
+    num_edges = compressed_graph.number_of_edges()
+
+    # 打印节点数和边数
+    print(f"Number of nodes in the compressed graph: {num_nodes}")
+    print(f"Number of edges in the compressed graph: {num_edges}")
+    print("----------------------------------------")
+
 def main(input_dir, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -63,6 +72,6 @@ def main(input_dir, output_dir):
             process_file(input_file, output_dir)
 
 if __name__ == "__main__":
-    input_dir = "Edges/generate"  # 输入边文件目录
-    output_dir = "Edges/DAGs/generate"  # 输出目录
+    input_dir = "Edges/large"  # 输入边文件目录
+    output_dir = "Edges/DAGs/large"  # 输出目录
     main(input_dir, output_dir)

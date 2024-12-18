@@ -37,7 +37,10 @@ public:
         g.set_partition_id(node, partitionId);
         mapping[partitionId].insert(node);
     };
-    int get_partition(int node) const { return g.get_partition_id(node); }
+    int get_partition_id(int node) const {
+        return csr->getPartition(node); 
+        // return g.get_partition_id(node); 
+    }
 
     // 获取分区的所有连接
     const std::unordered_map<int, PartitionEdge> &getPartitionConnections(int partitionId) const;
@@ -89,10 +92,9 @@ public:
         {
             if (equivalence_mapping[i] != nullptr)
             {
-                // 假设每行的第一个元素是行的长度
-                uint32_t row_size = equivalence_mapping[i][0];
-                total_size += row_size * sizeof(uint32_t);
+                total_size +=  sizeof(uint32_t);
             }
+            total_size +=  sizeof(uint32_t);
         }
         return total_size;
     }
@@ -110,6 +112,7 @@ public:
     std::unordered_map<int, std::unordered_set<int>> mapping;
     Graph &g;
     Graph part_g;
+    CSRGraph *part_csr;
 
     // 分区ID到子图的映射
     std::unordered_map<int, Graph> partition_subgraphs;
