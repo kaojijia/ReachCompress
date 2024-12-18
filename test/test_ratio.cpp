@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include "cal_ratio.h"
 #include "graph.h"
 #include "PartitionManager.h"
 #include "LouvainPartitioner.h"
@@ -22,19 +23,19 @@
 using namespace std;
 
 // 获取当前时间戳的辅助函数
-std::string getCurrentTimestamp() {
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
-    std::tm local_tm;
-#if defined(_WIN32) || defined(_WIN64)
-    localtime_s(&local_tm, &now_time);
-#else
-    localtime_r(&now_time, &local_tm);
-#endif
-    std::ostringstream ss;
-    ss << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S");
-    return ss.str();
-}
+// std::string getCurrentTimestamp() {
+//     auto now = std::chrono::system_clock::now();
+//     std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+//     std::tm local_tm;
+// #if defined(_WIN32) || defined(_WIN64)
+//     localtime_s(&local_tm, &now_time);
+// #else
+//     localtime_r(&now_time, &local_tm);
+// #endif
+//     std::ostringstream ss;
+//     ss << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S");
+//     return ss.str();
+// }
 
 std::string getCurrentDaystamp() {
     auto now = std::chrono::system_clock::now();
@@ -85,16 +86,16 @@ vector<string> getAllFiles(const string& directoryPath) {
 TEST(ReachabilityTest, TotalReachabilityRatioTest) {
     string edgesDirectory = PROJECT_ROOT_DIR"/Edges/DAGs/medium";  // 根据实际路径修改
     
-    string outputFilePath = string(PROJECT_ROOT_DIR)+"/result/"+getCurrentDaystamp()+"/reach_ratio_results_2.csv";      
+    string outputFilePath = string(PROJECT_ROOT_DIR)+"/result/"+getCurrentDaystamp()+"/reach_ratio_results.csv";      
 
-    string file2 = "/home/reco/Projects/ReachCompress/Edges/DAGs/large/tweibo-edgelist_DAG";
+    // string file2 = "/home/reco/Projects/ReachCompress/Edges/DAGs/large/tweibo-edgelist_DAG";
     // 获取所有边文件
-    // vector<string> edgeFiles = getAllFiles(edgesDirectory);
+    vector<string> edgeFiles = getAllFiles(edgesDirectory);
 
-    vector<string> edgeFiles; 
-    edgeFiles.push_back(file2);
+    // vector<string> edgeFiles; 
+    // edgeFiles.push_back(file2);
     if (edgeFiles.empty()) {
-        cout << "[" << getCurrentTimestamp() << "] " << "没有找到任何边文件。" << endl;
+        cout << "[" << getCurrentTimestamp() << "] "<<edgesDirectory<< "没有找到任何边文件。" << endl;
         return;
     }
 
@@ -103,18 +104,17 @@ TEST(ReachabilityTest, TotalReachabilityRatioTest) {
         cout << "[" << getCurrentTimestamp() << "] " << "找到边文件：" << edgeFile << endl;
     }
 
-    // 打开输出文件
-    ofstream outputFile(outputFilePath);
-    if (!outputFile.is_open()) {
-        cout << "[" << getCurrentTimestamp() << "] " << "无法打开输出文件: " << outputFilePath << endl;
-        return;
-    }
-
-    // 写入CSV头
-    outputFile << "File,TotalReachRatio\n";
 
     // 遍历每个边文件
     for (const auto& edgeFilePath : edgeFiles) {
+
+        // 打开输出文件
+        ofstream outputFile(outputFilePath,ios::app);
+        if (!outputFile.is_open()) {
+            cout << "[" << getCurrentTimestamp() << "] " << "无法打开输出文件: " << outputFilePath << endl;
+            return;
+        }
+
         cout << "[" << getCurrentTimestamp() << "] " << "正在处理: " << edgeFilePath << endl;
         // 初始化图
         Graph g(false);
@@ -123,22 +123,29 @@ TEST(ReachabilityTest, TotalReachabilityRatioTest) {
         InputHandler inputHandler(edgeFilePath);
         inputHandler.readGraph(g);
 
-        BidirectionalBFS bfs(g);
-        // bfs.set_reachable_matrix();
-        // 输出图信息（可选）
-        // OutputHandler::printGraphInfo(g);
+        // 执行拓扑排序
+        vector<int> topoOrder;
+        if (!topologicalSort(g, topoOrder)) {
+            cerr << "图包含环，无法计算可达性比例: " << edgeFilePath << endl;
+            continue;
+        }
 
-        // 计算全图的可达性比例
+
+
+        // 计算可达性比例
         cout << "[" << getCurrentTimestamp() << "] " << "Computing reach ratio..." << endl;
-        float total_ratio = compute_reach_ratio_bfs(g);
-        cout << "[" << getCurrentTimestamp() << "] " << "Total reach ratio: " << total_ratio << endl;
+        double reachRatio = computeReachRatio(g, topoOrder);
+        cout << getCurrentTimestamp() << "  文件: " << edgeFilePath << ", 可达性比例: " << reachRatio << endl;
+        cout << "[" << getCurrentTimestamp() << "] " << "Total reach ratio: " << reachRatio << endl;
 
         // 写入结果到CSV
-        outputFile << "\"" << edgeFilePath << "\"," << total_ratio << "\n";
+        outputFile << "\"" << edgeFilePath << "\"," << reachRatio << "\n";
+        
+        // 关闭输出文件
+        outputFile.close();
     }
 
-    // 关闭输出文件
-    outputFile.close();
+
 
     cout << "[" << getCurrentTimestamp() << "] " << "Reachability ratio testing completed. Results saved to " << outputFilePath << endl;
 

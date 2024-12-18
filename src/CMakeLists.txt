@@ -2,24 +2,24 @@
 
 # 生成静态库 libreach_comp.a
 add_library(reach_comp STATIC 
-    graph.cpp 
-    CSR.cpp
+    struct/graph.cpp 
+    struct/CSR.cpp
+    struct/PartitionManager.cpp
 
-    BiBFSCSR.cpp
-    BidirectionalBFS.cpp
-    pll.cpp 
-    CompressedSearch.cpp
+    search/BiBFSCSR.cpp
+    search/BidirectionalBFS.cpp
+    search/pll.cpp 
+    search/CompressedSearch.cpp
 
-    PartitionManager.cpp
-    LouvainPartitioner.cpp
-    ReachRatioPartitioner.cpp
-    ImportPartitioner.cpp
+    partitioner/LouvainPartitioner.cpp
+    partitioner/ReachRatioPartitioner.cpp
+    partitioner/ImportPartitioner.cpp
     
-    ReachRatio.cpp
-
-    compression.cpp 
+    utils/ReachRatio.cpp
+    utils/compression.cpp 
     utils/input_handler.cpp 
-    utils/output_handler.cpp 
+    utils/output_handler.cpp
+    utils/cal_ratio.cpp 
     filters/BloomFilter.cpp
     filters/TreeCover.cpp
 )

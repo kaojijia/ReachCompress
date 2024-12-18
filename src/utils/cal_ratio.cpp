@@ -173,39 +173,3 @@ double computeReachRatio(const Graph& g, const vector<int>& topoOrder) {
 }
 
 
-
-int main() {
-    // 输入与输出路径
-    string inputFile = PROJECT_ROOT_DIR "/Edges/DAGs/large/tweibo-edgelist_DAG";
-    string outputFile = PROJECT_ROOT_DIR "/ratio_results.txt";
-
-    // 读取图
-    cout << getCurrentTimestamp() << "  开始读取图数据: " << inputFile << endl;
-    Graph g(false);
-    InputHandler inputHandler(inputFile);
-    inputHandler.readGraph(g);
-    cout << getCurrentTimestamp() << "  图数据读取完成。" << endl;
-
-    // 执行拓扑排序
-    vector<int> topoOrder;
-    if (!topologicalSort(g, topoOrder)) {
-        cerr << "图包含环，无法计算可达性比例: " << inputFile << endl;
-        return -1;
-    }
-
-    // 计算可达性比例
-    double reachRatio = computeReachRatio(g, topoOrder);
-    cout << getCurrentTimestamp() << "  文件: " << inputFile << ", 可达性比例: " << reachRatio << endl;
-
-    // 输出结果
-    ofstream outFile(outputFile, ios::app);
-    if (outFile.is_open()) {
-        outFile << getCurrentTimestamp() << "  文件: " << inputFile << ", 可达性比例: " << reachRatio << "\n";
-        outFile.close();
-    } else {
-        cerr << "无法打开输出文件: " << outputFile << endl;
-        return -1;
-    }
-
-    return 0;
-}
