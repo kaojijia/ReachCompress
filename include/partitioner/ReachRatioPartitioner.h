@@ -16,11 +16,11 @@ public:
     void partition(Graph& graph, PartitionManager& partition_manager) override;
 
 private:
-    // Graph &graph;
     // PartitionManager &partition_manager;
+    // Graph &graph;
     double computeFirstTerm(const Graph& graph);
-    double computeSecondTerm(const Graph& graph, const PartitionManager& partition_manager);
-    void computeReachability(const Graph &graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes);
+    double computeSecondTerm(const Graph& graph, PartitionManager& partition_manager);
+    void computeReachability(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes);
     std::vector<int> topologicalSort(const Graph &graph, const std::vector<int> &nodes);
-    Graph buildPartitionGraph(const Graph& graph, const PartitionManager& partition_manager);
+    Graph buildPartitionGraph(const Graph& graph, PartitionManager& partition_manager);
 };

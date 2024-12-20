@@ -81,13 +81,11 @@ void Graph::addEdge(int u, int v, bool is_directed) {
     vertices[v].in_degree++;
 
     // 更新顶点和边的数量
-    //cout<<getCurrentTimestampofGraph()<<"   更新点的数量"<<endl;
     this->num_edges++;
     if(vertices[u].out_degree==1&&vertices[u].in_degree==0)
         this->num_vertices++;
     if(vertices[v].out_degree==0&&vertices[v].in_degree==1)
         this->num_vertices++;
-    //cout<<getCurrentTimestampofGraph()<<"   完成更新点的数量"<<endl;
 
     // 如果需要存储边集，确保 adjList 和 reverseAdjList 也被正确调整
     if (store_edges) {
@@ -127,6 +125,19 @@ void Graph::removeEdge(int u, int v, bool is_directed) {
     remove_edge(vertices[v].LIN, u);
     vertices[u].out_degree--;
     vertices[v].in_degree--;
+
+    // 更新边的数量
+    this->num_edges--;
+    // 更新点的数量
+    if(vertices[u].out_degree==0&&vertices[u].in_degree==0){
+        this->num_vertices--;
+        vertices[u].partition_id = -1;
+    }
+
+    if(vertices[v].out_degree==0&&vertices[v].in_degree==0){
+        this->num_vertices--;
+        vertices[v].partition_id = -1;
+    }
 
     if (store_edges) {
         remove_edge(adjList[u], v);

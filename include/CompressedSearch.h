@@ -12,7 +12,6 @@
 #include "partitioner/GraphPartitioner.h"
 #include "partitioner/ReachRatioPartitioner.h"
 #include "BloomFilter.h"
-#include "NodeEmbedding.h"
 #include "BidirectionalBFS.h"
 #include "BiBFSCSR.h"
 #include "TreeCover.h"

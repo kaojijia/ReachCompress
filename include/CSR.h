@@ -23,7 +23,7 @@ public:
     // 节点的分区信息
     int16_t* partitions;           // 存储每个节点的分区号，预设值为 -1
 
-    uint32_t max_node_id;            // 最大节点id=数组长度-2
+    uint32_t max_node_id;          // 最大节点id=数组长度-2
     uint32_t num_edges;            // 边数量
     uint32_t num_nodes;            // 节点数量
 
@@ -39,7 +39,7 @@ public:
         delete[] out_row_pointers;
         delete[] in_column_indices;
         delete[] in_row_pointers;
-        //delete[] partitions;
+        delete[] partitions;
     }
 
     // 从边集文件中读取图数据并构建 CSR 结构
@@ -97,14 +97,7 @@ public:
     uint32_t getNodesNum() const;
 
 private:
-    // 辅助函数：构建 CSR 结构
-    // void buildCSR(const std::vector<std::pair<uint32_t, uint32_t>>& edges, uint32_t max_node);
 
-    // 辅助函数：重新分配和扩展 CSR 数组
-    // bool resizeGraph(uint32_t new_max_node_id, uint32_t new_num_edges);
-
-    // 辅助函数：保持边的有序性
-    // void sortEdges();
 };
 
 #endif // CSR_H

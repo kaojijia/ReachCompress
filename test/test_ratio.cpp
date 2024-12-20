@@ -84,7 +84,7 @@ vector<string> getAllFiles(const string& directoryPath) {
 }
 
 TEST(ReachabilityTest, TotalReachabilityRatioTest) {
-    string edgesDirectory = PROJECT_ROOT_DIR"/Edges/DAGs/medium";  // 根据实际路径修改
+    string edgesDirectory = PROJECT_ROOT_DIR"/Edges/DAGs/generate";  // 根据实际路径修改
     
     string outputFilePath = string(PROJECT_ROOT_DIR)+"/result/"+getCurrentDaystamp()+"/reach_ratio_results.csv";      
 

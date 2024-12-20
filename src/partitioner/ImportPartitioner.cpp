@@ -53,5 +53,6 @@ void ImportPartitioner::partition(Graph& graph, PartitionManager& partition_mana
     std::cout << "Partitioning completed using file: " << partition_filename << std::endl;
     
     // 建立分区图和对应的信息
+    partition_manager.update_partition_connections();
     partition_manager.build_partition_graph();
 }

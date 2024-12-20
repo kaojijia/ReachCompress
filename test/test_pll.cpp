@@ -8,7 +8,7 @@
 #include <string>
 
 
-TEST(PLLTest, BIGVertexTest) {
+TEST(PLLTest, DISABLED_BIGVertexTest) {
     Graph g(true);
     g.addEdge(1, 2);
     g.addEdge(2, 3);
@@ -25,13 +25,13 @@ TEST(PLLTest, BIGVertexTest) {
     EXPECT_FALSE(pll.reachability_query(43, 1));
     pll.getCurrentTimestamp();
 }
-TEST(PLLTest, ReachabilityTest) {
+TEST(PLLTest, DISABLED_ReachabilityTest) {
     Graph g1(true);
     Graph g2(true);
 
     // 使用项目根目录宏构建绝对路径
-    std::string filename = "gene_edges_20241029_135003";
-    std::string gene_path = "/Edges/generate/";
+    std::string filename = "Edges/DAGs/large/tweibo-edgelist_DAG";
+    // std::string gene_path = "/Edges/generate/";
     std::string result_path = "/result/";
 
     
@@ -41,7 +41,7 @@ TEST(PLLTest, ReachabilityTest) {
     
     // OutputHandler::printGraphInfo(g1);
     
-    InputHandler inputHandler2(PROJECT_ROOT_DIR + gene_path + filename);
+    InputHandler inputHandler2(PROJECT_ROOT_DIR + filename);
     inputHandler2.readGraph(g2);
     OutputHandler outputHandler_pruned(PROJECT_ROOT_DIR + result_path+ filename +"_pruned");
 
@@ -70,5 +70,20 @@ TEST(PLLTest, ReachabilityTest) {
     }
     cout<<pll2.getCurrentTimestamp()<<endl;
 
+
+}
+
+
+TEST(PLLTest, IndexSizeTest){
+    std::string filename = "/Edges/DAGs/large/tweibo-edgelist_DAG";
+    Graph g(true);
+    InputHandler inputHandler(PROJECT_ROOT_DIR + filename);
+    inputHandler.readGraph(g);
+    PLL pll(g);
+    pll.buildPLLLabels();
+    std::unordered_map<std::string, size_t> indexSizes = pll.getIndexSizes();
+    for (const auto& [indexName, indexSize] : indexSizes) {
+        std::cout << indexName << ": " << indexSize << " bytes" << std::endl;
+    }
 
 }

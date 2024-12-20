@@ -30,7 +30,7 @@ TEST(PartitionTest, DISABLED_LouvainTest) {
 TEST(PartitionTest, ReachRatioPartitionTest) {
     // 创建一个图
     Graph g(true);  // 确保存储边集    
-    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/test_123456");
+    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/test_123456789");
     inputHandler.readGraph(g);
     // OutputHandler::printGraphInfo(g);
 

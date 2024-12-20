@@ -9,8 +9,6 @@
 #include "graph.h"
 #include "CSR.h"
 
-// TODO: mapping 在分区变化的函数中没有正确维护，仅在建立分区图的时候有初始化
-
 // 表示两个分区之间的边
 struct PartitionEdge
 {
@@ -25,6 +23,15 @@ public:
 
     // 建立分区图
     void build_partition_graph();
+    // 更新 顶点的分区id、分区图、分区之间的连接、分区和顶点的映射
+    void update_partition_info(int node, int old_partition_id, int new_partition_id);
+
+    
+    // 更新分区之间的连接
+    void update_partition_connections();
+    
+
+
 
     // 设置节点的分区ID
     void set_partition(int node, int partitionId)
@@ -37,6 +44,7 @@ public:
         g.set_partition_id(node, partitionId);
         mapping[partitionId].insert(node);
     };
+
     int get_partition_id(int node) const {
         return csr->getPartition(node); 
         // return g.get_partition_id(node); 
@@ -71,8 +79,6 @@ public:
         mapping.erase(partition_id);
     }
 
-    // 更新分区之间的连接
-    void update_partition_connections();
 
     void print_equivalence_mapping() const;
 
@@ -109,7 +115,7 @@ public:
     // 分区之间的邻接表
     std::unordered_map<int, std::unordered_map<int, PartitionEdge>> partition_adjacency;
 
-    // 分区和点的映射关系
+    // 分区和点的映射关系,第一位是分区号，第二位是顶点
     std::unordered_map<int, std::unordered_set<int>> mapping;
     Graph &g;
     Graph part_g;

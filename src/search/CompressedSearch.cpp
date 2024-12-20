@@ -4,7 +4,6 @@
 #include "partitioner/LouvainPartitioner.h"
 #include "partitioner/ImportPartitioner.h"
 #include "BloomFilter.h"
-#include "NodeEmbedding.h"
 #include <memory>
 #include <stdexcept>
 #include <iostream>
