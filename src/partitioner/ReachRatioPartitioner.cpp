@@ -374,7 +374,7 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
     std::vector<double> recentQs;
     const size_t maxHistorySize = 1000;
     const double fluctuationThreshold = 1e-6;
-    const int maxIterations = 1000;
+    const int maxIterations = 20;
 
     double currentQ = computeFirstTerm(graph) - computeSecondTerm(graph, partition_manager);
     recentQs.push_back(currentQ);
@@ -382,7 +382,7 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
     int iterationCount = 0;
     bool improvement = true;
 
-    while (improvement && iterationCount < maxIterations) {
+    while (iterationCount < maxIterations) {
         iterationCount++;
         std::cout <<"---------------------------"<<std::endl;
         std::cout << "Iteration: " << iterationCount << ", Current Q: " << currentQ << std::endl;
@@ -391,7 +391,7 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
         std::vector<int> movableNodes;
 
         // 收集可移动节点
-        // TODO_GH:  Louvian中是对所有节点进行遍历，目前这里是对所有未分配的节点进行处理
+        //   Louvian中是对所有节点进行遍历，目前这里是对所有未分配的节点进行处理
         // for (size_t i = 0; i < graph.vertices.size(); ++i) {
         //     int partition = graph.vertices[i].partition_id;
         //     if (partition != -1 && partitionSizes[partition] == 1) {
@@ -399,6 +399,7 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
         //     }
         // }
 
+        //对所有节点进行遍历，到固定轮数再停，或者变化不大就停
         for (size_t i = 0; i < graph.vertices.size(); ++i) {
             int partition = graph.vertices[i].partition_id;
             if (partition != -1 ) {
@@ -454,8 +455,17 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
                     // improvement = false;
                 }
             }
-
-            if (improvement) break;
+            
+            // if (improvement) break;
+            // std::cout << "Partition mapping:" << std::endl;
+            // for (const auto& [partition, nodes] : partition_manager.get_mapping()) {
+            //     if(partition == -1||nodes.size()<1) continue;
+            //     std::cout << "Partition " << partition << ": ";
+            //     for (int node : nodes) {
+            //         std::cout << node << " ";
+            //     }
+            //     std::cout << std::endl;
+            // }
         }
 
         if (recentQs.size() == maxHistorySize) {

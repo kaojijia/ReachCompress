@@ -224,9 +224,21 @@ TEST_F(ReachabilityTest, BasicTest) {
 
 
     // 初始化 CompressedSearch 并进行离线处理
-    CompressedSearch comps(dag);
+    CompressedSearch comps(dag,"ReachRatio");
     comps.offline_industry(200,0.9,mapping);
     logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
+
+    logFile << "Partition mapping:" << std::endl;
+    auto &pm = comps.get_partition_manager();
+    for (const auto& [partition, nodes] : pm.get_mapping()) {
+        if(partition == -1||nodes.size()<1) continue;
+        logFile << "Partition " << partition << ": ";
+        for (int node : nodes) {
+            logFile << node << " ";
+        }
+        logFile << std::endl;
+    }
+
 
     logFile <<"     PLL index size: "<<endl;
     auto indices =  pll.getIndexSizes();
