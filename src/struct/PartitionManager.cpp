@@ -134,7 +134,7 @@ void PartitionManager::build_partition_graph()
 
 
     // 打印分区图信息（可选）
-    std::cout << "Partition graph constructed with " << temp_edges.size() << " partitions." << std::endl;
+    // std::cout << "Partition graph constructed with " << temp_edges.size() << " partitions." << std::endl;
 }
 
 // void PartitionManager::update_partition_info(int node, uint16_t old_partition_id, uint16_t new_partition_id){

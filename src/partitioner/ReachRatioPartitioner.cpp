@@ -9,8 +9,11 @@
 #include <sstream>
 #include <iomanip>
 #include <chrono>
+#include <thread>
+#include <mutex>
 #include "graph.h"
 #include "partitioner/ReachRatioPartitioner.h"
+const int num_threads = 10; // 固定线程数
 
 // 获取当前时间戳
 std::string getCurrentTimestamp() {
@@ -31,14 +34,83 @@ std::string getCurrentTimestamp() {
 }
 
 
+// 使用固定数量线程的 BFS 做可达点对数量查询
+void ReachRatioPartitioner::computeReachability_BFS(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition) {
+    int partition_id = partition;
+    const int num_threads = 4; // 固定线程数
+    std::vector<std::thread> threads(num_threads);
+    std::mutex mtx;
 
-// 独立的可达性计算模块
+    for (int i = 0; i < current_graph.vertices.size(); i++) {
+        if (current_graph.vertices[i].partition_id == partition_id) {
+            reachableSets[i] = new int[1]; // 动态数组初始化
+            reachableSets[i][0] = i; // 初始集合仅包含自身
+            reachableSizes[i] = 1;
+        }
+    }
+
+    auto bfs = [&](int node) {
+        std::vector<bool> visited(current_graph.vertices.size(), false);
+        std::queue<int> q;
+        q.push(node);
+        visited[node] = true;
+        int reachable_count = 0;
+
+        while (!q.empty()) {
+            int u = q.front();
+            q.pop();
+            reachable_count++;
+
+            for (const auto &v : current_graph.vertices[u].LOUT) {
+                if (current_graph.vertices[v].partition_id == partition_id && !visited[v]) {
+                    visited[v] = true;
+                    q.push(v);
+                }
+            }
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            reachableSizes[node] = reachable_count;
+            reachableSets[node] = new int[reachable_count];
+            int idx = 0;
+            for (int i = 0; i < visited.size(); ++i) {
+                if (visited[i]) {
+                    reachableSets[node][idx++] = i;
+                }
+            }
+        }
+    };
+
+    for (size_t j = 0; j < nodes.size(); j += num_threads) {
+        int current_num_thread = std::min(num_threads, static_cast<int>(nodes.size() - j));
+        for (int i = 0; i < current_num_thread; ++i) {
+            if (threads[i].joinable()) {
+                threads[i].join();
+            }
+            threads[i] = std::thread(bfs, nodes[j + i]);
+        }
+
+        for (int i = 0; i < current_num_thread; ++i) {
+            if (threads[i].joinable()) {
+                threads[i].join();
+            }
+        }
+    }
+}
+
+
+
+
+
+// 使用拓扑排序来计算可达数组数量
 void ReachRatioPartitioner::computeReachability(const Graph& current_graph,
                          const std::vector<int>& nodes,
                          std::vector<int*>& reachableSets,
-                         std::vector<int>& reachableSizes) {
+                         std::vector<int>& reachableSizes,
+                         int partition) {
 
-    int partition_id = current_graph.vertices[nodes[1]].partition_id;
+    int partition_id = partition;
     for (int i = 0 ; i < current_graph.vertices.size(); i++){
         if(current_graph.vertices[i].partition_id == partition_id){
             reachableSets[i] = new int[1];// 动态数组初始化
@@ -164,7 +236,6 @@ Graph ReachRatioPartitioner::buildPartitionGraph(const Graph& graph, PartitionMa
     return partition_manager.part_g;
 }
 
-
 // Graph ReachRatioPartitioner::buildPartitionGraph(const Graph& graph, const PartitionManager& partition_manager) {
 //     Graph partitionGraph(false); // 分区图初始化
 //     std::unordered_map<int, std::unordered_set<int>> edges;
@@ -221,7 +292,7 @@ double ReachRatioPartitioner::computeFirstTerm(const Graph& graph) {
         }
 
         // 调用可达性计算模块
-        computeReachability(graph, nodes, reachableSets, reachableSizes);
+        computeReachability_BFS(graph, nodes, reachableSets, reachableSizes, partition);
 
         // 统计分区内部的可达点对数
         int reachablePairs = 0;
@@ -262,7 +333,8 @@ double ReachRatioPartitioner::computeSecondTerm(const Graph& graph, PartitionMan
     std::vector<int> reachableSizes(nodes.size(), 0);
 
     // 调用可达性计算模块
-    computeReachability(partitionGraph, nodes, reachableSets, reachableSizes);
+    // 分区图上的所有点分区都是1
+    computeReachability_BFS(partitionGraph, nodes, reachableSets, reachableSizes, 1);
 
     // 统计分区图上的可达点对数
     int reachablePairs = 0;
@@ -312,14 +384,25 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
 
     while (improvement && iterationCount < maxIterations) {
         iterationCount++;
+        std::cout <<"---------------------------"<<std::endl;
         std::cout << "Iteration: " << iterationCount << ", Current Q: " << currentQ << std::endl;
         improvement = false;
 
         std::vector<int> movableNodes;
+
+        // 收集可移动节点
+        // TODO_GH:  Louvian中是对所有节点进行遍历，目前这里是对所有未分配的节点进行处理
+        // for (size_t i = 0; i < graph.vertices.size(); ++i) {
+        //     int partition = graph.vertices[i].partition_id;
+        //     if (partition != -1 && partitionSizes[partition] == 1) {
+        //         movableNodes.push_back(i);// 将分区中只有一个节点的节点加入
+        //     }
+        // }
+
         for (size_t i = 0; i < graph.vertices.size(); ++i) {
             int partition = graph.vertices[i].partition_id;
-            if (partition != -1 && partitionSizes[partition] == 1) {
-                movableNodes.push_back(i);// 将分区中只有一个节点的节点加入
+            if (partition != -1 ) {
+                movableNodes.push_back(i);// 每轮将所有顶点加入
             }
         }
 
@@ -327,7 +410,7 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
         std::shuffle(movableNodes.begin(), movableNodes.end(), gen);
 
         for (int node : movableNodes) {
-
+            
             int originalPartition = graph.get_partition_id(node);
             std::unordered_set<int> neighborPartitions;
             for (int neighbor : graph.vertices[node].LOUT) {
@@ -368,6 +451,7 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
                     partition_manager.update_partition_info(node, targetPartition, originalPartition);
                     partitionSizes[originalPartition]++;
                     partitionSizes[targetPartition]--;
+                    // improvement = false;
                 }
             }
 
