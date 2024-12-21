@@ -32,11 +32,21 @@ public:
         : g(graph),
           partition_manager_(graph),
           bfs(graph),
+          csr(nullptr),
           part_bfs(nullptr),
           is_index(is_index),
           filter_name_("")
     {
         set_partitioner(partitioner_name);
+        this->csr = partition_manager_.csr;
+    }
+    ~CompressedSearch() override
+    {
+        for (auto &pll : pll_index_)
+        {
+            delete pll.second;
+        }
+        delete csr;
     }
 
     // 设置分区器
@@ -151,6 +161,7 @@ private:
     std::unique_ptr<BidirectionalBFS> part_bfs;
     std::unique_ptr<BiBFSCSR> part_bfs_csr;
     Graph &g;                                       ///< 处理的图。
+    CSRGraph *csr;
     PartitionManager partition_manager_;            ///< 分区管理器。
     std::unique_ptr<GraphPartitioner> partitioner_; ///< 图分区器，支持多种分区算法。
     // BloomFilter bloom_filter_;                      ///< Bloom Filter，用于快速判断节点间可能的连接。

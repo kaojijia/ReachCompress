@@ -2,10 +2,18 @@
 #include "ReachRatio.h"
 #include "BidirectionalBFS.h"
 #include "pll.h"
+#include "CSR.h"
 #include <vector>
 #include <iostream>
 #include <unordered_set>
 #include <queue>
+#include <thread>
+#include <mutex>
+#include <atomic>
+
+const int NUMBEROFTHREAD = 50;
+// 全局锁，保护 VRCount 的累加操作
+static std::mutex mtx;
 
 // 辅助函数：执行 BFS 并返回可达的顶点集合
 std::unordered_set<int> bfs_reachable(const std::vector<std::vector<int>>& adjList, int start) {
@@ -87,6 +95,63 @@ float compute_reach_ratio(Graph& graph) {
     return ratio;
 }
 
+
+//使用多线程BFS跑ratio
+
+static void bfsFromNode(CSRGraph *csr, uint32_t startNode, std::vector<uint64_t> &VRCount) {
+    std::vector<bool> visited(csr->max_node_id + 10, false);
+    std::queue<uint32_t> q;
+    q.push(startNode);
+    visited[startNode] = true;
+
+    while(!q.empty()) {
+        uint32_t u = q.front();
+        q.pop();
+        uint32_t deg;
+        uint32_t* neighbors = csr->getOutgoingEdges(u, deg);
+        for(uint32_t i = 0; i < deg; i++) {
+            uint32_t nxt = neighbors[i];
+            if(!visited[nxt]) {
+                visited[nxt] = true;
+                {
+                    std::lock_guard<std::mutex> lock(mtx);
+                    VRCount[startNode]++;
+                }
+                q.push(nxt);
+            }
+        }
+    }
+}
+
+float compute_reach_ratio(CSRGraph* csr) {
+    uint32_t totalNodes = csr->getNodesNum();
+    uint32_t length = csr->max_node_id + 1;
+    if (totalNodes < 2) return 0.0f;
+
+    std::vector<uint64_t> VRCount(length, 0);
+    std::vector<std::thread> th(NUMBEROFTHREAD);
+
+    for(uint32_t j = 0; j < totalNodes; j += NUMBEROFTHREAD) {
+        int current_num_thread = std::min<int>(NUMBEROFTHREAD, totalNodes - j);
+        for(int i = 0; i < current_num_thread; i++) {
+            th[i] = std::thread(bfsFromNode, csr, j + i, std::ref(VRCount));
+        }
+        for(int i = 0; i < current_num_thread; i++) {
+            th[i].join();
+        }
+    }
+
+    // 统计可达对数
+    uint64_t count = 0;
+    for(uint64_t val : VRCount) {
+        count += val;
+    }
+    
+    // 计算 ratio
+    long double n = (long double)totalNodes;
+    long double ratio = (long double)count / (n * (n - 1.0L));
+    return (float)ratio;
+}
 float compute_reach_ratio_bfs(Graph& graph){
     // PLL pll(graph);
     // cout<<"build labels"<<endl;

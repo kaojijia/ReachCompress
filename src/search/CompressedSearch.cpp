@@ -69,7 +69,7 @@ void CompressedSearch::offline_industry(size_t num_vertices, float ratio, string
 
 void CompressedSearch::construct_filter(float ratio)
 {
-    float ratio_ = compute_reach_ratio(g);
+    float ratio_ = compute_reach_ratio(csr);
     if (ratio_ > ratio)
     {
         // 稠密：不可达索引

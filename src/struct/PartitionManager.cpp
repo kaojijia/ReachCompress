@@ -376,13 +376,19 @@ void PartitionManager::read_equivalance_info(const std::string &filename)
     std::cout << "Mapping completed using file: " << filename << std::endl;
 }
 
-const std::unordered_map<int, PartitionEdge> &PartitionManager::getPartitionConnections(int partitionId) const
+std::unordered_map<int, PartitionEdge> PartitionManager::get_partition_adjacency(int partitionId)
 {
+    auto it_outer = partition_adjacency.find(partitionId);
+    if (it_outer == partition_adjacency.end())
+    {
+        //throw std::out_of_range("Partition not found.");
+        return {};
+    }
     return partition_adjacency.at(partitionId);
 }
 
 // 获取两个分区之间的连接
-const PartitionEdge &PartitionManager::get_partition_adjacency(int u, int v) const
+PartitionEdge PartitionManager::get_partition_adjacency(int u, int v)
 {
     auto it_outer = partition_adjacency.find(u);
     if (it_outer == partition_adjacency.end())

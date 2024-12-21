@@ -51,9 +51,9 @@ public:
     }
 
     // 获取分区的所有连接
-    const std::unordered_map<int, PartitionEdge> &getPartitionConnections(int partitionId) const;
+    std::unordered_map<int, PartitionEdge> get_partition_adjacency(int partitionId);
     // 获取两个分区之间的连接
-    const PartitionEdge &get_partition_adjacency(int u, int v) const;
+    PartitionEdge get_partition_adjacency(int u, int v);
 
     // 获取指定分区的顶点集合
     const std::unordered_set<int> &get_vertices_in_partition(int partition_id) const
@@ -118,6 +118,7 @@ public:
     // 分区和点的映射关系,第一位是分区号，第二位是顶点
     std::unordered_map<int, std::unordered_set<int>> mapping;
     Graph &g;
+    CSRGraph *csr;
     Graph part_g;
     CSRGraph *part_csr;
 
@@ -129,7 +130,7 @@ public:
     uint32_t **equivalence_mapping;
 
 private:
-    CSRGraph *csr;
+
 };
 
 #endif // PARTITION_MANAGER_H

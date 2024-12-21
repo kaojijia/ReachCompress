@@ -13,7 +13,11 @@
 #include <mutex>
 #include "graph.h"
 #include "partitioner/ReachRatioPartitioner.h"
-const int num_threads = 10; // 固定线程数
+const int num_threads = 20; // 固定线程数
+const double beta = 5; // 惩罚倍率
+const size_t maxHistorySize = 1000; // 用于求平均波动的数组大小
+const double fluctuationThreshold = 1e-6; //平均波动小于阈值就退出
+const int maxIterations = 3; //最大迭代轮数
 
 // 获取当前时间戳
 std::string getCurrentTimestamp() {
@@ -230,40 +234,6 @@ std::vector<int> ReachRatioPartitioner::topologicalSort(const Graph& graph, cons
     return topoOrder;
 }
 
-Graph ReachRatioPartitioner::buildPartitionGraph(const Graph& graph, PartitionManager& partition_manager){
-    partition_manager.build_partition_graph();
-    
-    return partition_manager.part_g;
-}
-
-// Graph ReachRatioPartitioner::buildPartitionGraph(const Graph& graph, const PartitionManager& partition_manager) {
-//     Graph partitionGraph(false); // 分区图初始化
-//     std::unordered_map<int, std::unordered_set<int>> edges;
-
-//     // 遍历所有节点，构建分区之间的边
-//     for (size_t u = 0; u < graph.vertices.size(); ++u) {
-//         int uPart = graph.get_partition_id(u); // 获取节点 u 的分区号
-//         for (int v : graph.vertices[u].LOUT) {
-//             int vPart = graph.get_partition_id(v); // 获取后继节点 v 的分区号
-//             if (uPart != vPart && uPart != -1 && vPart != -1) { // 忽略无效分区或同分区的边
-//                 edges[uPart].insert(vPart);
-//             }
-//         }
-//     }
-
-//     // 将分区之间的边加入分区图
-//     for (const auto& [uPart, neighbors] : edges) {
-//         for (int vPart : neighbors) {
-//             partitionGraph.addEdge(uPart, vPart);
-//         }
-//     }
-
-//     for(auto& node : partitionGraph.vertices){
-//         node.partition_id = 1;
-//     }
-
-//     return partitionGraph;
-// }
 
 double ReachRatioPartitioner::computeFirstTerm(const Graph& graph) {
     std::unordered_map<int, std::vector<int>> partitionNodes;
@@ -354,7 +324,7 @@ double ReachRatioPartitioner::computeSecondTerm(const Graph& graph, PartitionMan
 
 
 void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_manager) {
-    std::cout << "Starting ReachRatioPartitioner..." << std::endl;
+    std::cout << getCurrentTimestamp()<< "   Starting ReachRatioPartitioner..." << std::endl;
 
     std::unordered_map<int, int> partitionSizes; // 分区号 -> 分区中节点数
 
@@ -372,9 +342,7 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
     std::random_device rd;
     std::mt19937 gen(rd());
     std::vector<double> recentQs;
-    const size_t maxHistorySize = 1000;
-    const double fluctuationThreshold = 1e-6;
-    const int maxIterations = 20;
+
 
     double currentQ = computeFirstTerm(graph) - computeSecondTerm(graph, partition_manager);
     recentQs.push_back(currentQ);
@@ -428,16 +396,23 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
             }
 
             for (int targetPartition : neighborPartitions) {
-                cout<<"Trying to move node "<<node<<" to partition "<<targetPartition<<endl;
+                cout<<getCurrentTimestamp()<<"  Trying to move node "<<node<<" to partition "<<targetPartition<<endl;
                 auto oldPartition = graph.get_partition_id(node);
                 //graph.set_partition_id(node, targetPartition);
                 // 更新分区图
+                cout<<getCurrentTimestamp()<< "  before update " << node << endl;
                 partition_manager.update_partition_info(node, originalPartition, targetPartition);
+                cout<<getCurrentTimestamp()<< "  after update" <<endl;
                 partitionSizes[originalPartition]--;
                 partitionSizes[targetPartition]++;
-
-                double newQ = computeFirstTerm(graph) - computeSecondTerm(graph, partition_manager);
-
+                cout<<getCurrentTimestamp()<< "  before compute " << node << endl;
+                double firstTerm = computeFirstTerm(graph);
+                cout << getCurrentTimestamp() << "  complete first term"<<endl;
+                // double secondTerm = computeSecondTerm(graph, partition_manager);
+                double secondTerm = computePartitionEdges(graph, partition_manager,targetPartition);
+                cout << getCurrentTimestamp() << "  complete second term"<<endl;
+                double newQ = firstTerm - secondTerm;
+                // cout<<getCurrentTimestamp()<< "  after compute " << node << endl;
                 if (newQ >= currentQ) {
                     cout<<"Q does not decrease, newQ: "<<newQ<<endl;
                     currentQ = newQ;
@@ -481,5 +456,39 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
             }
         }
     }
+
+}
+
+
+// TODO：计算点进入分区后，分区新增的边数，如果多了的话就把罚增大，让整体q下降，这样就不能进入了
+double ReachRatioPartitioner::computePartitionEdges(const Graph& graph, PartitionManager& partition_manager, int parition_id) {
+    
+    int partition = parition_id;
+    PartitionManager& pm = partition_manager;
+    std::unordered_map<int, PartitionEdge> pmedges;
+    pmedges = pm.get_partition_adjacency(partition);
+    if(pmedges.empty()){
+        double secondTerm = 0.0f;
+        return secondTerm;
+    }
+    uint16_t edge_num = 0;
+    double secondTerm = 0.0f;
+    double tempTerm = 0.0f;
+
+    for(auto [node, partition_connection] : pmedges){
+        edge_num += partition_connection.edge_count;
+        if(partition_connection.edge_count > 6)
+            tempTerm = 100.f;
+    }
+    
+    //TODO:分段函数，超过30绝对不行，小于30缓慢增加
+    if(edge_num > 30){
+        secondTerm = 100;
+    }else{
+        secondTerm = static_cast<float>(edge_num) * 0.1; 
+    }
+    secondTerm += tempTerm;
+
+    return secondTerm;
 
 }

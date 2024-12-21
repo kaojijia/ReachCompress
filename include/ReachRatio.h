@@ -3,6 +3,7 @@
 #define REACH_RATIO_H
 
 #include "PartitionManager.h"
+#include "CSR.h"
 #include <unordered_set>
 
 // 计算所有点对之间的可达性比（弗洛伊德算法）
@@ -18,6 +19,8 @@ std::unordered_map<int, float> compute_reach_ratios(const PartitionManager& pm);
 // - graph：图对象
 // 返回：可达性比例（float）
 float compute_reach_ratio(Graph& graph);
+
+float compute_reach_ratio(CSRGraph * csr);
 
 //使用pll方法计算全图可达比例
 float compute_reach_ratio_bfs(Graph& graph);
