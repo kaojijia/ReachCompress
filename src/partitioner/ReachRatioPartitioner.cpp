@@ -13,11 +13,11 @@
 #include <mutex>
 #include "graph.h"
 #include "partitioner/ReachRatioPartitioner.h"
-const int num_threads = 20; // 固定线程数
+const int num_threads = 50; // 固定线程数
 const double beta = 5; // 惩罚倍率
 const size_t maxHistorySize = 1000; // 用于求平均波动的数组大小
 const double fluctuationThreshold = 1e-6; //平均波动小于阈值就退出
-const int maxIterations = 3; //最大迭代轮数
+const int maxIterations = 1; //最大迭代轮数
 
 // 获取当前时间戳
 std::string getCurrentTimestamp() {
