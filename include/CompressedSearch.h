@@ -151,7 +151,7 @@ private:
     bool query_across_partitions(int source, int target); ///< 跨分区查询
     bool query_across_partitions_with_all_paths(int source, int target);
     bool dfs_paths_search(int current_partition, int target_partition, std::vector<int> &path, std::vector<std::vector<int>> &all_paths, std::unordered_set<int> &visited, int source, int target);
-    bool dfs_partition_search(int u, std::vector<std::pair<int, int>> edges, std::vector<int> path, int target);
+    bool dfs_partition_search(int u,std::unordered_set<std::pair<int, int>, pair_hash, pair_equal> edges, std::vector<int> path, int target);
     void build_partition_index(float ratio, size_t num_vertices); ///< 构建分区索引
     void construct_filter(float ratio);
     

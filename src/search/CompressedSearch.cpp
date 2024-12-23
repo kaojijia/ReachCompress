@@ -349,7 +349,7 @@ bool CompressedSearch::dfs_paths_search(int current_partition, int target_partit
  * @param path 从当前节点出发的可达路径集合
  * @return 如果可达返回 true，否则返回 false。
  */
-bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, int>> edges, std::vector<int> path, int target)
+bool CompressedSearch::dfs_partition_search(int u, std::unordered_set<std::pair<int, int>, pair_hash, pair_equal> edges, std::vector<int> path, int target)
 {
     auto current_partition = path[0];
     if (current_partition != g.get_partition_id(u))

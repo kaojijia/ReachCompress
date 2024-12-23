@@ -7,32 +7,50 @@
 #include <memory>
 #include <vector>
 #include <cstdint>
+#include <functional>
+#include <utility>
+#include <iostream>
 #include "graph.h"
 #include "CSR.h"
+// 自定义哈希函数和相等比较函数，用于 std::unordered_set
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator() (const std::pair<T1, T2>& p) const {
+        auto hash1 = std::hash<T1>{}(p.first);
+        auto hash2 = std::hash<T2>{}(p.second);
+        return hash1 ^ (hash2 << 1); // 组合哈希值，减少碰撞
+    }
+};
+
+struct pair_equal {
+    template <class T1, class T2>
+    bool operator() (const std::pair<T1, T2>& p1, const std::pair<T1, T2>& p2) const {
+        return p1.first == p2.first && p1.second == p2.second;
+    }
+};
 
 // 表示两个分区之间的边
 struct PartitionEdge
 {
-    std::vector<std::pair<int, int>> original_edges; // 原始图中的边 <source, target>
-    int edge_count = 0;                              // 边的数量
-    // 插入边时保持 original_edges 有序
+    std::unordered_set<std::pair<int, int>, pair_hash, pair_equal> original_edges; // 原始图中的边 <source, target>
+    int edge_count = 0;                                                            // 边的数量
+
+    // 插入边
     void add_edge(int u, int v) {
-        auto it = std::lower_bound(original_edges.begin(), original_edges.end(), std::make_pair(u, v));
-        if (it == original_edges.end() || *it != std::make_pair(u, v)) {
-            original_edges.emplace(it, u, v);
+        auto result = original_edges.emplace(u, v);
+        if (result.second) {
             edge_count++;
         }
     }
 
     // 删除边
     void remove_edge(int u, int v) {
-        auto it = std::lower_bound(original_edges.begin(), original_edges.end(), std::make_pair(u, v));
-        if (it != original_edges.end() && *it == std::make_pair(u, v)) {
+        auto it = original_edges.find(std::make_pair(u, v));
+        if (it != original_edges.end()) {
             original_edges.erase(it);
             edge_count--;
         }
     }
-
 };
 
 class PartitionManager
