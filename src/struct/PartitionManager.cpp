@@ -16,6 +16,136 @@ PartitionManager::PartitionManager(Graph &graph) : g(graph), part_g(false)
     this->csr->fromGraph(g);
 }
 
+
+// 建立分区图（没有分区子图）
+
+// void PartitionManager::build_partition_graph_with_CSRs()
+// {
+//     // 清空之前的CSR
+//     delete this->part_csr;
+//     this->part_csr = new CSRGraph();
+//     part_csr->createEmptyCSR(g.vertices.size());
+
+//     // 清空分区之间的连接
+//     partition_adjacency.clear();
+
+//     // 清空分区和点的映射关系
+//     mapping.clear();
+
+//     // 清空分区子图
+//     partition_subgraphs.clear();
+//     partition_subgraphs_csr.clear();
+
+//     // 填充 mapping，记录每个分区包含的节点
+//     for (size_t node = 0; node < csr->max_node_id; ++node)
+//     {
+//         int partition_id = csr->getPartition(node);
+//         mapping[partition_id].insert(node);
+//     }
+
+//     // 更新分区之间的连接
+//     update_partition_connections_CSR();
+
+//     // 使用一个临时的映射来累积边的权重
+//     std::map<int, std::map<int, int>> temp_edges;
+
+//     // 遍历分区之间的连接，累积边的数量
+//     for (const auto &source_pair : partition_adjacency)
+//     {
+//         int source_partition = source_pair.first;
+//         const auto &targets = source_pair.second;
+//         for (const auto &target_pair : targets)
+//         {
+//             int target_partition = target_pair.first;
+//             const auto &edge_info = target_pair.second;
+//             temp_edges[source_partition][target_partition] += edge_info.edge_count;
+//         }
+//     }
+
+//     // 添加累积后的边到分区图，但是相同的边只存一条
+//     for (const auto &source_pair : temp_edges)
+//     {
+//         int source_partition = source_pair.first;
+//         const auto &targets = source_pair.second;
+//         for (const auto &target_pair : targets)
+//         {
+//             int target_partition = target_pair.first;
+//             bool result = this->part_csr->addEdge(source_partition, target_partition);
+//             if(!result){
+//                 std::cout << "Error: add edge failed" << std::endl;
+//             }
+//         }
+//     }
+
+//     // 分区图的每个点分区应该一样，不然没法找
+//     for (size_t i = 0; i < part_csr->getNodesNum()+1; ++i) {
+//         if (!part_csr->nodeExist(i)) {
+//             part_csr->setPartition(i, -1);
+//         }
+//         part_csr->setPartition(i, 1);
+//     }
+
+
+    // 为每个分区创建一个子图对象(需要吗？)
+    // for (const auto &partition_pair : mapping)
+    // {
+    //     int size = partition_pair.second.size();
+    //     int partition_id = partition_pair.first;
+    //     partition_subgraphs_csr[partition_id] = std::shared_ptr<CSRGraph>(); // 子图不需要存储边集
+    //     partition_subgraphs_csr[partition_id]->createEmptyCSR(size);
+    // }
+
+    // // 遍历原始图的所有节点，构建分区子图
+    // for (size_t u = 0; u < g.vertices.size(); ++u)
+    // {
+    //     int u_partition = g.get_partition_id(u);
+
+    //     // 获取对应的子图
+    //     Graph &subgraph = partition_subgraphs[u_partition];
+
+    //     // 确保子图中的顶点列表足够大
+    //     if (u >= subgraph.vertices.size())
+    //     {
+    //         subgraph.vertices.resize(u + 1);
+    //     }
+
+    //     // 复制节点分区
+    //     subgraph.vertices[u].partition_id = u_partition;
+
+    //     // 遍历出边
+    //     for (int v : g.vertices[u].LOUT)
+    //     {
+    //         int v_partition = g.get_partition_id(v);
+    //         if (v_partition == u_partition)
+    //         {
+    //             // 边在同一分区内，添加到子图中
+    //             if (v >= subgraph.vertices.size())
+    //             {
+    //                 subgraph.vertices.resize(v + 1);
+    //             }
+
+    //             // 添加边到子图
+    //             subgraph.addEdge(u, v);
+    //         }
+    //     }
+    // }
+
+    // // 为每个子图构建CSR图
+    // for (auto &partition_pair : partition_subgraphs)
+    // {
+    //     Graph &subgraph = partition_pair.second;
+    //     auto csr = std::make_shared<CSRGraph>();
+    //     csr->fromGraph(subgraph);
+    //     partition_subgraphs_csr[partition_pair.first] = csr;
+    // }
+
+
+    // 打印分区图信息（可选）
+    // std::cout << "Partition graph constructed with " << temp_edges.size() << " partitions." << std::endl;
+// }
+
+
+
 // 建立分区图
 void PartitionManager::build_partition_graph()
 {
@@ -84,8 +214,10 @@ void PartitionManager::build_partition_graph()
     // 为每个分区创建一个子图对象
     for (const auto &partition_pair : mapping)
     {
+        int size = partition_pair.second.size();
         int partition_id = partition_pair.first;
         partition_subgraphs[partition_id] = Graph(false); // 子图不需要存储边集
+        partition_subgraphs[partition_id].vertices.resize(size);
     }
 
     // 遍历原始图的所有节点，构建分区子图
@@ -137,9 +269,75 @@ void PartitionManager::build_partition_graph()
     // std::cout << "Partition graph constructed with " << temp_edges.size() << " partitions." << std::endl;
 }
 
-// void PartitionManager::update_partition_info(int node, uint16_t old_partition_id, uint16_t new_partition_id){
 
-// }
+
+
+// 建立分区图
+void PartitionManager::build_partition_graph_without_subgraph()
+{
+    // 清空之前的分区图
+    part_g = Graph(false); // 假设分区图不需要存储边集
+
+    // 清空分区之间的连接
+    partition_adjacency.clear();
+
+    // 清空分区和点的映射关系
+    mapping.clear();
+
+    // 清空分区子图
+    partition_subgraphs.clear();
+    partition_subgraphs_csr.clear();
+
+    // 填充 mapping，记录每个分区包含的节点
+    for (size_t node = 0; node < g.vertices.size(); ++node)
+    {
+        int partition_id = g.get_partition_id(node);
+        mapping[partition_id].insert(node);
+    }
+
+    // 更新分区之间的连接
+    update_partition_connections();
+
+    // 使用一个临时的映射来累积边的权重
+    std::unordered_map<int, std::unordered_map<int, int>> temp_edges;
+
+    // 遍历分区之间的连接，累积边的数量
+    for (const auto &source_pair : partition_adjacency)
+    {
+        int source_partition = source_pair.first;
+        const auto &targets = source_pair.second;
+        for (const auto &target_pair : targets)
+        {
+            int target_partition = target_pair.first;
+            const auto &edge_info = target_pair.second;
+            temp_edges[source_partition][target_partition] += edge_info.edge_count;
+        }
+    }
+
+    // 添加累积后的边到分区图，但是相同的边只存一条
+    for (const auto &source_pair : temp_edges)
+    {
+        int source_partition = source_pair.first;
+        const auto &targets = source_pair.second;
+        for (const auto &target_pair : targets)
+        {
+            int target_partition = target_pair.first;
+            part_g.addEdge(source_partition, target_partition, true);
+        }
+    }
+
+    // 分区图的每个点分区应该一样，不然没法找
+    for(auto& node : part_g.vertices){
+        if(node.in_degree == 0 && node.out_degree == 0){
+            node.partition_id = -1;
+        }
+        node.partition_id = 1;
+    }
+    part_g.set_max_node_id(part_g.vertices.size());
+    delete this->part_csr;
+    this->part_csr = new CSRGraph();
+    part_csr->fromGraph(part_g);
+}
 
 
 void PartitionManager::update_partition_connections()
@@ -176,6 +374,46 @@ void PartitionManager::update_partition_connections()
         }
     }
 }
+
+// void PartitionManager::update_partition_connections_CSR()
+// {
+//     for (size_t u = 0; u < this->csr->max_node_id+1; ++u)
+//     {
+//         if (!csr->nodeExist(u)) continue; 
+//         int u_partition = csr->getPartition(u);
+//         if (u_partition == -1) continue;
+//         uint32_t out_degree = 0;
+//         auto out_edges = csr->getOutgoingEdges(u, out_degree);
+//         for (auto v_index = 0;v_index < out_degree; ++v_index)
+//         {
+//             auto v = out_edges[v_index];
+//             int v_partition = csr->getPartition(v);
+//             if (u_partition != v_partition)
+//             {
+//                 PartitionEdge &pe = partition_adjacency[u_partition][v_partition];
+//                 if (std::find(pe.original_edges.begin(), pe.original_edges.end(), std::make_pair(static_cast<int>(u), v)) == pe.original_edges.end()) {
+//                     pe.original_edges.emplace_back(u, v);
+//                     pe.edge_count++;
+//                 }
+//             }
+//         }
+//         uint32_t in_degree = 0;
+//         auto in_edges = csr->getIncomingEdges(u, in_degree);
+//         for(auto v_index = 0; v_index<in_degree; ++v_index){
+//             auto v = in_edges[v_index];
+//             int v_partition = csr->getPartition(v);
+//             if (u_partition != v_partition)
+//             {
+//                 PartitionEdge &pe = partition_adjacency[v_partition][u_partition];
+//                 if (std::find(pe.original_edges.begin(), pe.original_edges.end(), std::make_pair(v, static_cast<int>(u))) == pe.original_edges.end()) {
+//                     pe.original_edges.emplace_back(v, u);
+//                     pe.edge_count++;
+//                 }
+//             }
+            
+//         }
+//     }
+// }
 
 void PartitionManager::update_partition_info(int node, int old_partition_id, int new_partition_id)
 {
@@ -287,6 +525,11 @@ void PartitionManager::update_partition_info(int node, int old_partition_id, int
     }
 }
 
+
+
+
+
+
 void PartitionManager::print_equivalence_mapping() const
 {
     if (equivalence_mapping == nullptr)
@@ -376,7 +619,7 @@ void PartitionManager::read_equivalance_info(const std::string &filename)
     std::cout << "Mapping completed using file: " << filename << std::endl;
 }
 
-std::unordered_map<int, PartitionEdge> PartitionManager::get_partition_adjacency(int partitionId)
+std::map<int, PartitionEdge> PartitionManager::get_partition_adjacency(int partitionId)
 {
     auto it_outer = partition_adjacency.find(partitionId);
     if (it_outer == partition_adjacency.end())

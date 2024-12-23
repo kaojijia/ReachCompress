@@ -24,7 +24,9 @@ private:
     void computeReachability(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition);
     std::vector<int> topologicalSort(const Graph &graph, const std::vector<int> &nodes);
     void computeReachability_BFS(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition);
-    
+
+    void computeReachability_BFS_CSR(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition);
+
     // 分区不能与其他分区连边太多
     double computePartitionEdges(const Graph &graph, PartitionManager &partition_manager, int partition);
     

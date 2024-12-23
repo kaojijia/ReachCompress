@@ -830,7 +830,7 @@ TEST_F(ReachabilityTest, BasicTest) {
     }
 
     string edgeFile = PROJECT_ROOT_DIR "/Edges/large/tweibo-edgelist";
-    string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/WikiTalk_edgelist_DAG";
+    string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/tweibo-edgelist_DAG";
     string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/tweibo-edgelist_mapping";
     string queryFile = PROJECT_ROOT_DIR "/QueryPairs/tweibo-edgelist_DAG_distance_pairs.txt";
 

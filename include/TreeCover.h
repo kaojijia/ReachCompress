@@ -21,8 +21,13 @@ class TreeCover : public Algorithm {
 public:
     TreeCover(Graph& graph): g(graph) {
     }
-    ~TreeCover(){
-
+    ~TreeCover() {
+        if (tree_nodes != nullptr) {
+            for(uint32_t i = 0; i < g.vertices.size(); ++i){
+                delete tree_nodes[i];
+            }
+            delete[] tree_nodes;
+        }
     }
     void offline_industry() override;
     void printIndex();

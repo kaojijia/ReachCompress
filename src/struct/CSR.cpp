@@ -2,6 +2,29 @@
 
 #include "CSR.h"
 
+// 创建一个空的 CSRGraph，指定顶点数量
+bool CSRGraph::createEmptyCSR(uint32_t num_vertices) {
+    // 设置最大节点 ID
+    max_node_id = num_vertices > 0 ? num_vertices - 1 : 0;
+    num_nodes = num_vertices;
+    num_edges = 0;
+
+    // 分配行指针数组，初始化为0
+    out_row_pointers = new uint32_t[max_node_id + 2];
+    in_row_pointers = new uint32_t[max_node_id + 2];
+    std::memset(out_row_pointers, 0, (max_node_id + 2) * sizeof(uint32_t));
+    std::memset(in_row_pointers, 0, (max_node_id + 2) * sizeof(uint32_t));
+
+    // 分配分区数组，初始化为-1
+    partitions = new int16_t[max_node_id + 1];
+    for (uint32_t i = 0; i <= max_node_id; ++i) {
+        partitions[i] = -1;
+    }
+
+    // 初始化列索引数组为空
+    out_column_indices = nullptr;
+    in_column_indices = nullptr;
+}
 
 // 从边集文件中读取图数据并构建 CSR 结构
 bool CSRGraph::fromFile(const std::string& filename) {
@@ -640,3 +663,12 @@ uint32_t CSRGraph::getNodesNum() const
     
     return num;
 }
+
+
+uint32_t CSRGraph::setNodesNum(uint32_t num)
+{
+    this->num_nodes = num;
+}
+
+
+

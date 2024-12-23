@@ -38,10 +38,12 @@ std::string getCurrentTimestamp() {
 }
 
 
+
+
 // 使用固定数量线程的 BFS 做可达点对数量查询
 void ReachRatioPartitioner::computeReachability_BFS(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition) {
     int partition_id = partition;
-    const int num_threads = 4; // 固定线程数
+
     std::vector<std::thread> threads(num_threads);
     std::mutex mtx;
 
@@ -337,7 +339,7 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
             graph.set_partition_id(i, -1); // 无效节点分区号为 -1
         }
     }
-    partition_manager.build_partition_graph();
+    partition_manager.build_partition_graph_without_subgraph();
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -465,7 +467,7 @@ double ReachRatioPartitioner::computePartitionEdges(const Graph& graph, Partitio
     
     int partition = parition_id;
     PartitionManager& pm = partition_manager;
-    std::unordered_map<int, PartitionEdge> pmedges;
+    std::map<int, PartitionEdge> pmedges;
     pmedges = pm.get_partition_adjacency(partition);
     if(pmedges.empty()){
         double secondTerm = 0.0f;

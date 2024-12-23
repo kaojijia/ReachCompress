@@ -2,6 +2,7 @@
 #define PARTITION_MANAGER_H
 #include <unordered_set>
 #include <unordered_map>
+#include <set>
 #include <map>
 #include <memory>
 #include <vector>
@@ -21,17 +22,21 @@ class PartitionManager
 public:
     PartitionManager(Graph &graph);
 
+    // void build_partition_graph_with_CSRs();
+
     // 建立分区图
     void build_partition_graph();
+    void build_partition_graph_without_subgraph();
+
     // 更新 顶点的分区id、分区图、分区之间的连接、分区和顶点的映射
+    // 好像 没有分区子图
     void update_partition_info(int node, int old_partition_id, int new_partition_id);
 
     
     // 更新分区之间的连接
     void update_partition_connections();
-    
 
-
+    // void update_partition_connections_CSR();
 
     // 设置节点的分区ID
     void set_partition(int node, int partitionId)
@@ -51,19 +56,19 @@ public:
     }
 
     // 获取分区的所有连接
-    std::unordered_map<int, PartitionEdge> get_partition_adjacency(int partitionId);
+    std::map<int, PartitionEdge> get_partition_adjacency(int partitionId);
     // 获取两个分区之间的连接
     PartitionEdge get_partition_adjacency(int u, int v);
 
     // 获取指定分区的顶点集合
-    const std::unordered_set<int> &get_vertices_in_partition(int partition_id) const
+    const std::set<int> &get_vertices_in_partition(int partition_id) const
     {
         auto it = mapping.find(partition_id);
         if (it != mapping.end())
         {
             return it->second;
         }
-        static const std::unordered_set<int> empty_set;
+        static const std::set<int> empty_set;
         return empty_set;
     }
 
@@ -107,16 +112,16 @@ public:
     }
 
     // 获取分区和点的映射关系
-    const std::unordered_map<int, std::unordered_set<int>> &get_mapping() const
+    const std::map<int, std::set<int>> &get_mapping() const
     {
         return mapping;
     }
 
     // 分区之间的邻接表
-    std::unordered_map<int, std::unordered_map<int, PartitionEdge>> partition_adjacency;
+    std::map<int, std::map<int, PartitionEdge>> partition_adjacency;
 
     // 分区和点的映射关系,第一位是分区号，第二位是顶点
-    std::unordered_map<int, std::unordered_set<int>> mapping;
+    std::map<int, std::set<int>> mapping;
     Graph &g;
     CSRGraph *csr;
     Graph part_g;

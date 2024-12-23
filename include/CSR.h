@@ -42,6 +42,9 @@ public:
         delete[] partitions;
     }
 
+    // 创建空的CSR图
+    bool createEmptyCSR(uint32_t num_vertices);
+
     // 从边集文件中读取图数据并构建 CSR 结构
     bool fromFile(const std::string& filename);
 
@@ -95,6 +98,8 @@ public:
     
     // 统计顶点个数
     uint32_t getNodesNum() const;
+    // 设置节点个数
+    uint32_t setNodesNum(uint32_t);
 
 private:
 
