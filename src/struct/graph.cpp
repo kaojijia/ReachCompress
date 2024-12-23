@@ -53,7 +53,7 @@ int Graph::get_partition_id(int node) const
 bool Graph::set_partition_id(int node, int part_id)
 {
     if (node >= vertices.size()) return false;
-    if (vertices[node].in_degree==0&&vertices[node].out_degree==0)return false;
+    // if (vertices[node].in_degree==0&&vertices[node].out_degree==0)return false;
     vertices[node].partition_id = part_id;
     return true;
 }
@@ -81,41 +81,45 @@ void Graph::addEdge_simple(int u, int v, bool is_directed) {
 }
 // 添加边到图
 void Graph::addEdge(int u, int v, bool is_directed) {
-    //cout<<getCurrentTimestampofGraph()<<"   start"<<endl;
-    if (u==v) return;
-    //跳过已有边
-    if (u < vertices.size()) {
-        for(auto i:vertices[u].LOUT){
-            if(i==v)return;
-        }
-    }
-    //cout<<getCurrentTimestampofGraph()<<"   判断是否要resize"<<endl;
+    if (u == v) return;
+
+    // 判断是否需要 resize
     if (u >= vertices.size()) 
         vertices.resize(u + 1);
     if (v >= vertices.size()) 
         vertices.resize(v + 1);
 
-    //cout<<getCurrentTimestampofGraph()<<"   添加边"<<endl;
-    vertices[u].LOUT.push_back(v);
-    vertices[v].LIN.push_back(u);
-    vertices[u].out_degree++;
-    vertices[v].in_degree++;
+    auto& out_edges = vertices[u].LOUT;
+    auto& in_edges = vertices[v].LIN;
 
-    // 更新顶点和边的数量
-    this->num_edges++;
-    if(vertices[u].out_degree==1&&vertices[u].in_degree==0)
-        this->num_vertices++;
-    if(vertices[v].out_degree==0&&vertices[v].in_degree==1)
-        this->num_vertices++;
+    // 插入边并保持有序
+    auto out_pos = std::lower_bound(out_edges.begin(), out_edges.end(), v);
+    if (out_pos == out_edges.end() || *out_pos != v) {
+        out_edges.insert(out_pos, v);
+        vertices[u].out_degree++;
 
-    // 如果需要存储边集，确保 adjList 和 reverseAdjList 也被正确调整
-    if (store_edges) {
-        // 确保 adjList 和 reverseAdjList 足够大
-        if (u >= adjList.size()) adjList.resize(u + 1);
-        if (v >= reverseAdjList.size()) reverseAdjList.resize(v + 1);
+        auto in_pos = std::lower_bound(in_edges.begin(), in_edges.end(), u);
+        in_edges.insert(in_pos, u);
+        vertices[v].in_degree++;
 
-        adjList[u].push_back(v); 
-        reverseAdjList[v].push_back(u);
+        // 更新顶点和边的数量
+        this->num_edges++;
+        if (vertices[u].out_degree == 1 && vertices[u].in_degree == 0)
+            this->num_vertices++;
+        if (vertices[v].out_degree == 0 && vertices[v].in_degree == 1)
+            this->num_vertices++;
+
+        // 如果需要存储边集，确保 adjList 和 reverseAdjList 也被正确调整
+        if (store_edges) {
+            if (u >= adjList.size()) adjList.resize(u + 1);
+            if (v >= reverseAdjList.size()) reverseAdjList.resize(v + 1);
+
+            auto adj_pos = std::lower_bound(adjList[u].begin(), adjList[u].end(), v);
+            adjList[u].insert(adj_pos, v);
+
+            auto rev_adj_pos = std::lower_bound(reverseAdjList[v].begin(), reverseAdjList[v].end(), u);
+            reverseAdjList[v].insert(rev_adj_pos, u);
+        }
     }
 }
 
@@ -139,7 +143,10 @@ bool Graph::hasEdge(int u, int v)
 void Graph::removeEdge(int u, int v, bool is_directed) {
     if (u >= vertices.size() || v >= vertices.size()) return;
     auto remove_edge = [](std::vector<int>& vec, int val) {
-        vec.erase(std::remove(vec.begin(), vec.end(), val), vec.end());
+        auto it = std::lower_bound(vec.begin(), vec.end(), val);
+        if (it != vec.end() && *it == val) {
+            vec.erase(it);
+        }
     };
 
     remove_edge(vertices[u].LOUT, v);

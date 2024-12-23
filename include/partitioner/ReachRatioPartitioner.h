@@ -22,11 +22,12 @@ private:
     // 计算所有分区
     double computeFirstTerm(const Graph& graph);
     //计算受影响的分区
-    double computeFirstTerm(const Graph &graph, int partition);
+    double computeFirstTerm(const Graph &graph, int partition, PartitionManager &partition_manager);
+    
     double computeSecondTerm(const Graph &graph, PartitionManager &partition_manager);
     void computeReachability(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition);
     std::vector<int> topologicalSort(const Graph &graph, const std::vector<int> &nodes);
-    void computeReachability_BFS(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition);
+    void computeReachability_BFS(const Graph &current_graph, const std::vector<int> &nodes,  std::vector<int> &reachableSizes, int partition);
 
     //void computeReachability_BFS_CSR(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition);
 

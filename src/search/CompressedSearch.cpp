@@ -100,12 +100,15 @@ bool CompressedSearch::reachability_query(int origin_source, int origin_target)
         return true;
     uint32_t target = partition_manager_.get_equivalance_mapping(origin_target);
     uint32_t source = partition_manager_.get_equivalance_mapping(origin_source);
-    if (source >= g.vertices.size() || target >= g.vertices.size() || source < 0 || target < 0)
-    {
-        return false;
-    }
+    // if (source >= g.vertices.size() || target >= g.vertices.size() || source < 0 || target < 0)
+    // {
+    //     return false;
+    // }
     if (g.vertices[source].out_degree == 0 || g.vertices[target].in_degree == 0)
         return false;
+    if (g.vertices[source].partition_id == -1 || g.vertices[target].partition_id == -1){
+        return false;
+    }
 
 
     // 使用filter快速判断
@@ -421,17 +424,13 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
     this->num_vertices = num_vertices;
     for (auto &subgraph : this->partition_manager_.partition_subgraphs)
     {
-        if (subgraph.first == -1)
+        if (subgraph.first == -1 || subgraph.second.get_num_vertices() <= 1)
             continue;
         // 计算分区的比例信息
         float total_ratio = compute_reach_ratio(subgraph.second);
         auto partition_id = subgraph.first;
 
-        if (subgraph.second.get_num_vertices() == 1)
-        {
-            // 一个点就不管了
-            continue;
-        }
+
         // 根据情况构建索引,如果点数小于100那么就要建立一个子图的邻接矩阵
         // 如果g.get_num_vertices点数大于传进来的num_vertices,看分区图的ratio
         // ratio < 传进来的ratio,那么就建立PLL索引

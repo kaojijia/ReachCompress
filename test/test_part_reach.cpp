@@ -840,9 +840,9 @@ TEST_F(ReachabilityTest, BasicTest) {
     // string queryFile = PROJECT_ROOT_DIR "/QueryPairs/tweibo-edgelist_DAG_distance_pairs.txt";
     
     // 读取查询点对
-    vector<pair<int, int>> query_pairs_6 = readQueryPairs(queryFile, 6, 100);
-    vector<pair<int, int>> query_pairs_8 = readQueryPairs(queryFile, 8, 100);
-    vector<pair<int, int>> query_pairs_10 = readQueryPairs(queryFile, 10, 100);
+    // vector<pair<int, int>> query_pairs_6 = readQueryPairs(queryFile, 6, 100);
+    // vector<pair<int, int>> query_pairs_8 = readQueryPairs(queryFile, 8, 100);
+    // vector<pair<int, int>> query_pairs_10 = readQueryPairs(queryFile, 10, 100);
 
     cout << "Processing edge file: " << edgeFile << endl;
     // 写入初始日志
@@ -878,16 +878,6 @@ TEST_F(ReachabilityTest, BasicTest) {
 
 
 
-    // 构建 CompressedSearch 索引并记录日志
-    try {
-        logFile << "[" << getCurrentTimestamp() << "] 开始 CompressedSearch 离线索引构建" << endl;
-        comps.offline_industry(200, 0.3, mapping);
-        logFile << "[" << getCurrentTimestamp() << "] 完成 CompressedSearch 离线索引构建" << endl;
-    } catch (const std::exception &e) {
-        logFile << "[" << getCurrentTimestamp() << "] CompressedSearch 构建失败: " << e.what() << endl;
-    }
-
-
     logFile << "Partition mapping:" << std::endl;
     auto &pm = comps.get_partition_manager();
     for (const auto& [partition, nodes] : pm.get_mapping()) {
@@ -904,7 +894,13 @@ TEST_F(ReachabilityTest, BasicTest) {
     for (auto &index : indices) {
         logFile << "[" << getCurrentTimestamp() << "] " << index.first << ": " << index.second << std::endl;
     }
+    // 生成查询对
+    int num_queries = 1000;
+    int max_value = dag.vertices.size();
+    unsigned int seed = 42; // 可选的随机种子
 
+    //改成允许重复的 query
+    vector<pair<int, int>> query_pairs = RandomUtils::generateQueryPairs(num_queries, max_value, seed);
 
 
     // 查询并比较时间
@@ -960,10 +956,11 @@ TEST_F(ReachabilityTest, BasicTest) {
         
     };
 
-    // 对每个距离进行查询并记录结果
-    query_and_log(query_pairs_6, 6);
-    query_and_log(query_pairs_8, 8);
-    query_and_log(query_pairs_10, 10);
+    // // 对每个距离进行查询并记录结果
+    // query_and_log(query_pairs_6, 6);
+    // query_and_log(query_pairs_8, 8);
+    // query_and_log(query_pairs_10, 10);
+    query_and_log(query_pairs, 0);
 
     // 关闭日志文件
     logFile.close();

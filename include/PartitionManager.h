@@ -111,7 +111,7 @@ public:
 
     uint32_t get_equivalance_mapping(int node) const{
         uint32_t eq = *equivalence_mapping[node];
-        return ((eq==4156623648)?static_cast<uint32_t>(node):eq);
+        return ((eq==999999999)?static_cast<uint32_t>(node):eq);
     };
 
     uint32_t get_equivalence_mapping_size() const
