@@ -271,6 +271,63 @@ void PartitionManager::build_partition_graph()
 
 
 
+void PartitionManager::build_subgraphs(){
+    
+    // 为每个分区创建一个子图对象
+    for (const auto &partition_pair : mapping)
+    {
+        int size = partition_pair.second.size();
+        int partition_id = partition_pair.first;
+        partition_subgraphs[partition_id] = Graph(false); // 子图不需要存储边集
+        partition_subgraphs[partition_id].vertices.resize(size);
+    }
+
+    // 遍历原始图的所有节点，构建分区子图
+    for (size_t u = 0; u < g.vertices.size(); ++u)
+    {
+        int u_partition = g.get_partition_id(u);
+
+        // 获取对应的子图
+        Graph &subgraph = partition_subgraphs[u_partition];
+
+        // 确保子图中的顶点列表足够大
+        if (u >= subgraph.vertices.size())
+        {
+            subgraph.vertices.resize(u + 1);
+        }
+
+        // 复制节点分区
+        subgraph.vertices[u].partition_id = u_partition;
+
+        // 遍历出边
+        for (int v : g.vertices[u].LOUT)
+        {
+            int v_partition = g.get_partition_id(v);
+            if (v_partition == u_partition)
+            {
+                // 边在同一分区内，添加到子图中
+                if (v >= subgraph.vertices.size())
+                {
+                    subgraph.vertices.resize(v + 1);
+                }
+
+                // 添加边到子图
+                subgraph.addEdge(u, v);
+            }
+        }
+    }
+
+    // 为每个子图构建CSR图
+    for (auto &partition_pair : partition_subgraphs)
+    {
+        Graph &subgraph = partition_pair.second;
+        auto csr = std::make_shared<CSRGraph>();
+        csr->fromGraph(subgraph);
+        partition_subgraphs_csr[partition_pair.first] = csr;
+    }
+
+}
+
 
 // 建立分区图
 void PartitionManager::build_partition_graph_without_subgraph()

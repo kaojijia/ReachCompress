@@ -44,6 +44,7 @@ public:
 
     // 建立分区图
     void build_partition_graph();
+    void build_subgraphs();
     void build_partition_graph_without_subgraph();
 
     // 更新 顶点的分区id、分区图、分区之间的连接、分区和顶点的映射

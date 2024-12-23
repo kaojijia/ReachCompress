@@ -600,6 +600,8 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
             }
         }
     }
+
+    partition_manager.build_subgraphs();
 }
 
 // TODO：计算点进入分区后，分区新增的边数，如果多了的话就把罚增大，让整体q下降，这样就不能进入了

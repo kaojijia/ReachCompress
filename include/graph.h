@@ -14,7 +14,7 @@
 
 // 表示节点的结构
 struct Vertex {
-    int partition_id = -1;  // 分区ID
+    int partition_id = -2;  // 分区ID
     std::vector<int> LOUT;  // 出度
     std::vector<int> LIN;   // 入度
     int in_degree = 0;
