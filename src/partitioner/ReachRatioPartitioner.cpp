@@ -13,14 +13,16 @@
 #include <mutex>
 #include "graph.h"
 #include "partitioner/ReachRatioPartitioner.h"
-const int num_threads = 50; // 固定线程数
-const double beta = 5; // 惩罚倍率
-const size_t maxHistorySize = 1000; // 用于求平均波动的数组大小
-const double fluctuationThreshold = 1e-6; //平均波动小于阈值就退出
-const int maxIterations = 1; //最大迭代轮数
+
+const int num_threads = 50;               // 固定线程数
+const double beta = 5;                    // 惩罚倍率
+const size_t maxHistorySize = 1000;       // 用于求平均波动的数组大小
+const double fluctuationThreshold = 1e-6; // 平均波动小于阈值就退出
+const int maxIterations = 1;              // 最大迭代轮数
 
 // 获取当前时间戳
-std::string getCurrentTimestamp() {
+std::string getCurrentTimestamp()
+{
     auto now = std::chrono::system_clock::now();
     auto now_time_t = std::chrono::system_clock::to_time_t(now);
     auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1000000;
@@ -37,38 +39,42 @@ std::string getCurrentTimestamp() {
     return ss.str();
 }
 
-
-
-
 // 使用固定数量线程的 BFS 做可达点对数量查询
-void ReachRatioPartitioner::computeReachability_BFS(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition) {
+void ReachRatioPartitioner::computeReachability_BFS(const Graph &current_graph, const std::vector<int> &nodes, std::vector<int *> &reachableSets, std::vector<int> &reachableSizes, int partition)
+{
     int partition_id = partition;
 
     std::vector<std::thread> threads(num_threads);
     std::mutex mtx;
 
-    for (int i = 0; i < current_graph.vertices.size(); i++) {
-        if (current_graph.vertices[i].partition_id == partition_id) {
+    for (int i = 0; i < current_graph.vertices.size(); i++)
+    {
+        if (current_graph.vertices[i].partition_id == partition_id)
+        {
             reachableSets[i] = new int[1]; // 动态数组初始化
-            reachableSets[i][0] = i; // 初始集合仅包含自身
+            reachableSets[i][0] = i;       // 初始集合仅包含自身
             reachableSizes[i] = 1;
         }
     }
 
-    auto bfs = [&](int node) {
+    auto bfs = [&](int node)
+    {
         std::vector<bool> visited(current_graph.vertices.size(), false);
         std::queue<int> q;
         q.push(node);
         visited[node] = true;
         int reachable_count = 0;
 
-        while (!q.empty()) {
+        while (!q.empty())
+        {
             int u = q.front();
             q.pop();
             reachable_count++;
 
-            for (const auto &v : current_graph.vertices[u].LOUT) {
-                if (current_graph.vertices[v].partition_id == partition_id && !visited[v]) {
+            for (const auto &v : current_graph.vertices[u].LOUT)
+            {
+                if (current_graph.vertices[v].partition_id == partition_id && !visited[v])
+                {
                     visited[v] = true;
                     q.push(v);
                 }
@@ -80,47 +86,53 @@ void ReachRatioPartitioner::computeReachability_BFS(const Graph &current_graph, 
             reachableSizes[node] = reachable_count;
             reachableSets[node] = new int[reachable_count];
             int idx = 0;
-            for (int i = 0; i < visited.size(); ++i) {
-                if (visited[i]) {
+            for (int i = 0; i < visited.size(); ++i)
+            {
+                if (visited[i])
+                {
                     reachableSets[node][idx++] = i;
                 }
             }
         }
     };
 
-    for (size_t j = 0; j < nodes.size(); j += num_threads) {
+    for (size_t j = 0; j < nodes.size(); j += num_threads)
+    {
         int current_num_thread = std::min(num_threads, static_cast<int>(nodes.size() - j));
-        for (int i = 0; i < current_num_thread; ++i) {
-            if (threads[i].joinable()) {
+        for (int i = 0; i < current_num_thread; ++i)
+        {
+            if (threads[i].joinable())
+            {
                 threads[i].join();
             }
             threads[i] = std::thread(bfs, nodes[j + i]);
         }
 
-        for (int i = 0; i < current_num_thread; ++i) {
-            if (threads[i].joinable()) {
+        for (int i = 0; i < current_num_thread; ++i)
+        {
+            if (threads[i].joinable())
+            {
                 threads[i].join();
             }
         }
     }
 }
 
-
-
-
-
 // 使用拓扑排序来计算可达数组数量
-void ReachRatioPartitioner::computeReachability(const Graph& current_graph,
-                         const std::vector<int>& nodes,
-                         std::vector<int*>& reachableSets,
-                         std::vector<int>& reachableSizes,
-                         int partition) {
+void ReachRatioPartitioner::computeReachability(const Graph &current_graph,
+                                                const std::vector<int> &nodes,
+                                                std::vector<int *> &reachableSets,
+                                                std::vector<int> &reachableSizes,
+                                                int partition)
+{
 
     int partition_id = partition;
-    for (int i = 0 ; i < current_graph.vertices.size(); i++){
-        if(current_graph.vertices[i].partition_id == partition_id){
-            reachableSets[i] = new int[1];// 动态数组初始化
-            reachableSets[i][0] = i;// 初始集合仅包含自身
+    for (int i = 0; i < current_graph.vertices.size(); i++)
+    {
+        if (current_graph.vertices[i].partition_id == partition_id)
+        {
+            reachableSets[i] = new int[1]; // 动态数组初始化
+            reachableSets[i][0] = i;       // 初始集合仅包含自身
             reachableSizes[i] = 1;
         }
     }
@@ -128,17 +140,21 @@ void ReachRatioPartitioner::computeReachability(const Graph& current_graph,
     auto topoOrder = topologicalSort(current_graph, nodes);
 
     // 按拓扑排序逆序合并可达集合
-    for (auto it = topoOrder.rbegin(); it != topoOrder.rend(); ++it) {
+    for (auto it = topoOrder.rbegin(); it != topoOrder.rend(); ++it)
+    {
         int u = *it; // 当前节点
 
         // 检查索引合法性
-        if (u < 0 || u >= current_graph.vertices.size()) {
+        if (u < 0 || u >= current_graph.vertices.size())
+        {
             continue;
         }
-        if(current_graph.vertices[u].partition_id == -1){
+        if (current_graph.vertices[u].partition_id == -1)
+        {
             continue;
         }
-        if(current_graph.vertices[u].LIN.empty() && current_graph.vertices[u].LOUT.empty()){
+        if (current_graph.vertices[u].LIN.empty() && current_graph.vertices[u].LOUT.empty())
+        {
             continue;
         }
 
@@ -148,27 +164,32 @@ void ReachRatioPartitioner::computeReachability(const Graph& current_graph,
         mergedSet.insert(u);
 
         // 遍历当前节点的后继节点
-        for (int v : current_graph.vertices[u].LOUT) {
+        for (int v : current_graph.vertices[u].LOUT)
+        {
             // 限制只处理当前分区的节点
-            if (current_graph.vertices[u].partition_id == current_graph.vertices[v].partition_id) {
+            if (current_graph.vertices[u].partition_id == current_graph.vertices[v].partition_id)
+            {
                 // 合并后继节点的可达集合
-                for (int i = 0; i < reachableSizes[v]; ++i) {
+                for (int i = 0; i < reachableSizes[v]; ++i)
+                {
                     mergedSet.insert(reachableSets[v][i]);
                 }
             }
         }
 
         // 将合并后的集合存储到动态数组中
-        if (reachableSets[u] != nullptr) {
-            delete[] reachableSets[u]; // 释放旧内存
+        if (reachableSets[u] != nullptr)
+        {
+            delete[] reachableSets[u];  // 释放旧内存
             reachableSets[u] = nullptr; // 防止悬挂指针
         }
 
-        reachableSizes[u] = mergedSet.size(); // 更新大小
+        reachableSizes[u] = mergedSet.size();         // 更新大小
         reachableSets[u] = new int[mergedSet.size()]; // 分配新内存
 
         size_t idx = 0;
-        for (int val : mergedSet) {
+        for (int val : mergedSet)
+        {
             reachableSets[u][idx++] = val;
         }
 
@@ -177,18 +198,21 @@ void ReachRatioPartitioner::computeReachability(const Graph& current_graph,
     }
 }
 
-
-
 // 拓扑排序：对指定的节点集合进行排序
-std::vector<int> ReachRatioPartitioner::topologicalSort(const Graph& graph, const std::vector<int>& nodes) {
+std::vector<int> ReachRatioPartitioner::topologicalSort(const Graph &graph, const std::vector<int> &nodes)
+{
     // 初始化入度
     std::unordered_map<int, int> inDegree;
-    for (int node : nodes) {
+    for (int node : nodes)
+    {
         inDegree[node] = 0; // 初始化入度为 0
     }
-    for (int node : nodes) {
-        for (int neighbor : graph.vertices[node].LOUT) {
-            if (inDegree.find(neighbor) != inDegree.end()) {
+    for (int node : nodes)
+    {
+        for (int neighbor : graph.vertices[node].LOUT)
+        {
+            if (inDegree.find(neighbor) != inDegree.end())
+            {
                 inDegree[neighbor]++;
             }
         }
@@ -202,8 +226,10 @@ std::vector<int> ReachRatioPartitioner::topologicalSort(const Graph& graph, cons
 
     // 初始化队列和拓扑顺序
     std::queue<int> q;
-    for (int node : nodes) {
-        if (inDegree[node] == 0) {
+    for (int node : nodes)
+    {
+        if (inDegree[node] == 0)
+        {
             q.push(node);
         }
     }
@@ -211,16 +237,20 @@ std::vector<int> ReachRatioPartitioner::topologicalSort(const Graph& graph, cons
     std::vector<int> topoOrder;
 
     // 拓扑排序
-    while (!q.empty()) {
+    while (!q.empty())
+    {
         int u = q.front();
         q.pop();
         topoOrder.push_back(u);
 
-        for (int v : graph.vertices[u].LOUT) {
-            if (inDegree.find(v) != inDegree.end()) {
+        for (int v : graph.vertices[u].LOUT)
+        {
+            if (inDegree.find(v) != inDegree.end())
+            {
                 --inDegree[v];
                 // std::cout << "Reduced in-degree of node " << v << " to " << inDegree[v] << std::endl;
-                if (inDegree[v] == 0) {
+                if (inDegree[v] == 0)
+                {
                     q.push(v);
                 }
             }
@@ -228,7 +258,8 @@ std::vector<int> ReachRatioPartitioner::topologicalSort(const Graph& graph, cons
     }
 
     // 检查是否存在环
-    if (topoOrder.size() != nodes.size()) {
+    if (topoOrder.size() != nodes.size())
+    {
         std::cerr << "Error: Graph contains a cycle or incomplete input. Topological sorting failed." << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -236,13 +267,15 @@ std::vector<int> ReachRatioPartitioner::topologicalSort(const Graph& graph, cons
     return topoOrder;
 }
 
-
-double ReachRatioPartitioner::computeFirstTerm(const Graph& graph) {
+double ReachRatioPartitioner::computeFirstTerm(const Graph &graph)
+{
     std::unordered_map<int, std::vector<int>> partitionNodes;
 
     // 收集每个分区的节点
-    for (size_t i = 0; i < graph.vertices.size(); ++i) {
-        if (graph.vertices[i].partition_id != -1) { // 忽略未分配分区的节点
+    for (size_t i = 0; i < graph.vertices.size(); ++i)
+    {
+        if (graph.vertices[i].partition_id != -1)
+        { // 忽略未分配分区的节点
             partitionNodes[graph.vertices[i].partition_id].push_back(i);
         }
     }
@@ -250,15 +283,18 @@ double ReachRatioPartitioner::computeFirstTerm(const Graph& graph) {
     double firstTerm = 0.0;
 
     // 遍历每个分区
-    for (const auto& [partition, nodes] : partitionNodes) {
-        if(nodes.size() == 1){
+    for (const auto &[partition, nodes] : partitionNodes)
+    {
+        if (nodes.size() == 1)
+        {
             continue;
         }
-        std::vector<int*> reachableSets(graph.vertices.size(), nullptr);
+        std::vector<int *> reachableSets(graph.vertices.size(), nullptr);
         std::vector<int> reachableSizes(graph.vertices.size(), 0);
 
         // 检查当前分区是否为空
-        if (nodes.empty()) {
+        if (nodes.empty())
+        {
             std::cerr << "Warning: Partition " << partition << " is empty." << std::endl;
             continue;
         }
@@ -268,21 +304,26 @@ double ReachRatioPartitioner::computeFirstTerm(const Graph& graph) {
 
         // 统计分区内部的可达点对数
         int reachablePairs = 0;
-        for (size_t i = 0; i < graph.vertices.size(); ++i) {
-            if (reachableSizes[i] > 0 || graph.vertices[i].partition_id == partition) {
+        for (size_t i = 0; i < graph.vertices.size(); ++i)
+        {
+            if (reachableSizes[i] > 0 || graph.vertices[i].partition_id == partition)
+            {
                 reachablePairs += reachableSizes[i] - 1; // 排除自身
             }
         }
 
         // 计算当前分区的贡献
         int V = nodes.size();
-        if (V > 1) {
+        if (V > 1)
+        {
             firstTerm += static_cast<double>(reachablePairs) / (V * (V - 1));
         }
 
         // 释放内存，确保合法性检查
-        for (size_t i = 0; i < reachableSets.size(); ++i) {
-            if (reachableSets[i] != nullptr) {
+        for (size_t i = 0; i < reachableSets.size(); ++i)
+        {
+            if (reachableSets[i] != nullptr)
+            {
                 delete[] reachableSets[i];
                 reachableSets[i] = nullptr; // 避免悬挂指针
             }
@@ -292,16 +333,80 @@ double ReachRatioPartitioner::computeFirstTerm(const Graph& graph) {
     return firstTerm;
 }
 
-double ReachRatioPartitioner::computeSecondTerm(const Graph& graph, PartitionManager& partition_manager) {
-
-    Graph& partitionGraph = partition_manager.part_g;
-
+double ReachRatioPartitioner::computeFirstTerm(const Graph &graph, int partition)
+{
     std::vector<int> nodes;
-    for (size_t i = 0; i < partitionGraph.vertices.size(); ++i) {
-            nodes.push_back(i); // 将分区图的节点加入集合
+
+    // 收集输入分区的节点
+    for (size_t i = 0; i < graph.vertices.size(); ++i)
+    {
+        if (graph.vertices[i].partition_id == partition)
+        { // 忽略未分配分区的节点
+            nodes.push_back(i);
+        }
     }
 
-    std::vector<int*> reachableSets(nodes.size(), nullptr);
+    double firstTerm = 0.0;
+
+    if (nodes.size() == 1)
+    {
+        return 0;
+    }
+    std::vector<int *> reachableSets(graph.vertices.size(), nullptr);
+    std::vector<int> reachableSizes(graph.vertices.size(), 0);
+
+    // 检查当前分区是否为空
+    if (nodes.empty())
+    {
+        std::cerr << "Warning: Partition " << partition << " is empty." << std::endl;
+        return 0;
+    }
+
+    // 调用可达性计算模块
+    computeReachability_BFS(graph, nodes, reachableSets, reachableSizes, partition);
+
+    // 统计分区内部的可达点对数
+    int reachablePairs = 0;
+    for (size_t i = 0; i < graph.vertices.size(); ++i)
+    {
+        if (reachableSizes[i] > 0 || graph.vertices[i].partition_id == partition)
+        {
+            reachablePairs += reachableSizes[i] - 1; // 排除自身
+        }
+    }
+
+    // 计算当前分区的贡献
+    int V = nodes.size();
+    if (V > 1)
+    {
+        firstTerm += static_cast<double>(reachablePairs) / (V * (V - 1));
+    }
+
+    // 释放内存，确保合法性检查
+    for (size_t i = 0; i < reachableSets.size(); ++i)
+    {
+        if (reachableSets[i] != nullptr)
+        {
+            delete[] reachableSets[i];
+            reachableSets[i] = nullptr; // 避免悬挂指针
+        }
+    }
+
+    return firstTerm;
+}
+
+double ReachRatioPartitioner::computeSecondTerm(const Graph &graph, PartitionManager &partition_manager)
+{
+
+    Graph &partitionGraph = partition_manager.part_g;
+
+    std::vector<int> nodes;
+    for (size_t i = 0; i < partitionGraph.vertices.size(); ++i)
+    {
+        nodes.push_back(i); // 将分区图的节点加入集合
+    }
+
+    std::vector<int *> reachableSets(nodes.size(), nullptr);
     std::vector<int> reachableSizes(nodes.size(), 0);
 
     // 调用可达性计算模块
@@ -310,32 +415,39 @@ double ReachRatioPartitioner::computeSecondTerm(const Graph& graph, PartitionMan
 
     // 统计分区图上的可达点对数
     int reachablePairs = 0;
-    for (size_t i = 0; i < nodes.size(); ++i) {
-        reachablePairs += max(0,reachableSizes[i]-1);
+    for (size_t i = 0; i < nodes.size(); ++i)
+    {
+        reachablePairs += max(0, reachableSizes[i] - 1);
     }
 
     // 释放内存
-    for (size_t i = 0; i < reachableSets.size(); ++i) {
+    for (size_t i = 0; i < reachableSets.size(); ++i)
+    {
         delete[] reachableSets[i];
     }
 
     int V = partitionGraph.get_num_vertices();
-    if (V > 1) return static_cast<double>(reachablePairs) / (V * (V - 1));
+    if (V > 1)
+        return static_cast<double>(reachablePairs) / (V * (V - 1));
     return 0.0;
 }
 
-
-void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_manager) {
-    std::cout << getCurrentTimestamp()<< "   Starting ReachRatioPartitioner..." << std::endl;
+void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_manager)
+{
+    std::cout << getCurrentTimestamp() << "   Starting ReachRatioPartitioner..." << std::endl;
 
     std::unordered_map<int, int> partitionSizes; // 分区号 -> 分区中节点数
 
     // 初始化分区
-    for (size_t i = 0; i < graph.vertices.size(); ++i) {
-        if (graph.vertices[i].out_degree > 0 || graph.vertices[i].in_degree > 0) {
+    for (size_t i = 0; i < graph.vertices.size(); ++i)
+    {
+        if (graph.vertices[i].out_degree > 0 || graph.vertices[i].in_degree > 0)
+        {
             graph.set_partition_id(i, i); // 初始分区号为节点自身编号
             partitionSizes[i] = 1;        // 每个节点独占一个分区
-        } else {
+        }
+        else
+        {
             graph.set_partition_id(i, -1); // 无效节点分区号为 -1
         }
     }
@@ -345,16 +457,19 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
     std::mt19937 gen(rd());
     std::vector<double> recentQs;
 
-
-    double currentQ = computeFirstTerm(graph) - computeSecondTerm(graph, partition_manager);
+    // double currentQ = computeFirstTerm(graph) - computeSecondTerm(graph, partition_manager);
+    double currentQ = 0;
     recentQs.push_back(currentQ);
+    double current_secondTerm = 0;
 
     int iterationCount = 0;
     bool improvement = true;
 
-    while (iterationCount < maxIterations) {
+
+    while (iterationCount < maxIterations)
+    {
         iterationCount++;
-        std::cout <<"---------------------------"<<std::endl;
+        std::cout << "---------------------------" << std::endl;
         std::cout << "Iteration: " << iterationCount << ", Current Q: " << currentQ << std::endl;
         improvement = false;
 
@@ -369,70 +484,94 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
         //     }
         // }
 
-        //对所有节点进行遍历，到固定轮数再停，或者变化不大就停
-        for (size_t i = 0; i < graph.vertices.size(); ++i) {
+        // 对所有节点进行遍历，到固定轮数再停，或者变化不大就停
+        for (size_t i = 0; i < graph.vertices.size(); ++i)
+        {
+            if(graph.vertices[i].out_degree == 0 && graph.vertices[i].in_degree == 0) continue;
             int partition = graph.vertices[i].partition_id;
-            if (partition != -1 ) {
-                movableNodes.push_back(i);// 每轮将所有顶点加入
+            if (partition != -1)
+            {
+                movableNodes.push_back(i); // 每轮将所有顶点加入
             }
         }
 
-        //std::reverse(movableNodes.begin(), movableNodes.end());
+        // std::reverse(movableNodes.begin(), movableNodes.end());
         std::shuffle(movableNodes.begin(), movableNodes.end(), gen);
+        int count = 0;
 
-        for (int node : movableNodes) {
-            
+        for (int node : movableNodes)
+        {
+
             int originalPartition = graph.get_partition_id(node);
             std::unordered_set<int> neighborPartitions;
-            for (int neighbor : graph.vertices[node].LOUT) {
+            for (int neighbor : graph.vertices[node].LOUT)
+            {
                 int neighborPartition = graph.get_partition_id(neighbor);
-                if (neighborPartition != -1 && neighborPartition != originalPartition) {
+                if (neighborPartition != -1 && neighborPartition != originalPartition)
+                {
                     neighborPartitions.insert(neighborPartition);
                 }
             }
-            for (int neighbor : graph.vertices[node].LIN) {
-                int neighborPartition = graph.get_partition_id(neighbor);
-                if (neighborPartition != -1 && neighborPartition != originalPartition) {
-                    neighborPartitions.insert(neighborPartition);
-                }
-            }
+            // for (int neighbor : graph.vertices[node].LIN)
+            // {
+            //     int neighborPartition = graph.get_partition_id(neighbor);
+            //     if (neighborPartition != -1 && neighborPartition != originalPartition)
+            //     {
+            //         neighborPartitions.insert(neighborPartition);
+            //     }
+            // }
 
-            for (int targetPartition : neighborPartitions) {
-                cout<<getCurrentTimestamp()<<"  Trying to move node "<<node<<" to partition "<<targetPartition<<endl;
+            for (int targetPartition : neighborPartitions)
+            {
+                cout << getCurrentTimestamp() << "  Trying to move node " << node << " to partition " << targetPartition << endl;
                 auto oldPartition = graph.get_partition_id(node);
-                //graph.set_partition_id(node, targetPartition);
-                // 更新分区图
-                cout<<getCurrentTimestamp()<< "  before update " << node << endl;
+                
+                // 节点加入分区前两个分区的a
+                double old_source_a = computeFirstTerm(graph, oldPartition);
+                double old_target_a = computeFirstTerm(graph, targetPartition);
+                //  更新分区图
+                cout << getCurrentTimestamp() << "  before update " << node << endl;
                 partition_manager.update_partition_info(node, originalPartition, targetPartition);
-                cout<<getCurrentTimestamp()<< "  after update" <<endl;
+                cout << getCurrentTimestamp() << "  after update" << endl;
                 partitionSizes[originalPartition]--;
                 partitionSizes[targetPartition]++;
-                cout<<getCurrentTimestamp()<< "  before compute " << node << endl;
-                double firstTerm = computeFirstTerm(graph);
-                cout << getCurrentTimestamp() << "  complete first term"<<endl;
+                cout << getCurrentTimestamp() << "  before compute " << node << endl;
+                // double firstTerm = computeFirstTerm(graph);
+
+                // 节点加入分区后两个分区的a
+                double new_source_a = computeFirstTerm(graph, oldPartition);
+                double new_target_a = computeFirstTerm(graph, targetPartition);
+                cout << getCurrentTimestamp() << "  complete first term" << endl;
                 // double secondTerm = computeSecondTerm(graph, partition_manager);
-                double secondTerm = computePartitionEdges(graph, partition_manager,targetPartition);
-                cout << getCurrentTimestamp() << "  complete second term"<<endl;
-                double newQ = firstTerm - secondTerm;
+                double secondTerm = computePartitionEdges(graph, partition_manager, targetPartition);
+                cout << getCurrentTimestamp() << "  complete second term" << endl;
+                // double newQ = firstTerm - secondTerm;
+                double newQ = currentQ + new_source_a + new_target_a - old_source_a - old_target_a - secondTerm + current_secondTerm;
                 // cout<<getCurrentTimestamp()<< "  after compute " << node << endl;
-                if (newQ >= currentQ) {
-                    cout<<"Q does not decrease, newQ: "<<newQ<<endl;
+                if (newQ > currentQ)
+                {
+                    cout << "Q increases, newQ: " << newQ << endl;
+                    cout <<getCurrentTimestamp()<< "完成统计" <<++count<< "个点"<<endl;
                     currentQ = newQ;
+                    current_secondTerm = secondTerm;
                     recentQs.push_back(newQ);
-                    if (recentQs.size() > maxHistorySize) {
+                    if (recentQs.size() > maxHistorySize)
+                    {
                         recentQs.erase(recentQs.begin());
                     }
                     improvement = true;
                     break;
-                } else {
-                    cout<<"Q decreases, newQ: "<<newQ<<endl;
+                }
+                else
+                {
+                    cout << "Q decreases, newQ: " << newQ << endl;
                     partition_manager.update_partition_info(node, targetPartition, originalPartition);
                     partitionSizes[originalPartition]++;
                     partitionSizes[targetPartition]--;
                     // improvement = false;
                 }
             }
-            
+
             // if (improvement) break;
             // std::cout << "Partition mapping:" << std::endl;
             // for (const auto& [partition, nodes] : partition_manager.get_mapping()) {
@@ -445,31 +584,34 @@ void ReachRatioPartitioner::partition(Graph& graph, PartitionManager& partition_
             // }
         }
 
-        if (recentQs.size() == maxHistorySize) {
+        if (recentQs.size() == maxHistorySize)
+        {
             double fluctuation = 0.0;
-            for (size_t i = 1; i < recentQs.size(); ++i) {
+            for (size_t i = 1; i < recentQs.size(); ++i)
+            {
                 fluctuation += std::abs(recentQs[i] - recentQs[i - 1]);
             }
             fluctuation /= (recentQs.size() - 1);
 
-            if (fluctuation < fluctuationThreshold) {
+            if (fluctuation < fluctuationThreshold)
+            {
                 std::cout << "Partitioning converged after " << iterationCount << " iterations. Final Q: " << currentQ << std::endl;
                 break;
             }
         }
     }
-
 }
 
-
 // TODO：计算点进入分区后，分区新增的边数，如果多了的话就把罚增大，让整体q下降，这样就不能进入了
-double ReachRatioPartitioner::computePartitionEdges(const Graph& graph, PartitionManager& partition_manager, int parition_id) {
-    
+double ReachRatioPartitioner::computePartitionEdges(const Graph &graph, PartitionManager &partition_manager, int parition_id)
+{
+
     int partition = parition_id;
-    PartitionManager& pm = partition_manager;
+    PartitionManager &pm = partition_manager;
     std::map<int, PartitionEdge> pmedges;
     pmedges = pm.get_partition_adjacency(partition);
-    if(pmedges.empty()){
+    if (pmedges.empty())
+    {
         double secondTerm = 0.0f;
         return secondTerm;
     }
@@ -477,20 +619,23 @@ double ReachRatioPartitioner::computePartitionEdges(const Graph& graph, Partitio
     double secondTerm = 0.0f;
     double tempTerm = 0.0f;
 
-    for(auto [node, partition_connection] : pmedges){
+    for (auto [node, partition_connection] : pmedges)
+    {
         edge_num += partition_connection.edge_count;
-        if(partition_connection.edge_count > 6)
+        if (partition_connection.edge_count > 6)
             tempTerm = 100.f;
     }
-    
-    //TODO:分段函数，超过30绝对不行，小于30缓慢增加
-    if(edge_num > 30){
+
+    // TODO:分段函数，超过30绝对不行，小于30缓慢增加
+    if (edge_num > 30)
+    {
         secondTerm = 100;
-    }else{
-        secondTerm = static_cast<float>(edge_num) * 0.1; 
+    }
+    else
+    {
+        secondTerm = static_cast<float>(edge_num) * 0.1;
     }
     secondTerm += tempTerm;
 
     return secondTerm;
-
 }

@@ -829,11 +829,15 @@ TEST_F(ReachabilityTest, BasicTest) {
         FAIL() << "无法打开查询日志文件: " << queryLogPath;
     }
 
-    string edgeFile = PROJECT_ROOT_DIR "/Edges/large/tweibo-edgelist";
-    string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/tweibo-edgelist_DAG";
-    string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/tweibo-edgelist_mapping";
-    string queryFile = PROJECT_ROOT_DIR "/QueryPairs/tweibo-edgelist_DAG_distance_pairs.txt";
+    string edgeFile = PROJECT_ROOT_DIR "/Edges/medium/cit-DBLP";
+    string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/medium/cit-DBLP_DAG";
+    string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/cit-DBLP_mapping";
+    string queryFile = PROJECT_ROOT_DIR "/QueryPairs/cit-DBLP_distance_pairs_reachable";
 
+    // string edgeFile = PROJECT_ROOT_DIR "/Edges/large/tweibo-edgelist";
+    // string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/tweibo-edgelist_DAG";
+    // string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/tweibo-edgelist_mapping";
+    // string queryFile = PROJECT_ROOT_DIR "/QueryPairs/tweibo-edgelist_DAG_distance_pairs.txt";
     
     // 读取查询点对
     vector<pair<int, int>> query_pairs_6 = readQueryPairs(queryFile, 6, 100);

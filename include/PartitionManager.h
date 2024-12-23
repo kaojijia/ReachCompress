@@ -15,6 +15,24 @@ struct PartitionEdge
 {
     std::vector<std::pair<int, int>> original_edges; // 原始图中的边 <source, target>
     int edge_count = 0;                              // 边的数量
+    // 插入边时保持 original_edges 有序
+    void add_edge(int u, int v) {
+        auto it = std::lower_bound(original_edges.begin(), original_edges.end(), std::make_pair(u, v));
+        if (it == original_edges.end() || *it != std::make_pair(u, v)) {
+            original_edges.emplace(it, u, v);
+            edge_count++;
+        }
+    }
+
+    // 删除边
+    void remove_edge(int u, int v) {
+        auto it = std::lower_bound(original_edges.begin(), original_edges.end(), std::make_pair(u, v));
+        if (it != original_edges.end() && *it == std::make_pair(u, v)) {
+            original_edges.erase(it);
+            edge_count--;
+        }
+    }
+
 };
 
 class PartitionManager

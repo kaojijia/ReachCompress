@@ -35,6 +35,8 @@ public:
         this->vertices.resize(max_node_id + 1);
     };
 
+    void addEdge_simple(int u, int v, bool is_directed);
+
     // 添加边
     void addEdge(int u, int v, bool is_directed = true);
 

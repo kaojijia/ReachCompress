@@ -58,6 +58,27 @@ bool Graph::set_partition_id(int node, int part_id)
     return true;
 }
 
+// 简化版本
+void Graph::addEdge_simple(int u, int v, bool is_directed) {
+    // if (u==v) return;
+    //跳过已有边
+    if (u < vertices.size()) {
+        for(auto i:vertices[u].LOUT){
+            if(i==v)return;
+        }
+    }
+    vertices[u].LOUT.push_back(v);
+    vertices[v].LIN.push_back(u);
+    vertices[u].out_degree++;
+    vertices[v].in_degree++;
+
+    this->num_edges++;
+    if(vertices[u].out_degree==1&&vertices[u].in_degree==0)
+        this->num_vertices++;
+    if(vertices[v].out_degree==0&&vertices[v].in_degree==1)
+        this->num_vertices++;
+
+}
 // 添加边到图
 void Graph::addEdge(int u, int v, bool is_directed) {
     //cout<<getCurrentTimestampofGraph()<<"   start"<<endl;

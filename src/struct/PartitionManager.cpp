@@ -355,8 +355,7 @@ void PartitionManager::update_partition_connections()
             {
                 PartitionEdge &pe = partition_adjacency[u_partition][v_partition];
                 if (std::find(pe.original_edges.begin(), pe.original_edges.end(), std::make_pair(static_cast<int>(u), v)) == pe.original_edges.end()) {
-                    pe.original_edges.emplace_back(u, v);
-                    pe.edge_count++;
+                    pe.add_edge(u, v);
                 }
             }
         }
@@ -367,8 +366,7 @@ void PartitionManager::update_partition_connections()
             {
                 PartitionEdge &pe = partition_adjacency[v_partition][u_partition];
                 if (std::find(pe.original_edges.begin(), pe.original_edges.end(), std::make_pair(v, static_cast<int>(u))) == pe.original_edges.end()) {
-                    pe.original_edges.emplace_back(v, u);
-                    pe.edge_count++;
+                    pe.add_edge(v, u);
                 }
             }
         }
@@ -418,13 +416,13 @@ void PartitionManager::update_partition_connections()
 void PartitionManager::update_partition_info(int node, int old_partition_id, int new_partition_id)
 {
     // 更新节点的分区id
-    if(g.vertices[node].partition_id != old_partition_id) 
-        std::cout<<"error: old partition id not match"<<std::endl;
+    // if(g.vertices[node].partition_id != old_partition_id) 
+    //     std::cout<<"error: old partition id not match"<<std::endl;
     g.vertices[node].partition_id = new_partition_id;
 
-    if (g.vertices[node].LOUT.empty() && g.vertices[node].LIN.empty()) return; // Skip nodes with no edges
-    if (node > g.get_num_vertices()) return;
-    if (new_partition_id == -1 || old_partition_id == -1 || old_partition_id == new_partition_id) return;
+    //if (g.vertices[node].LOUT.empty() && g.vertices[node].LIN.empty()) return;
+    //if (node > g.get_num_vertices()) return;
+    //if (new_partition_id == -1 || old_partition_id == -1 || old_partition_id == new_partition_id) return;
 
     // 更新mapping
     mapping[old_partition_id].erase(node);
@@ -443,21 +441,23 @@ void PartitionManager::update_partition_info(int node, int old_partition_id, int
     }
 
     // 更新分区之间的连接和分区图
-    for(auto v: g.vertices[node].LOUT)
+    auto& vertex_out = g.vertices[node].LOUT;
+    for(auto v: vertex_out)
     {
         // 删除原有的边和分区图上的信息,如果和前驱点相同的就不用管了
         if(g.vertices[v].partition_id != old_partition_id){
             // 更新分区之间的连接
             PartitionEdge &pe_old = partition_adjacency[old_partition_id][g.vertices[v].partition_id];
-            for (auto it = pe_old.original_edges.begin(); it != pe_old.original_edges.end(); ++it)
-            {
-                if (*it == std::make_pair(node, v))
-                {
-                    pe_old.original_edges.erase(it);
-                    break;
-                }
-            }
-            pe_old.edge_count--;
+            // for (auto it = pe_old.original_edges.begin(); it != pe_old.original_edges.end(); ++it)
+            // {
+            //     if (*it == std::make_pair(node, v))
+            //     {
+            //         pe_old.original_edges.erase(it);
+            //         break;
+            //     }
+            // }
+            // pe_old.edge_count--;
+            pe_old.remove_edge(node, v);
             if(pe_old.edge_count == 0){
                 partition_adjacency[old_partition_id].erase(g.vertices[v].partition_id);
             }
@@ -474,8 +474,9 @@ void PartitionManager::update_partition_info(int node, int old_partition_id, int
         if(g.vertices[v].partition_id != new_partition_id){
             //分区之间的连接加条边。这里原本没有pe的话会新创建一个
             PartitionEdge &pe = partition_adjacency[new_partition_id][g.vertices[v].partition_id];
-            pe.original_edges.emplace_back(node, v);
-            pe.edge_count++;
+            // pe.original_edges.emplace_back(node, v);
+            // pe.edge_count++;
+            pe.add_edge(node, v);
             //分区图上加边
             part_g.addEdge(new_partition_id, g.vertices[v].partition_id);
         }
@@ -483,20 +484,22 @@ void PartitionManager::update_partition_info(int node, int old_partition_id, int
 
 
     // 对于顶点的入边，减掉原有分区的，新分区的入边加一个
-    for(auto v: g.vertices[node].LIN)
+    auto& vertex_in = g.vertices[node].LIN;
+    for(auto v: vertex_in)
     {
         if(g.vertices[v].partition_id != old_partition_id){
             // 删除原有的边
             PartitionEdge &pe_old = partition_adjacency[g.vertices[v].partition_id][old_partition_id];
-            for (auto it = pe_old.original_edges.begin(); it != pe_old.original_edges.end(); ++it)
-            {
-                if (*it == std::make_pair(v, node))
-                {
-                    pe_old.original_edges.erase(it);
-                    break;
-                }
-            }
-            pe_old.edge_count--;
+            // for (auto it = pe_old.original_edges.begin(); it != pe_old.original_edges.end(); ++it)
+            // {
+            //     if (*it == std::make_pair(v, node))
+            //     {
+            //         pe_old.original_edges.erase(it);
+            //         break;
+            //     }
+            // }
+            // pe_old.edge_count--;
+            pe_old.remove_edge(v, node);
             if(pe_old.edge_count == 0){
                 partition_adjacency[g.vertices[v].partition_id].erase(old_partition_id);
             }
@@ -511,8 +514,9 @@ void PartitionManager::update_partition_info(int node, int old_partition_id, int
         //添加新的边，如果和前驱点相同分区就不用了
         if(g.vertices[v].partition_id != new_partition_id){
             PartitionEdge &pe = partition_adjacency[g.vertices[v].partition_id][new_partition_id];
-            pe.original_edges.emplace_back(v, node);
-            pe.edge_count++;
+            // pe.original_edges.emplace_back(v, node);
+            // pe.edge_count++;
+            pe.add_edge(v, node);
             //分区图上加边
             part_g.addEdge(g.vertices[v].partition_id, new_partition_id);
         } 
