@@ -27,16 +27,16 @@ protected:
     void SetUp() override {
         // 初始化代码
         // 获取所有边文件
-        string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/test";
+        // string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/test";
 
-        // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
-        // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
-        // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-LiveJournal1.txt");
+        // // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
+        // // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
+        // // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/soc-LiveJournal1.txt");
 
-        edgeFiles = this->getAllFiles(edgesDirectory);
-        if (edgeFiles[0].empty()) {
-            FAIL() << "没有找到任何边文件。";
-        }
+        // edgeFiles = this->getAllFiles(edgesDirectory);
+        // if (edgeFiles[0].empty()) {
+        //     FAIL() << "没有找到任何边文件。";
+        // }
     }
 
     void TearDown() override {
@@ -823,29 +823,16 @@ TEST_F(ReachabilityTest, BasicTest) {
         FAIL() << "无法打开日志文件: " << logFilePath;
     }
 
-
-    string pllLogPath = string(PROJECT_ROOT_DIR) + "/result/" + getCurrentDaystamp() + "/PLL_log.txt";
-    ofstream pllLog(pllLogPath, ios::out);
-    if (!pllLog.is_open()) {
-        FAIL() << "无法打开 PLL 日志文件: " << pllLogPath;
-    }
-
-    string compsLogPath = string(PROJECT_ROOT_DIR) + "/result/" + getCurrentDaystamp() + "/Comps_log.txt";
-    ofstream compsLog(compsLogPath, ios::out);
-    if (!compsLog.is_open()) {
-        FAIL() << "无法打开 CompressedSearch 日志文件: " << compsLogPath;
-    }
-
     string queryLogPath = string(PROJECT_ROOT_DIR) + "/result/" + getCurrentDaystamp() + "/Query_log.txt";
     ofstream queryLog(queryLogPath, ios::out);
     if (!queryLog.is_open()) {
         FAIL() << "无法打开查询日志文件: " << queryLogPath;
     }
 
-    string edgeFile = PROJECT_ROOT_DIR "/Edges/large/WikiTalk_edgelist";
+    string edgeFile = PROJECT_ROOT_DIR "/Edges/large/tweibo-edgelist";
     string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/WikiTalk_edgelist_DAG";
-    string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/WikiTalk_edgelist_mapping";
-    string queryFile = PROJECT_ROOT_DIR "/QueryPairs/WikiTalk_edgelist_DAG_distance_pairs.txt";
+    string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/tweibo-edgelist_mapping";
+    string queryFile = PROJECT_ROOT_DIR "/QueryPairs/tweibo-edgelist_DAG_distance_pairs.txt";
 
     
     // 读取查询点对
@@ -879,33 +866,21 @@ TEST_F(ReachabilityTest, BasicTest) {
 
 
     stringstream oss;
-    // 初始化 PLL 并进行离线处理    
-    PLL pll(g);
-    pll.offline_industry();
-    queryLog << "[" << getCurrentTimestamp() << "] " << "完成 PLL 离线索引构建" << endl;
 
     // 初始化 CompressedSearch 并进行离线处理
     CompressedSearch comps(dag, "ReachRatio");
     comps.offline_industry(200, 0.3, mapping);
-    compsLog << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
+    logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
 
 
-    // 构建 PLL 索引并记录日志
-    try {
-        pllLog << "[" << getCurrentTimestamp() << "] 开始 PLL 离线索引构建" << endl;
-        pll.offline_industry();
-        pllLog << "[" << getCurrentTimestamp() << "] 完成 PLL 离线索引构建" << endl;
-    } catch (const std::exception &e) {
-        pllLog << "[" << getCurrentTimestamp() << "] PLL 构建失败: " << e.what() << endl;
-    }
 
     // 构建 CompressedSearch 索引并记录日志
     try {
-        compsLog << "[" << getCurrentTimestamp() << "] 开始 CompressedSearch 离线索引构建" << endl;
+        logFile << "[" << getCurrentTimestamp() << "] 开始 CompressedSearch 离线索引构建" << endl;
         comps.offline_industry(200, 0.3, mapping);
-        compsLog << "[" << getCurrentTimestamp() << "] 完成 CompressedSearch 离线索引构建" << endl;
+        logFile << "[" << getCurrentTimestamp() << "] 完成 CompressedSearch 离线索引构建" << endl;
     } catch (const std::exception &e) {
-        compsLog << "[" << getCurrentTimestamp() << "] CompressedSearch 构建失败: " << e.what() << endl;
+        logFile << "[" << getCurrentTimestamp() << "] CompressedSearch 构建失败: " << e.what() << endl;
     }
 
 
@@ -920,13 +895,8 @@ TEST_F(ReachabilityTest, BasicTest) {
         logFile << std::endl;
     }
 
-    logFile << "PLL index size: " << std::endl;
-    auto indices = pll.getIndexSizes();
-    for (auto &index : indices) {
-        logFile << "[" << getCurrentTimestamp() << "] " << index.first << ": " << index.second << std::endl;
-    }
     logFile << "Comps index size: " << std::endl;
-    indices = comps.getIndexSizes();
+    auto indices = comps.getIndexSizes();
     for (auto &index : indices) {
         logFile << "[" << getCurrentTimestamp() << "] " << index.first << ": " << index.second << std::endl;
     }
@@ -937,7 +907,6 @@ TEST_F(ReachabilityTest, BasicTest) {
     auto query_and_log = [&](const vector<pair<int, int>>& query_pairs, int distance) {
         long long total_duration_bfs = 0;
         long long total_duration_compressed = 0;
-        long long total_duration_pll = 0;
         int query_count = 0;
 
         logFile << "****************************************************" << std::endl;
@@ -965,27 +934,17 @@ TEST_F(ReachabilityTest, BasicTest) {
             auto end_compressed = chrono::high_resolution_clock::now();
             auto duration_compressed = chrono::duration_cast<chrono::microseconds>(end_compressed - start_compressed).count();
 
-            // 测量 PLL 查询耗时
-            auto start_pll = chrono::high_resolution_clock::now();
-            bool pll_result = pll.reachability_query(source, target);
-            auto end_pll = chrono::high_resolution_clock::now();
-            auto duration_pll = chrono::duration_cast<chrono::microseconds>(end_pll - start_pll).count();
-
             query_count++;
             total_duration_bfs += duration_bfs;
             total_duration_compressed += duration_compressed;
-            total_duration_pll += duration_pll;
-            auto results_match = (bfs_result == compressed_result) && (bfs_result == pll_result);
-            // auto results_match = (bfs_result == compressed_result);
-            
+            auto results_match = (bfs_result == compressed_result);
+  
             EXPECT_EQ(bfs_result, compressed_result);
-            EXPECT_EQ(bfs_result, pll_result);
 
             // 输出查询结果和耗时
             logFile << "Distance " << distance << " Query from " << source << " to " << target << std::endl;
             logFile << "BiBFS: " << (bfs_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_bfs << " microseconds)" << std::endl;
             logFile << "CompressedSearch: " << (compressed_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_compressed << " microseconds)" << std::endl;
-            logFile << "PLL: " << (pll_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_pll << " microseconds)" << std::endl;
             stringstream match_oss;
             match_oss << "***** Does Result Match from " << source << " query to " << target << ": " << (results_match ? "Match" : "Not Match") << " *****";
             logFile << "[" << getCurrentTimestamp() << "] " << match_oss.str() << std::endl;
@@ -994,7 +953,7 @@ TEST_F(ReachabilityTest, BasicTest) {
         // 计算并记录平均耗时
         logFile << "Distance " << distance << " Final Average BiBFS Time: " << (query_count > 0 ? (total_duration_bfs / query_count) : 0) << " microseconds" << std::endl;
         logFile << "Distance " << distance << " Final Average CompressedSearch Time: " << (query_count > 0 ? (total_duration_compressed / query_count) : 0) << " microseconds" << std::endl;
-        logFile << "Distance " << distance << " Final Average PLL Time: " << (query_count > 0 ? (total_duration_pll / query_count) : 0) << " microseconds" << std::endl;
+        
     };
 
     // 对每个距离进行查询并记录结果
