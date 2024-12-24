@@ -14,6 +14,7 @@ PartitionManager::PartitionManager(Graph &graph) : g(graph), part_g(false)
 {
     this->csr = new CSRGraph();
     this->csr->fromGraph(g);
+    this->part_csr = nullptr;
 }
 
 // 建立分区图（没有分区子图）
@@ -366,7 +367,7 @@ void PartitionManager::build_partition_graph_without_subgraph()
         node.partition_id = 1;
     }
     part_g.set_max_node_id(part_g.vertices.size());
-    delete this->part_csr;
+    if(part_csr != nullptr) delete this->part_csr;
     this->part_csr = new CSRGraph();
     part_csr->fromGraph(part_g);
 }
@@ -641,7 +642,7 @@ void PartitionManager::read_equivalance_info(const std::string &filename)
     std::cout << "Mapping completed using file: " << filename << std::endl;
 }
 
-std::map<int, PartitionEdge> PartitionManager::get_partition_adjacency(int partitionId)
+std::unordered_map<int, PartitionEdge> PartitionManager::get_partition_adjacency(int partitionId)
 {
     auto it_outer = partition_adjacency.find(partitionId);
     if (it_outer == partition_adjacency.end())
@@ -649,7 +650,8 @@ std::map<int, PartitionEdge> PartitionManager::get_partition_adjacency(int parti
         // throw std::out_of_range("Partition not found.");
         return {};
     }
-    return partition_adjacency.at(partitionId);
+    return it_outer->second;
+    //return partition_adjacency.at(partitionId);
 }
 
 // 获取两个分区之间的连接

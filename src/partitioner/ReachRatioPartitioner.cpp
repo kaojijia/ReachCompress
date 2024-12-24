@@ -454,6 +454,12 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
         std::cout << "Iteration: " << iterationCount << ", Current Q: " << currentQ << std::endl;
         improvement = false;
 
+        std::vector<bool> joinable(graph.vertices.size(), true); // 节点是否可加入分区
+        //secondTerm中只计算了targetPartition的出边,没有计算入边,也就是受影响的分区的出边
+        //因此不确定入边的分区是怎么样,需要在更新的时候重算
+        std::vector<bool> need_compute(graph.vertices.size(), false); // 节点是否需要重新计算
+
+
         std::vector<int> movableNodes;
 
         // 收集可移动节点
@@ -465,20 +471,38 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
         //     }
         // }
 
-        // 对所有节点进行遍历，到固定轮数再停，或者变化不大就停
+
+
         for (size_t i = 0; i < graph.vertices.size(); ++i)
         {
-            if(graph.vertices[i].out_degree == 0 && graph.vertices[i].in_degree == 0) continue;
+            if(graph.vertices[i].out_degree == 0 && graph.vertices[i].in_degree == 0) {
+                joinable[i] = false;
+                continue;
+            }
             int partition = graph.vertices[i].partition_id;
             if (partition != -1)
             {
+                auto c = computePartitionEdges(graph, partition_manager, partition);
+                if(c >= 100)
+                {
+                    joinable[partition] = false;
+                }
                 movableNodes.push_back(i); // 每轮将所有顶点加入
+            }else{
+                joinable[i] = false;
             }
         }
-
+        cout<<getCurrentTimestamp()<< "  可移动节点数："<<movableNodes.size()<<endl;
+        cout<<getCurrentTimestamp()<< "  开始排序"<<endl;
         // std::reverse(movableNodes.begin(), movableNodes.end());
-        std::shuffle(movableNodes.begin(), movableNodes.end(), gen);
+        std::sort(movableNodes.begin(), movableNodes.end(), [&](int a, int b) {
+            return graph.vertices[a].out_degree + graph.vertices[a].in_degree < graph.vertices[b].out_degree + graph.vertices[b].in_degree;
+        });
+        cout<<getCurrentTimestamp()<< "  排序完成"<<endl;
+
+
         int count = 0;
+
 
         for (int node : movableNodes)
         {
@@ -504,6 +528,15 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
 
             for (int targetPartition : neighborPartitions)
             {
+
+                // 快速过滤不可达分区
+                if (!joinable[targetPartition])
+                {
+                    cout<< getCurrentTimestamp() << "  Partition " << targetPartition << " is not joinable." << endl;
+                    continue;
+                }
+
+
                 cout << getCurrentTimestamp() << "  Trying to move node " << node << " to partition " << targetPartition << endl;
                 auto oldPartition = graph.get_partition_id(node);
                 
@@ -524,7 +557,8 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
                 double new_target_a = computeFirstTerm(graph, targetPartition, partition_manager);
                 cout << getCurrentTimestamp() << "  complete first term" << endl;
                 // double secondTerm = computeSecondTerm(graph, partition_manager);
-                double secondTerm = computePartitionEdges(graph, partition_manager, targetPartition);
+                double secondTerm = computePartitionEdges(graph, partition_manager, targetPartition);          
+                
                 cout << getCurrentTimestamp() << "  complete second term" << endl;
                 // double newQ = firstTerm - secondTerm;
                 double newQ = currentQ + new_source_a + new_target_a - old_source_a - old_target_a - secondTerm + current_secondTerm;
@@ -532,9 +566,22 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
                 if (newQ > currentQ)
                 {
                     cout << "Q increases, newQ: " << newQ << endl;
-                    cout <<getCurrentTimestamp()<< "完成统计" <<++count<< "个点"<<endl;
                     currentQ = newQ;
                     current_secondTerm = secondTerm;
+
+                    // //更新两个数组
+                    // for(auto outNeighbour:graph.vertices[node].LIN){                       
+                    //     auto partition_id = graph.vertices[outNeighbour].partition_id;
+                    //      //如果分区空了就不用了
+                    //     if(partition_manager.mapping[partition_id].size() == 0) continue;
+                    //     if (partition_id > 0 && partition_id != targetPartition)
+                    //     {
+                    //         need_compute[partition_id] = true;
+                    //     }
+                    // }
+                    // need_compute[targetPartition] = false;
+
+
                     recentQs.push_back(newQ);
                     if (recentQs.size() > maxHistorySize)
                     {
@@ -551,8 +598,9 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
                     partitionSizes[targetPartition]--;
                     // improvement = false;
                 }
-            }
 
+            }
+            cout <<getCurrentTimestamp()<< "    完成统计" <<++count<< "个点"<<endl;
             // if (improvement) break;
             // std::cout << "Partition mapping:" << std::endl;
             // for (const auto& [partition, nodes] : partition_manager.get_mapping()) {
@@ -586,29 +634,32 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
 }
 
 // TODO：计算点进入分区后，分区新增的边数，如果多了的话就把罚增大，让整体q下降，这样就不能进入了
-double ReachRatioPartitioner::computePartitionEdges(const Graph &graph, PartitionManager &partition_manager, int parition_id)
+double ReachRatioPartitioner::computePartitionEdges(const Graph &graph, PartitionManager &partition_manager, int partition)
 {
-
-    int partition = parition_id;
-    PartitionManager &pm = partition_manager;
-    std::map<int, PartitionEdge> pmedges;
-    pmedges = pm.get_partition_adjacency(partition);
-    if (pmedges.empty())
-    {
-        double secondTerm = 0.0f;
-        return secondTerm;
-    }
-    uint16_t edge_num = 0;
+    // cout << getCurrentTimestamp() << "  computePartitionEdges" << endl;
+    // auto & pmedges = partition_manager.get_partition_adjacency(partition);
+    // cout << getCurrentTimestamp() << "  partition_adjacency get" << endl;
+    // if (pmedges.empty())
+    // {
+    //     return 0.0f;
+    // }
+    // uint16_t edge_num = 0;
     double secondTerm = 0.0f;
-    double tempTerm = 0.0f;
+    // double tempTerm = 0.0f;
 
-    for (auto [node, partition_connection] : pmedges)
-    {
-        edge_num += partition_connection.edge_count;
-        if (partition_connection.edge_count > 6)
-            tempTerm = 100.f;
-    }
-
+    // for(const auto& pmedge : pmedges)
+    // {
+    //     auto count = pmedge.second.edge_count;
+    //     edge_num += count;
+    //     if (count < 6)
+    //     {
+    //         tempTerm = 100.0f;
+    //     }
+    // }
+    // cout << getCurrentTimestamp() << "  complete count edge" << endl;
+    
+    auto pair = partition_manager.get_partition_adjacency_size(partition);
+    int edge_num = pair.first;
     // TODO:分段函数，超过30绝对不行，小于30缓慢增加
     if (edge_num > 30)
     {
@@ -618,7 +669,10 @@ double ReachRatioPartitioner::computePartitionEdges(const Graph &graph, Partitio
     {
         secondTerm = static_cast<float>(edge_num) * 0.1;
     }
-    secondTerm += tempTerm;
+    if(pair.second == 1)
+    {
+        secondTerm += 100;
+    }
 
     return secondTerm;
 }

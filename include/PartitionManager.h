@@ -9,6 +9,9 @@
 #include <cstdint>
 #include "graph.h"
 #include "CSR.h"
+#include "Algorithm.h"
+
+
 
 // 表示两个分区之间的边
 struct PartitionEdge
@@ -75,7 +78,23 @@ public:
     }
 
     // 获取分区的所有连接
-    std::map<int, PartitionEdge> get_partition_adjacency(int partitionId);
+    std::unordered_map<int, PartitionEdge> get_partition_adjacency(int partitionId);
+    // 获取分区的连接数
+    std::pair<int, int> get_partition_adjacency_size(int partitionId) const {
+        int count = 0;
+        int single = 0;
+        auto it = partition_adjacency.find(partitionId);
+        if (it == partition_adjacency.end()) {
+            return {0, 0};
+        }
+        for (const auto &edge : it->second) {
+            int num = edge.second.edge_count;
+            if (num >= 6) single = 1;
+            count += num;
+        }
+        return {count, single};
+    }
+
     // 获取两个分区之间的连接
     PartitionEdge get_partition_adjacency(int u, int v);
 
@@ -137,7 +156,7 @@ public:
     }
 
     // 分区之间的邻接表
-    std::map<int, std::map<int, PartitionEdge>> partition_adjacency;
+    std::unordered_map<int, std::unordered_map<int, PartitionEdge>> partition_adjacency;
 
     // 分区和点的映射关系,第一位是分区号，第二位是顶点
     std::map<int, std::set<int>> mapping;
@@ -154,6 +173,22 @@ public:
     uint32_t **equivalence_mapping;
 
 private:
+    std::string getCurrentTimes() {
+        auto now = std::chrono::system_clock::now();
+        auto now_time_t = std::chrono::system_clock::to_time_t(now);
+        auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1000000;
+        tm local_tm;
+    #if defined(_WIN32) || defined(_WIN64)
+        localtime_s(&local_tm, &now_time_t);
+    #else
+        localtime_r(&now_time_t, &local_tm);
+    #endif
+
+        std::stringstream ss;
+        ss << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S");
+        ss << "." << std::setw(6) << std::setfill('0') << now_us.count();
+        return ss.str();
+    }
 
 };
 
