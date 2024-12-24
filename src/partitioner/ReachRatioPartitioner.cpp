@@ -502,11 +502,11 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
 
 
         int count = 0;
-
+        size_t mv_count = 0;
 
         for (int node : movableNodes)
         {
-
+            mv_count = 0;
             int originalPartition = graph.get_partition_id(node);
             std::unordered_set<int> neighborPartitions;
             for (int neighbor : graph.vertices[node].LOUT)
@@ -536,6 +536,12 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
                     continue;
                 }
 
+                // 限制移动次数
+                if (++mv_count >= 100)
+                {
+                    cout<< getCurrentTimestamp() << "  Node " << node << " has moved too many times." << endl;
+                    break;
+                }
 
                 cout << getCurrentTimestamp() << "  Trying to move node " << node << " to partition " << targetPartition << endl;
                 auto oldPartition = graph.get_partition_id(node);
