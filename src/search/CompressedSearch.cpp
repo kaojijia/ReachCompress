@@ -4,6 +4,7 @@
 #include "partitioner/LouvainPartitioner.h"
 #include "partitioner/ImportPartitioner.h"
 #include "BloomFilter.h"
+#include "AddEdge.h"
 #include <memory>
 #include <stdexcept>
 #include <iostream>
@@ -57,6 +58,9 @@ void CompressedSearch::offline_industry(size_t num_vertices, float ratio, string
         partition_manager_.read_equivalance_info(mapping_file); ///< 读取等价信息
 
     construct_filter(ratio); ///< 构建过滤器
+
+    //加边
+    add_edges_by_degree_threshold(g, 10);
 
     partition_graph(); ///< 执行图分区算法
 

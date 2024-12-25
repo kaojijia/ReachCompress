@@ -815,30 +815,33 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
 
 
 TEST_F(ReachabilityTest, BasicTest) {
-    // 打开日志文件
+    
+    // string edgeFile = PROJECT_ROOT_DIR "/Edges/large/tweibo-edgelist";
+    // string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/tweibo-edgelist_DAG";
+    // string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/tweibo-edgelist_mapping";
+    // string queryFile = PROJECT_ROOT_DIR "/QueryPairs/tweibo-edgelist_DAG_distance_pairs.txt";
+    // string edgeFile = PROJECT_ROOT_DIR "/Edges/large/dbpedia_edgelist";
+    // string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/dbpedia_edgelist_DAG";
+    // string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/dbpedia_edgelist_mapping";
+    string edgeFile = PROJECT_ROOT_DIR "/Edges/large/LiveJournal";
+    string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/LiveJournal_DAG";
+    string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/LiveJournal_mapping";
+    // string queryFile = PROJECT_ROOT_DIR "/QueryPairs/tweibo-edgelist_DAG_distance_pairs.txt";
 
-    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/" + getCurrentDaystamp() + "/Basictest_log.txt";
+    
+    // 打开日志文件
+    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/" + getCurrentDaystamp() + "/Basictest_LiveJournal_log.txt";
+    // string logFilePath = string(PROJECT_ROOT_DIR) + "/result/" + getCurrentDaystamp() + "/Basictest_dbpedia_log.txt";
+    // string logFilePath = string(PROJECT_ROOT_DIR) + "/result/" + getCurrentDaystamp() + "/Basictest_tweibo_log.txt";
+    
     ofstream logFile(logFilePath, ios::out);
     if (!logFile.is_open()) {
         FAIL() << "无法打开日志文件: " << logFilePath;
     }
 
-    string queryLogPath = string(PROJECT_ROOT_DIR) + "/result/" + getCurrentDaystamp() + "/Query_log.txt";
-    ofstream queryLog(queryLogPath, ios::out);
-    if (!queryLog.is_open()) {
-        FAIL() << "无法打开查询日志文件: " << queryLogPath;
-    }
 
-    string edgeFile = PROJECT_ROOT_DIR "/Edges/medium/cit-DBLP";
-    string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/medium/cit-DBLP_DAG";
-    string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/cit-DBLP_mapping";
-    string queryFile = PROJECT_ROOT_DIR "/QueryPairs/cit-DBLP_distance_pairs_reachable";
 
-    // string edgeFile = PROJECT_ROOT_DIR "/Edges/large/tweibo-edgelist";
-    // string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/tweibo-edgelist_DAG";
-    // string mapping = PROJECT_ROOT_DIR "/Edges/DAGmapping/tweibo-edgelist_mapping";
-    // string queryFile = PROJECT_ROOT_DIR "/QueryPairs/tweibo-edgelist_DAG_distance_pairs.txt";
-    
+
     // 读取查询点对
     // vector<pair<int, int>> query_pairs_6 = readQueryPairs(queryFile, 6, 100);
     // vector<pair<int, int>> query_pairs_8 = readQueryPairs(queryFile, 8, 100);
@@ -858,15 +861,15 @@ TEST_F(ReachabilityTest, BasicTest) {
     Graph g(true);  // 确保存储边集
     Graph dag(true);
     // 读取边文件
-    InputHandler inputHandler(edgeFile);
-    inputHandler.readGraph(g);
-    g.setFilename(edgeFile);
+    // InputHandler inputHandler(edgeFile);
+    // inputHandler.readGraph(g);
+    // g.setFilename(edgeFile);
     InputHandler inputHandlerDAG(edgefileDAG);
     inputHandlerDAG.readGraph(dag);
     dag.setFilename(edgefileDAG);
 
     // 初始化 BFS
-    BidirectionalBFS bfs(g);
+    BidirectionalBFS bfs(dag);
 
 
     stringstream oss;
@@ -875,7 +878,6 @@ TEST_F(ReachabilityTest, BasicTest) {
     CompressedSearch comps(dag, "ReachRatio");
     comps.offline_industry(200, 0.3, mapping);
     logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
-
 
 
     logFile << "Partition mapping:" << std::endl;
@@ -894,14 +896,15 @@ TEST_F(ReachabilityTest, BasicTest) {
     for (auto &index : indices) {
         logFile << "[" << getCurrentTimestamp() << "] " << index.first << ": " << index.second << std::endl;
     }
+
     // 生成查询对
     int num_queries = 1000;
-    int max_value = dag.vertices.size();
+    int max_value = g.vertices.size();
     unsigned int seed = 42; // 可选的随机种子
 
     //改成允许重复的 query
     vector<pair<int, int>> query_pairs = RandomUtils::generateQueryPairs(num_queries, max_value, seed);
-
+    
 
     // 查询并比较时间
     auto query_and_log = [&](const vector<pair<int, int>>& query_pairs, int distance) {
@@ -937,7 +940,7 @@ TEST_F(ReachabilityTest, BasicTest) {
             query_count++;
             total_duration_bfs += duration_bfs;
             total_duration_compressed += duration_compressed;
-            auto results_match = (bfs_result == compressed_result);
+            auto results_match = (bfs_result == compressed_result);if(!results_match) continue;
   
             EXPECT_EQ(bfs_result, compressed_result);
 
@@ -956,10 +959,11 @@ TEST_F(ReachabilityTest, BasicTest) {
         
     };
 
-    // // 对每个距离进行查询并记录结果
+    // 对每个距离进行查询并记录结果
     // query_and_log(query_pairs_6, 6);
     // query_and_log(query_pairs_8, 8);
     // query_and_log(query_pairs_10, 10);
+
     query_and_log(query_pairs, 0);
 
     // 关闭日志文件

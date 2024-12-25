@@ -672,3 +672,32 @@ PartitionEdge PartitionManager::get_partition_adjacency(int u, int v)
 
     return it_inner->second;
 }
+
+
+/**
+ * @brief 将分区映射保存到文件，每行包含节点编号和分区ID。
+ * @param filename 输出文件名。
+ */
+void PartitionManager::save_mapping(const std::string &filename) const
+{
+    std::ofstream outfile(filename);
+    if (!outfile.is_open())
+    {
+        std::cerr << "无法打开文件进行写入: " << filename << std::endl;
+        return;
+    }
+
+    for (const auto &partition_pair : mapping)
+    {
+        int partition_id = partition_pair.first;
+        const std::set<int> &nodes = partition_pair.second;
+
+        for (const int node : nodes)
+        {
+            outfile << node << " " << partition_id << "\n";
+        }
+    }
+
+    outfile.close();
+    std::cout << "分区映射已保存到文件: " << filename << std::endl;
+}

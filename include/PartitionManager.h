@@ -98,6 +98,8 @@ public:
     // 获取两个分区之间的连接
     PartitionEdge get_partition_adjacency(int u, int v);
 
+    void save_mapping(const std::string &filename) const;
+
     // 获取指定分区的顶点集合
     const std::set<int> &get_vertices_in_partition(int partition_id) const
     {

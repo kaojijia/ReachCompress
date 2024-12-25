@@ -636,6 +636,7 @@ void ReachRatioPartitioner::partition(Graph &graph, PartitionManager &partition_
         }
     }
     partition_manager.build_partition_graph_without_subgraph();
+    partition_manager.save_mapping(PROJECT_ROOT_DIR"/Partitions/livejournal_rr.txt");
     partition_manager.build_subgraphs();
 }
 
