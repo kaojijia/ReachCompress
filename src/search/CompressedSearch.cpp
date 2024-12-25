@@ -60,7 +60,7 @@ void CompressedSearch::offline_industry(size_t num_vertices, float ratio, string
     construct_filter(ratio); ///< 构建过滤器
 
     //加边
-    add_edges_by_degree_threshold(g, 10);
+    add_edges_by_degree_threshold(g, 50);
 
     partition_graph(); ///< 执行图分区算法
 
@@ -110,9 +110,9 @@ bool CompressedSearch::reachability_query(int origin_source, int origin_target)
     // }
     if (g.vertices[source].out_degree == 0 || g.vertices[target].in_degree == 0)
         return false;
-    if (g.vertices[source].partition_id == -1 || g.vertices[target].partition_id == -1){
-        return false;
-    }
+    // if (g.vertices[source].partition_id == -1 || g.vertices[target].partition_id == -1){
+    //     return false;
+    // }
 
 
     // 使用filter快速判断

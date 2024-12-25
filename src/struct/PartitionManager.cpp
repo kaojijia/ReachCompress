@@ -208,6 +208,9 @@ void PartitionManager::build_partition_graph()
     part_g.set_max_node_id(part_g.vertices.size());
     this->part_csr = new CSRGraph();
     part_csr->fromGraph(part_g);
+    delete csr;
+    csr = new CSRGraph();
+    csr->fromGraph(g);
 
     // 为每个分区创建一个子图对象
     for (const auto &partition_pair : mapping)
@@ -368,6 +371,9 @@ void PartitionManager::build_partition_graph_without_subgraph()
     }
     part_g.set_max_node_id(part_g.vertices.size());
     if(part_csr != nullptr) delete this->part_csr;
+    delete this->csr;
+    this->csr = new CSRGraph();
+    csr->fromGraph(g);
     this->part_csr = new CSRGraph();
     part_csr->fromGraph(part_g);
 }
