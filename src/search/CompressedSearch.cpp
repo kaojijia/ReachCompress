@@ -1,3 +1,5 @@
+// #define DEBUG
+
 #include "CompressedSearch.h"
 #include "ReachRatio.h"
 #include "partitioner/GraphPartitioner.h"
@@ -412,9 +414,7 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
 {
 #ifdef DEBUG
     std::cout << "Building partition index..." << std::endl;
-#endif
-
-    // 打印 mapping 信息
+        // 打印 mapping 信息
     std::cout << "Partition to Node Mapping:" << std::endl;
     for (const auto &partition_pair : partition_manager_.mapping)
     {
@@ -427,6 +427,9 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
         }
         std::cout << std::endl;
     }
+#endif
+
+
     this->ratio = ratio;
     this->num_vertices = num_vertices;
     for (auto &subgraph : this->partition_manager_.partition_subgraphs)
@@ -496,7 +499,7 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
             pll_index_[subgraph.first] = new PLL(subgraph.second);
             pll_index_[subgraph.first]->offline_industry();
             // 打印 PLL 的 IN 和 OUT 集合
-
+#ifdef DEBUG
             std::cout << "PLL IN and OUT sets for partition " << subgraph.first << ":" << std::endl;
             for (size_t i = 0; i < pll_index_[subgraph.first]->IN.size(); ++i)
             {
@@ -522,6 +525,7 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
                 }
                 std::cout << std::endl;
             }
+#endif
         }
         else
         {
@@ -567,6 +571,7 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
                     }
                 }
             }
+#ifdef DEBUG
             // 打印不可达邻接表
             std::cout << "Unreachable Adjacency List " << std::endl;
             for (size_t i = 0; i < unreachable_adj.size(); i++)
@@ -578,6 +583,7 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
                 }
                 std::cout << std::endl;
             }
+#endif
         }
     }
 }

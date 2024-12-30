@@ -313,7 +313,7 @@ PLL::~PLL() {
 
     // 清空 IN 和 OUT 容器
     if (!IN.empty()) {
-        std::cout << "Clearing IN..." << std::endl;
+        // std::cout << "Clearing IN..." << std::endl;
         for (auto& inSet : IN) {
             inSet.clear(); // 清空每个子向量
         }
@@ -321,7 +321,7 @@ PLL::~PLL() {
     }
 
     if (!OUT.empty()) {
-        std::cout << "Clearing OUT..." << std::endl;
+        // std::cout << "Clearing OUT..." << std::endl;
         for (auto& outSet : OUT) {
             outSet.clear();
         }
@@ -330,13 +330,13 @@ PLL::~PLL() {
 
     // 清空邻接表
     if (!adjList.empty()) {
-        std::cout << "Clearing adjList..." << std::endl;
+        // std::cout << "Clearing adjList..." << std::endl;
         adjList.clear();
     }
     if (!reverseAdjList.empty()) {
-        std::cout << "Clearing reverseAdjList..." << std::endl;
+        // std::cout << "Clearing reverseAdjList..." << std::endl;
         reverseAdjList.clear();
     }
 
-    std::cout << "PLL destructor completed." << std::endl;
+    // std::cout << "PLL destructor completed." << std::endl;
 }
