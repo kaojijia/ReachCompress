@@ -37,6 +37,9 @@ add_executable(test_Bloom test_bloom.cpp)
 target_link_libraries(test_Bloom reach_comp gtest gtest_main)
 
 
+add_executable(tes1t test.cpp)
+target_link_libraries(tes1t gtest gtest_main)
+
 set_target_properties(${TARGET} PROPERTIES
 COMPILE_FLAGS "-pthread"
 LINK_FLAGS "-pthread")

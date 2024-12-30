@@ -12,7 +12,7 @@ public:
     void offline_industry() override;
     bool reachability_query(int source, int target) override;
     double false_positive_rate(int vertex); // 计算某个顶点的假阳性率
-    std::unordered_map<std::string, size_t> getIndexSizes() const override; // 计算索引大小
+    std::vector<std::pair<std::string, std::string>> getIndexSizes() const override; // 计算索引大小
 
 private:
     Graph& graph;

@@ -24,13 +24,13 @@ def plot_counts(counts):
     frequencies = list(counts.values())
 
     plt.bar(numbers, frequencies)
-    plt.xlabel('分区号')
-    plt.ylabel('包含点数')
-    plt.title('每个分区包含点数统计')
+    plt.xlabel('Partition ID')
+    plt.ylabel('Number of Nodes')
+    plt.title('Number of Nodes in Each Partition')
     plt.savefig('output.png')  # 保存图表为PNG文件
     # plt.show()  # 注释掉显示图表的代码
 
 if __name__ == "__main__":
-    file_path = '/home/reco/Projects/ReachCompress/Partitions/livejournal_rr.txt'  # 请将此路径替换为你的TXT文件路径
+    file_path = '/root/Projects/ReachCompress/Partitions/livejournal_rr.txt'  # 请将此路径替换为你的TXT文件路径
     counts = read_and_count(file_path)
     plot_counts(counts)

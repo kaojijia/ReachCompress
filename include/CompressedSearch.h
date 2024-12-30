@@ -11,6 +11,7 @@
 #include "PartitionManager.h"
 #include "partitioner/GraphPartitioner.h"
 #include "partitioner/ReachRatioPartitioner.h"
+#include "partitioner/RandomPartitioner.h"
 #include "BloomFilter.h"
 #include "BidirectionalBFS.h"
 #include "BiBFSCSR.h"
@@ -54,10 +55,8 @@ public:
 
     void offline_industry() override;
 
-    void offline_industry(size_t num_vertices, float ratio, string mapping_file);
+    void offline_industry(size_t num_vertices, float ratio, string mapping_file = "");
 
-
-    
     bool reachability_query(int source, int target) override;
 
     std::vector<std::string> get_index_info();
@@ -68,73 +67,86 @@ public:
     };
 
     BidirectionalBFS bfs; ///< 原图上的双向BFS算法。
-    std::unordered_map<std::string, size_t> getIndexSizes() const override
-    {
-        std::unordered_map<std::string, size_t> index_sizes;
-        index_sizes["Equivalence Mapping"] = 0;
-        index_sizes["G'CSR"] = 0;
-        index_sizes["Partition id"] = g.vertices.size() * sizeof(uint16_t);
-        index_sizes["Partition Connection"] = 0;
-        index_sizes["PLL_in_pointers"] = 0;
-        index_sizes["PLL_out_pointers"] = 0;
-        index_sizes["PLL_in_sets"] = 0;
-        index_sizes["PLL_out_sets"] = 0;
-        index_sizes["Reachable Matrix"] = 0;
-        index_sizes["Unreachable Index"] = 0;
-        index_sizes["Total"] = 0;
 
+std::vector<std::pair<std::string, std::string>> getIndexSizes() const override
+{
+    std::vector<std::pair<std::string, std::string>> index_sizes;
+    index_sizes.emplace_back("Equivalence Mapping", "0");
+    index_sizes.emplace_back("G'CSR", "0");
+    index_sizes.emplace_back("Partition id", std::to_string(g.vertices.size() * sizeof(uint16_t)));
+    index_sizes.emplace_back("Partition Connection", "0");
+    index_sizes.emplace_back("PLL_in_pointers", "0");
+    index_sizes.emplace_back("PLL_out_pointers", "0");
+    index_sizes.emplace_back("PLL_in_sets", "0");
+    index_sizes.emplace_back("PLL_out_sets", "0");
+    index_sizes.emplace_back("Reachable Matrix", "0");
+    index_sizes.emplace_back("Unreachable Index", "0");
+    index_sizes.emplace_back("Total", "0");
 
-        // 计算 PLL 索引的大小
-        // for (const auto &pll : pll_index_)
-        // {
-        //     auto i = pll.second->getIndexSizes();
-        //     index_sizes["PLL"] += i["IN"] + i["OUT"];
-        // }
-        // 计算 PLL 索引的大小
-        for (const auto &pll : pll_index_) {
-            auto i = pll.second->getIndexSizes();
-            index_sizes["PLL_in_pointers"] += i["in_pointers"];
-            index_sizes["PLL_out_pointers"] += i["out_pointers"];
-            index_sizes["PLL_in_sets"] += i["in_sets"];
-            index_sizes["PLL_out_sets"] += i["out_sets"];
-        }
-
-        // 计算小分区索引的大小
-        for (const auto &small_index : small_index_)
-        {
-            int a = small_index.second.size();
-            index_sizes["Reachable Matrix"] += a*a;
-        }
-
-        // 计算不可达索引的大小
-        for (const auto &unreachable_index : unreachable_index_)
-        {
-            for (const auto &row : unreachable_index.second)
-            {
-                index_sizes["Unreachable adjList"] += row.size() * sizeof(size_t);
+    // 计算 PLL 索引的大小
+    for (const auto &pll : pll_index_) {
+        auto pll_sizes = pll.second->getIndexSizes();
+        for (const auto &size : pll_sizes) {
+            if (size.first == "in_pointers") {
+                index_sizes[4].second = std::to_string(std::stoull(index_sizes[4].second) + std::stoull(size.second));
+            } else if (size.first == "out_pointers") {
+                index_sizes[5].second = std::to_string(std::stoull(index_sizes[5].second) + std::stoull(size.second));
+            } else if (size.first == "in_sets") {
+                index_sizes[6].second = std::to_string(std::stoull(index_sizes[6].second) + std::stoull(size.second));
+            } else if (size.first == "out_sets") {
+                index_sizes[7].second = std::to_string(std::stoull(index_sizes[7].second) + std::stoull(size.second));
             }
         }
-
-        // 计算分区图的大小
-        index_sizes["G'CSR"] += partition_manager_.part_csr->getMemoryUsage();
-
-        // 计算分区信息的大小
-        index_sizes["Partition Mapping"] += partition_manager_.mapping.size() * sizeof(std::unordered_set<int>);
-
-        // 计算分区间的联系的大小
-        index_sizes["Partition Connection"] += partition_manager_.partition_adjacency.size() * sizeof(std::unordered_map<int, PartitionEdge>);
-
-        // 计算等价类大小
-        index_sizes["Equivalence Mapping"] += partition_manager_.get_equivalence_mapping_size();
-
-        uint32_t total = 0;
-        for(auto i : index_sizes){
-            total += i.second;
-        }
-        index_sizes["Total"] = total;
-
-        return index_sizes;
     }
+
+    // 计算小分区索引的大小
+    for (const auto &small_index : small_index_) {
+        int a = small_index.second.size();
+        index_sizes[8].second = std::to_string(std::stoull(index_sizes[8].second) + a * a);
+    }
+
+    // 计算不可达索引的大小
+    for (const auto &unreachable_index : unreachable_index_) {
+        for (const auto &row : unreachable_index.second) {
+            index_sizes[9].second = std::to_string(std::stoull(index_sizes[9].second) + row.size() * sizeof(size_t));
+        }
+    }
+
+    // 计算分区图的大小
+    index_sizes[1].second = std::to_string(std::stoull(index_sizes[1].second) + partition_manager_.part_csr->getMemoryUsage());
+
+    // 计算分区信息的大小
+    index_sizes.emplace_back("Partition Mapping", std::to_string(partition_manager_.mapping.size() * sizeof(std::unordered_set<int>)));
+
+    // 计算分区间的联系的大小和边的数量
+    size_t partition_connection_size = 0;
+    size_t partition_connection_memory = 0;
+    size_t total_edges = 0;
+    for (const auto &outer_pair : partition_manager_.partition_adjacency) {
+        for (const auto &inner_pair : outer_pair.second) {
+            partition_connection_size++;
+            partition_connection_memory += inner_pair.second.original_edges.size() * sizeof(std::pair<int, int>);
+            partition_connection_memory += sizeof(inner_pair.second.edge_count);
+            total_edges += inner_pair.second.original_edges.size();
+        }
+    }
+    index_sizes.emplace(index_sizes.begin() + 3, "Total Edges in Partition Connections", std::to_string(total_edges));
+    index_sizes[4].second = std::to_string(partition_connection_memory);
+
+    // 计算等价类大小
+    if (partition_manager_.equivalence_mapping != nullptr) {
+        index_sizes[0].second = std::to_string(std::stoull(index_sizes[0].second) + partition_manager_.get_equivalence_mapping_size());
+    }
+
+    uint64_t total = 0;
+    for (const auto &i : index_sizes) {
+        total += std::stoull(i.second);
+    }
+    index_sizes[11].second = std::to_string(total);
+
+    return index_sizes;
+}
+
     void read_equivalance_info(string filename)
     {
         this->partition_manager_.read_equivalance_info(filename);
@@ -145,22 +157,22 @@ public:
     size_t num_vertices = 0;
 
 private:
-    void partition_graph(); ///< 图分区算法
-    bool query_within_partition(int source, int target); ///< 同分区查询
+    void partition_graph();                                                      ///< 图分区算法
+    bool query_within_partition(int source, int target);                         ///< 同分区查询
     bool query_index_within_partition(int source, int target, int partition_id); ///< 同分区查询
-    bool query_across_partitions(int source, int target); ///< 跨分区查询
+    bool query_across_partitions(int source, int target);                        ///< 跨分区查询
     bool query_across_partitions_with_all_paths(int source, int target);
     bool dfs_paths_search(int current_partition, int target_partition, std::vector<int> &path, std::vector<std::vector<int>> &all_paths, std::unordered_set<int> &visited, int source, int target);
     bool dfs_partition_search(int u, std::vector<std::pair<int, int>> edges, std::vector<int> path, int target);
     void build_partition_index(float ratio, size_t num_vertices); ///< 构建分区索引
     void construct_filter(float ratio);
-    
+
     // std::unique_ptr<BidirectionalBFS> part_bfs;           ///< 分区图上的双向BFS类。
-    std::unique_ptr<Algorithm> filter;              ///< 过滤器，看a来实现
+    std::unique_ptr<Algorithm> filter; ///< 过滤器，看a来实现
     std::string filter_name_;
     std::unique_ptr<BidirectionalBFS> part_bfs;
     std::unique_ptr<BiBFSCSR> part_bfs_csr;
-    Graph &g;                                       ///< 处理的图。
+    Graph &g; ///< 处理的图。
     CSRGraph *csr;
     PartitionManager partition_manager_;            ///< 分区管理器。
     std::unique_ptr<GraphPartitioner> partitioner_; ///< 图分区器，支持多种分区算法。

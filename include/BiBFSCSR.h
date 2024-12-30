@@ -20,8 +20,8 @@ public:
 
     // 找路径是否可达，如果可达返回路径，否则返回空。第三个参数，分区内搜索的时候要设置成true
     std::vector<int> findPath(int source, int target, int partition_number = -1); 
-    std::unordered_map<std::string, size_t> getIndexSizes() const override {
-        return {{"G'CSR", csr->getMemoryUsage()}};
+    std::vector<std::pair<std::string, std::string>> getIndexSizes() const override {
+        return {{"G'CSR", std::to_string(csr->getMemoryUsage())}};
     }
 
 private:

@@ -16,7 +16,7 @@ public:
     virtual void offline_industry() = 0;
     virtual bool reachability_query(int source, int target) = 0;
     // 声明测量索引大小的纯虚函数，返回索引名称与大小的键值对
-    virtual std::unordered_map<std::string, size_t> getIndexSizes() const = 0;
+    virtual std::vector<std::pair<std::string, std::string>> getIndexSizes() const = 0;
     virtual ~Algorithm() = default;
     //输出当前时间
     std::string getCurrentTimestamp() {

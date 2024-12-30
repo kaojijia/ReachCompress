@@ -30,6 +30,9 @@ void CompressedSearch::set_partitioner(std::string partitioner_name)
     else if (partitioner_name == "ReachRatio"){
         partitioner_ = std::unique_ptr<ReachRatioPartitioner>(new ReachRatioPartitioner());
     }
+    else if(partitioner_name == "Random"){
+        partitioner_ = std::unique_ptr<RandomPartitioner>(new RandomPartitioner());
+    }
     else
     {
         throw std::invalid_argument("Unsupported partitioner name");

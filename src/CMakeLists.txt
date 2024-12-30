@@ -14,6 +14,7 @@ add_library(reach_comp STATIC
     partitioner/LouvainPartitioner.cpp
     partitioner/ReachRatioPartitioner.cpp
     partitioner/ImportPartitioner.cpp
+    partitioner/RandomPartitioner.cpp
     
     utils/ReachRatio.cpp
     utils/compression.cpp 

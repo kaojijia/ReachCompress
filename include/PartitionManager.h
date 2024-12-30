@@ -131,12 +131,14 @@ public:
     void read_equivalance_info(const std::string &filename);
 
     uint32_t get_equivalance_mapping(int node) const{
+        if(equivalence_mapping == nullptr) return node;
         uint32_t eq = *equivalence_mapping[node];
         return ((eq==999999999)?static_cast<uint32_t>(node):eq);
     };
 
     uint32_t get_equivalence_mapping_size() const
     {
+
         uint32_t total_size = 0;
         uint32_t num_vertices = csr->max_node_id+1;
         for (uint32_t i = 0; i < num_vertices; ++i)
@@ -172,7 +174,7 @@ public:
     std::map<uint32_t, std::shared_ptr<CSRGraph>> partition_subgraphs_csr;
 
     // 等价类的二维数组映射,第一位是原始节点，第二位是映射后的节点。在g中的vertex结构体里也有这个
-    uint32_t **equivalence_mapping;
+    uint32_t **equivalence_mapping = nullptr;
 
 private:
     std::string getCurrentTimes() {

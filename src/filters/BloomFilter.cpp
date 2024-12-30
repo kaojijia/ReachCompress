@@ -57,26 +57,25 @@ bool BloomFilter::reachability_query(int source, int target) {
 }
 
 // 计算索引大小
-std::unordered_map<std::string, size_t> BloomFilter::getIndexSizes() const {
-    std::unordered_map<std::string, size_t> indexSizes;
+std::vector<std::pair<std::string, std::string>> BloomFilter::getIndexSizes() const {
+    std::vector<std::pair<std::string, std::string>> indexSizes;
 
     // 每个 Bloom Filter 的大小（64 位 = 8 字节）
     size_t perFilterSize = sizeof(std::bitset<64>);
 
     // 总顶点数
-    size_t numVertices = graph.vertices.size(); // 修改为 graph.vertices().size()
+    size_t numVertices = graph.vertices.size();
 
     // 计算整体过滤器大小
     size_t totalFilterSize = numVertices * perFilterSize;
 
-    // 填充结果映射
-    indexSizes["PerVertexFilterSize(bytes)"] = perFilterSize;
-    indexSizes["TotalFilterSize(bytes)"] = totalFilterSize;
-    indexSizes["NumberOfHashFunctions"] = numHashFunctions;
+    // 填充结果向量
+    indexSizes.emplace_back("PerVertexFilterSize(bytes)", std::to_string(perFilterSize));
+    indexSizes.emplace_back("TotalFilterSize(bytes)", std::to_string(totalFilterSize));
+    indexSizes.emplace_back("NumberOfHashFunctions", std::to_string(numHashFunctions));
 
     return indexSizes;
 }
-
 // 哈希函数生成
 std::vector<size_t> BloomFilter::generateHashes(int key) const {
     std::vector<size_t> hashes;
