@@ -12,6 +12,7 @@
 #include "partitioner/GraphPartitioner.h"
 #include "partitioner/ReachRatioPartitioner.h"
 #include "partitioner/RandomPartitioner.h"
+#include "partitioner/MultiCutPartitioner.h"
 #include "BloomFilter.h"
 #include "BidirectionalBFS.h"
 #include "BiBFSCSR.h"

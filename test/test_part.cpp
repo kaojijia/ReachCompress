@@ -42,19 +42,19 @@ TEST(PartitionTest, PartitionerTest) {
     PartitionManager partition_manager(g);
     // 进行分区
     // ReachRatioPartitioner partitioner;
-    RandomPartitioner partitioner;
+    // RandomPartitioner partitioner;
     // partitioner.partition(g, partition_manager);
-    CompressedSearch comps(g, "Random");
+    CompressedSearch comps(g, "MultiCut");
     comps.offline_industry(200, 0.6);
-    PLL pll(g);
-    pll.offline_industry();
-    auto pll_index = pll.getIndexSizes();
-    cout<<endl;
-    cout<<"PLL index size: "<<endl;
-    for(auto [key, value] : pll_index){
-        cout<<key<<"  "<<value<<endl;
-    }
-        cout<<endl;
+    // PLL pll(g);
+    // pll.offline_industry();
+    // auto pll_index = pll.getIndexSizes();
+    // cout<<endl;
+    // cout<<"PLL index size: "<<endl;
+    // for(auto [key, value] : pll_index){
+    //     cout<<key<<"  "<<value<<endl;
+    // }
+    //     cout<<endl;
     cout<<"Compressed index size: "<<endl;
     // OutputHandler::printPartitionInfo(partition_manager);
     auto index = comps.getIndexSizes();

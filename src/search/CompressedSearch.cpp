@@ -35,6 +35,12 @@ void CompressedSearch::set_partitioner(std::string partitioner_name)
     else if(partitioner_name == "Random"){
         partitioner_ = std::unique_ptr<RandomPartitioner>(new RandomPartitioner());
     }
+    else if (partitioner_name == "MultiCut")
+    {
+        /* code */
+        partitioner_ = std::unique_ptr<MultiCutPartitioner>(new MultiCutPartitioner());
+    }
+    
     else
     {
         throw std::invalid_argument("Unsupported partitioner name");
