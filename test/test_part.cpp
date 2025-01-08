@@ -4,6 +4,7 @@
 #include "partitioner/LouvainPartitioner.h"
 #include "partitioner/RandomPartitioner.h"
 #include "partitioner/ReachRatioPartitioner.h"
+#include "partitioner/TraversePartitioner.h"
 #include "pll.h"
 #include "utils/OutputHandler.h"
 #include "utils/RandomUtils.h"
@@ -44,7 +45,7 @@ TEST(PartitionTest, PartitionerTest) {
     // ReachRatioPartitioner partitioner;
     // RandomPartitioner partitioner;
     // partitioner.partition(g, partition_manager);
-    CompressedSearch comps(g, "MultiCut");
+    CompressedSearch comps(g, "Random");
     comps.offline_industry(200, 0.6);
     // PLL pll(g);
     // pll.offline_industry();
@@ -61,6 +62,7 @@ TEST(PartitionTest, PartitionerTest) {
     for(auto [key, value] : index){
         cout<<key<<"  "<<value<<endl;
     }
+    
 
     // auto r1 = comps.reachability_query(1, 18);
     // auto r2 = pll.reachability_query(1, 18);

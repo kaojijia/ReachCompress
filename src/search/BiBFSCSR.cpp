@@ -3,7 +3,7 @@
 #include "CSR.h"
 
 BiBFSCSR::BiBFSCSR(Graph &graph) : g(graph) {
-    csr = new CSRGraph();
+    csr = make_shared<CSRGraph>();
     csr->fromGraph(g);
 }
 

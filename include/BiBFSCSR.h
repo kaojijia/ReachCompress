@@ -7,6 +7,7 @@
 #include <vector>
 #include <queue>
 #include <unordered_set>
+#include <memory>
 
 class BiBFSCSR : public Algorithm {
 public:
@@ -24,9 +25,13 @@ public:
         return {{"G'CSR", std::to_string(csr->getMemoryUsage())}};
     }
 
+    shared_ptr<CSRGraph> getCSR() {
+        return csr;
+    }
+
 private:
     Graph& g;
-    CSRGraph* csr;
+    shared_ptr<CSRGraph> csr;
 
 };
 

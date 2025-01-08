@@ -1,11 +1,10 @@
-// MultiCutPartitioner.cpp
-#include "partitioner/MultiCutPartitioner.h"
+#include "partitioner/LabelPropagationPartitioner.h"
 #include "CSR.h"
 #include <thread>
 #include <vector>
 #include <atomic>
 #include <mutex>
-void MultiCutPartitioner::partition(Graph& graph, PartitionManager& partition_manager) {
+void LabelPropagationPartitioner::partition(Graph& graph, PartitionManager& partition_manager) {
     // Step 1: 构造CSRGraph
     CSRGraph csr;
     if (!csr.fromGraph(graph)) {
@@ -14,8 +13,7 @@ void MultiCutPartitioner::partition(Graph& graph, PartitionManager& partition_ma
     }
 
     // Step 2: 初始化分区数组
-    std::vector<int> partitions(csr.num_nodes, -1);
-    std::atomic<int> current_partition(0);
+    std::vector<int> partitions(csr.max_node_id+1, -1);
     std::mutex partition_mutex;
 
     // Step 3: 实现最小割算法（标签传播）
@@ -23,7 +21,7 @@ void MultiCutPartitioner::partition(Graph& graph, PartitionManager& partition_ma
         bool changed = true;
         while (changed) {
             changed = false;
-            for (uint32_t node = thread_id; node < csr.num_nodes; node += num_threads) {
+            for (uint32_t node = thread_id; node < csr.max_node_id; node += num_threads) {
                 if (csr.getOutDegree(node) == 0 && csr.getInDegree(node) == 0)
                     continue; // 忽略无连接的节点
                 std::unordered_map<int, int> label_counts;
@@ -65,9 +63,9 @@ void MultiCutPartitioner::partition(Graph& graph, PartitionManager& partition_ma
     std::vector<std::thread> threads;
 
     // 初始化分区
-    for (uint32_t node = 0; node < csr.num_nodes; ++node) {
+    for (uint32_t node = 0; node < csr.max_node_id; ++node) {
         if (csr.getOutDegree(node) > 0 || csr.getInDegree(node) > 0) {
-            partitions[node] = current_partition++;
+            partitions[node] = node;
         }
     }
 
@@ -81,8 +79,9 @@ void MultiCutPartitioner::partition(Graph& graph, PartitionManager& partition_ma
     }
 
     // 打印分区结果
-    for (uint32_t node = 0; node < csr.num_nodes; ++node) {
-        std::cout << "Node " << node << " is in partition " << partitions[node] << std::endl;
+    for (uint32_t node = 0; node < csr.max_node_id; ++node) {
+        if(partitions[node] != -1)
+            std::cout << "Node " << node << " is in partition " << partitions[node] << std::endl;
     }
     // // Step 4: 更新PartitionManager
     // 统计每个分区的节点数量

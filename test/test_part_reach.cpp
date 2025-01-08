@@ -407,7 +407,7 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
         // 获取 PLL 索引大小并记录
         auto pllIndexSizes = pll.getIndexSizes();
         stringstream oss;
-        oss << "PLL Index Sizes - IN: " << pllIndexSizes["IN"] << ", OUT: " << pllIndexSizes["OUT"];
+        oss << "PLL Index Sizes - IN: " << pllIndexSizes[3].second << ", OUT: " << pllIndexSizes[4].second;
         logFile << "[" << getCurrentTimestamp() << "] " << oss.str() << endl;
 
         // 生成查询对
@@ -695,7 +695,7 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
     // 获取 PLL 索引大小并记录
     auto pllIndexSizes = pll.getIndexSizes();
     stringstream oss;
-    oss << "PLL Index Sizes - IN: " << pllIndexSizes["IN"] << ", OUT: " << pllIndexSizes["OUT"];
+    oss << "PLL Index Sizes - IN: " << pllIndexSizes[3].second << ", OUT: " << pllIndexSizes[4].second;
     logFile << "[" << getCurrentTimestamp() << "] " << oss.str() << endl;
 
 
@@ -866,9 +866,9 @@ TEST_F(ReachabilityTest, BasicTest) {
     Graph g(true);  // 确保存储边集
     Graph dag(true);
     // 读取边文件
-    InputHandler inputHandler(edgeFile);
-    inputHandler.readGraph(g);
-    g.setFilename(edgeFile);
+    // InputHandler inputHandler(edgeFile);
+    // inputHandler.readGraph(g);
+    // g.setFilename(edgeFile);
     InputHandler inputHandlerDAG(edgefileDAG);
     inputHandlerDAG.readGraph(dag);
     dag.setFilename(edgefileDAG);
@@ -886,7 +886,7 @@ TEST_F(ReachabilityTest, BasicTest) {
     // 初始化 BFS
     BidirectionalBFS bfs(g);
     // 初始化 CompressedSearch 并进行离线处理
-    CompressedSearch comps(dag, "ReachRatio");
+    CompressedSearch comps(dag, "MultiCut");
     comps.offline_industry(200, 0.3, mapping);
     logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
 

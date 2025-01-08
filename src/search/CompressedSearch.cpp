@@ -5,6 +5,8 @@
 #include "partitioner/GraphPartitioner.h"
 #include "partitioner/LouvainPartitioner.h"
 #include "partitioner/ImportPartitioner.h"
+#include "partitioner/LabelPropagationPartitioner.h"
+#include "partitioner/TraversePartitioner.h"
 #include "BloomFilter.h"
 #include "AddEdge.h"
 #include <memory>
@@ -40,7 +42,14 @@ void CompressedSearch::set_partitioner(std::string partitioner_name)
         /* code */
         partitioner_ = std::unique_ptr<MultiCutPartitioner>(new MultiCutPartitioner());
     }
-    
+    else if(partitioner_name == "Label")
+    {
+        partitioner_ = std::unique_ptr<LabelPropagationPartitioner>(new LabelPropagationPartitioner());
+    }
+    else if(partitioner_name == "Traverse")
+    {
+        partitioner_ = std::unique_ptr<TraversePartitioner>(new TraversePartitioner());
+    }
     else
     {
         throw std::invalid_argument("Unsupported partitioner name");
