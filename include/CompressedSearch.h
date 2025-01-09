@@ -170,7 +170,7 @@ private:
     bool part_connection_graph_search(std::vector<int> path, int source, int target);
     void build_partition_index(float ratio, size_t num_vertices); ///< 构建分区索引
     void construct_filter(float ratio);
-    bool set_and_nodes_reachability(vector<int> source_set, vector<int> target_set, int source, int target);
+    bool set_reachability(vector<int> source_set, vector<int> target_set);
 
     // std::unique_ptr<BidirectionalBFS> part_bfs;           ///< 分区图上的双向BFS类。
     std::unique_ptr<Algorithm> filter; ///< 过滤器，看a来实现
