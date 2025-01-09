@@ -31,10 +31,12 @@ void CompressedSearch::set_partitioner(std::string partitioner_name)
         partitioner_ = std::unique_ptr<ImportPartitioner>(new ImportPartitioner());
         // partitioner_ = std::unique_ptr<GraphPartitioner>(new GraphPartitioner());
     }
-    else if (partitioner_name == "ReachRatio"){
+    else if (partitioner_name == "ReachRatio")
+    {
         partitioner_ = std::unique_ptr<ReachRatioPartitioner>(new ReachRatioPartitioner());
     }
-    else if(partitioner_name == "Random"){
+    else if (partitioner_name == "Random")
+    {
         partitioner_ = std::unique_ptr<RandomPartitioner>(new RandomPartitioner());
     }
     else if (partitioner_name == "MultiCut")
@@ -42,11 +44,11 @@ void CompressedSearch::set_partitioner(std::string partitioner_name)
         /* code */
         partitioner_ = std::unique_ptr<MultiCutPartitioner>(new MultiCutPartitioner());
     }
-    else if(partitioner_name == "Label")
+    else if (partitioner_name == "Label")
     {
         partitioner_ = std::unique_ptr<LabelPropagationPartitioner>(new LabelPropagationPartitioner());
     }
-    else if(partitioner_name == "Traverse")
+    else if (partitioner_name == "Traverse")
     {
         partitioner_ = std::unique_ptr<TraversePartitioner>(new TraversePartitioner());
     }
@@ -79,7 +81,7 @@ void CompressedSearch::offline_industry(size_t num_vertices, float ratio, string
 
     construct_filter(ratio); ///< 构建过滤器
 
-    //加边
+    // 加边
     add_edges_by_degree_threshold(g, 50);
 
     partition_graph(); ///< 执行图分区算法
@@ -134,7 +136,6 @@ bool CompressedSearch::reachability_query(int origin_source, int origin_target)
     //     return false;
     // }
 
-
     // 使用filter快速判断
     if (filter_name_ != "")
     {
@@ -159,7 +160,7 @@ bool CompressedSearch::reachability_query(int origin_source, int origin_target)
 
     bool result = false;
     int source_partition = partition_manager_.get_partition_id(source);
-    int target_partition = partition_manager_.get_partition_id(target);    
+    int target_partition = partition_manager_.get_partition_id(target);
     // int source_partition = g.get_partition_id(source);
     // int target_partition = g.get_partition_id(target);
     cout << getCurrentTimestamp() << "分区确定" << source_partition << "  " << target_partition << endl;
@@ -338,16 +339,16 @@ bool CompressedSearch::dfs_paths_search(int current_partition, int target_partit
     path.push_back(current_partition);
     bool result = false;
 
-    //跑到了目标分区，将途径的分区放到path里面，传给dfs函数，递归去找各个出口和入口点集合能不能依次有边相连
+    // 跑到了目标分区，将途径的分区放到path里面，传给dfs函数，递归去找各个出口和入口点集合能不能依次有边相连
     if (current_partition == target_partition)
     {
         all_paths.push_back(path);
 #ifdef DEBUG
         cout << getCurrentTimestamp() << " 分区可达，开始用新方法查询" << endl;
         result = part_connection_graph_search(path, source, target);
-        if(result)
+        if (result)
             return true;
-        else 
+        else
             goto target;
 #endif
         auto edges = partition_manager_.get_partition_adjacency(path[0], path[1]);
@@ -372,7 +373,7 @@ bool CompressedSearch::dfs_paths_search(int current_partition, int target_partit
         }
     }
 #ifdef DEBUG
-    target:
+target:
 #endif
     path.pop_back();
     // 当前的分区改成未访问，在以此为根的生成树中已经遍历完成，不需要防止重复遍历
@@ -437,47 +438,42 @@ bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, in
     return result;
 }
 
-
 /**
  * @brief 判断可达的分区是否存在可达路径。
- * 
- * @param path 
- * @return true 
- * @return false 
+ *
+ * @param path
+ * @return true
+ * @return false
  */
 bool CompressedSearch::part_connection_graph_search(std::vector<int> path, int source, int target)
 {
     auto current_partition = path[0];
-    auto second_partition  = path[1];
+    auto second_partition = path[1];
     auto tail_partition = path[path.size() - 1];
     auto tail_second_partition = path[path.size() - 2];
 
     vector<int> outgoing_nodes = partition_manager_.connect_nodes[current_partition][second_partition].outgoing_nodes;
     vector<int> incoming_nodes = partition_manager_.connect_nodes[tail_partition][tail_second_partition].incoming_nodes;
 
-    //TODO：从出口集合和入口集合中找source和target能相连的点
-    vector <int> source_set;
-    vector <int> target_set;
+    // TODO：从出口集合和入口集合中找source和target能相连的点
+    vector<int> source_set;
+    vector<int> target_set;
     for (auto &node : outgoing_nodes)
     {
         if (query_within_partition(source, node))
             source_set.push_back(node);
     }
 
-    for(auto &node : incoming_nodes)
+    for (auto &node : incoming_nodes)
     {
-        if (query_within_partition(node,target))
+        if (query_within_partition(node, target))
             target_set.push_back(node);
     }
 
-    bool result = set_reachability(source_set, target_set);    
-    
+    bool result = set_reachability(source_set, target_set);
+
     return result;
 }
-
-
-
-
 
 // TODO:构建索引的时候用全局搜索，避免两个点绕过一个分区来相连
 // 但是如果分区方法用连通度来计算，会不会有情况是加进去的点都是相连的呢
@@ -485,7 +481,7 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
 {
 #ifdef DEBUG
     std::cout << "Building partition index..." << std::endl;
-        // 打印 mapping 信息
+    // 打印 mapping 信息
     std::cout << "Partition to Node Mapping:" << std::endl;
     for (const auto &partition_pair : partition_manager_.mapping)
     {
@@ -500,10 +496,9 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
     }
 #endif
 
-
-    //TODO： 计算分区链接图上的索引，在后面能 一次性获取所有出口点到入口点的可达点对
-    //这个索引能接收两个点集，返回两个点集的笛卡尔积中的可达的部分
-    //先做个pll去循环吧
+    // TODO： 计算分区链接图上的索引，在后面能 一次性获取所有出口点到入口点的可达点对
+    // 这个索引能接收两个点集，返回两个点集的笛卡尔积中的可达的部分
+    // 先做个pll去循环吧
     this->pll_connect_g = make_shared<PLL>(*(this->partition_manager_.part_connect_g));
     this->pll_connect_g->offline_industry();
 
@@ -516,7 +511,6 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
         // 计算分区的比例信息
         float total_ratio = compute_reach_ratio(subgraph.second);
         auto partition_id = subgraph.first;
-
 
         // 根据情况构建索引,如果点数小于100那么就要建立一个子图的邻接矩阵
         // 如果g.get_num_vertices点数大于传进来的num_vertices,看分区图的ratio
@@ -772,24 +766,21 @@ std::vector<std::string> CompressedSearch::get_index_info()
     return lines;
 }
 
-
-
 /**
  * @brief 集合之间的可达性，有一个可达就整体返回true, 若遍历全图仍没有就返回false
- * 
+ *
  */
-bool CompressedSearch::set_reachability(vector<int> source_set, vector<int> target_set)
+
 bool CompressedSearch::set_reachability(vector<int> source_set, vector<int> target_set)
 {
     bool result = false;
     for (auto u : source_set)
     {
-        for (auto v : target_set){
+        for (auto v : target_set)
+        {
             result = pll_connect_g->reachability_query(u, v);
-            if(result) return true;
-        for (auto v : target_set){
-            result = pll_connect_g->reachability_query(u, v);
-            if(result) return true;
+            if (result)
+                return true;
         }
     }
     return false;
