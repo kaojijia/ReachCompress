@@ -391,6 +391,7 @@ bool CSRGraph::removeNode(uint32_t node) {
 
 }
 // 增加边（假定新点的id不会大于当前最大节点的id）
+// 并且已经有边的数组了
 bool CSRGraph::addEdge(uint32_t u, uint32_t v) {
     
     if (u > max_node_id || v > max_node_id) return false;

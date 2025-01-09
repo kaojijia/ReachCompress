@@ -505,7 +505,6 @@ TEST_F(ReachabilityTest, DISABLED_IndexReachabilityTest) {
     logFile.close();
 }
 
-
 //历史记录
 TEST_F(ReachabilityTest, DISABLED_MultiPartitionTest)
 {
@@ -647,7 +646,6 @@ TEST_F(ReachabilityTest, DISABLED_CompressedSearchPartitionInfoTest) {
 
     cout << "Compressed search partition info testing completed. Results saved to " << outputFilePath << endl;
 }
-
 
 TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
 
@@ -812,9 +810,106 @@ TEST_F(ReachabilityTest, DISABLED_LongDistanceTest) {
     logFile.close();
 }
 
+TEST_F(ReachabilityTest, SingleTest){
+    string edgeFile = PROJECT_ROOT_DIR"/Edges/medium/moreno_health_unweighted";
+    string logFilePath = string(PROJECT_ROOT_DIR) + "/result/" + getCurrentDaystamp() + "/singletest.txt";
+    ofstream logFile(logFilePath, ios::out);
+    if (!logFile.is_open()) {
+        FAIL() << "无法打开日志文件: " << logFilePath;
+    }
+    // 写入初始日志
+    logFile << "**************************************" << endl;
+    logFile << "*************************************" << endl;
+    logFile << "************************************" << endl;
+    logFile << "********************************" << endl;
+    logFile << "*************************" << endl;
+    logFile << "**************" << endl;
+    logFile << "[" << getCurrentTimestamp() << "] " << "当前处理文件: " << edgeFile << endl;
+
+    // 初始化图
+    Graph g(true);  // 确保存储边集
+    // 读取边文件
+    InputHandler inputHandler(edgeFile);
+    inputHandler.readGraph(g);
+    g.setFilename(edgeFile);
 
 
-TEST_F(ReachabilityTest, BasicTest) {
+    // 生成查询对
+    int num_queries = 1000;
+    int max_value = g.vertices.size();
+    unsigned int seed = 42; // 可选的随机种子
+
+    //改成允许重复的 query
+    vector<pair<int, int>> query_pairs = RandomUtils::generateQueryPairs(num_queries, max_value, seed);
+    
+    // 初始化 BFS
+    BidirectionalBFS bfs(g);
+    // 初始化 CompressedSearch 并进行离线处理
+    CompressedSearch comps(g, "Random");
+    comps.offline_industry(200, 0.3, "");
+    logFile << "[" << getCurrentTimestamp() << "] " << "完成 Compress 离线索引构建" << endl;
+
+
+    // 查询并比较时间
+    auto query_and_log = [&](const vector<pair<int, int>>& query_pairs) {
+        long long total_duration_bfs = 0;
+        long long total_duration_compressed = 0;
+        int query_count = 0;
+
+        logFile << "****************************************************" << std::endl;
+        logFile << "****************************************************" << std::endl;
+        logFile << "****************************************************" << std::endl;
+        logFile << "****************************************************" << std::endl;
+        logFile << "****************************************************" << std::endl;
+        logFile << "****************************************************" << std::endl;
+        logFile << "****************************************************" << std::endl;
+
+        for (const auto& query_pair : query_pairs) {
+            int source = query_pair.first;
+            int target = query_pair.second;
+            cout << "[" << getCurrentTimestamp() << "] " << "Querying from " << source << " to " << target << endl;
+            // 测量 BiBFS 查询耗时
+            auto start_bfs = chrono::high_resolution_clock::now();
+            bool bfs_result = bfs.reachability_query(source, target);
+            auto end_bfs = chrono::high_resolution_clock::now();
+            auto duration_bfs = chrono::duration_cast<chrono::microseconds>(end_bfs - start_bfs).count();
+
+            // 测量 CompressedSearch 查询耗时
+            auto start_compressed = chrono::high_resolution_clock::now();
+            bool compressed_result = comps.reachability_query(source, target);
+            auto end_compressed = chrono::high_resolution_clock::now();
+            auto duration_compressed = chrono::duration_cast<chrono::microseconds>(end_compressed - start_compressed).count();
+
+            query_count++;
+            total_duration_bfs += duration_bfs;
+            total_duration_compressed += duration_compressed;
+            auto results_match = (bfs_result == compressed_result);//if(!results_match) continue;
+  
+            EXPECT_EQ(bfs_result, compressed_result);
+
+            // 输出查询结果和耗时
+            logFile << " Query from " << source << " to " << target << std::endl;
+            logFile << "BiBFS: " << (bfs_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_bfs << " microseconds)" << std::endl;
+            logFile << "CompressedSearch: " << (compressed_result ? "Reachable" : "Not Reachable") << " (Time: " << duration_compressed << " microseconds)" << std::endl;
+            stringstream match_oss;
+            match_oss << "***** Does Result Match from " << source << " query to " << target << ": " << (results_match ? "Match" : "Not Match") << " *****";
+            logFile << "[" << getCurrentTimestamp() << "] " << match_oss.str() << std::endl;
+        }
+
+        // 计算并记录平均耗时
+        logFile << " Final Average BiBFS Time: " << (query_count > 0 ? (total_duration_bfs / query_count) : 0) << " microseconds" << std::endl;
+        logFile << " Final Average CompressedSearch Time: " << (query_count > 0 ? (total_duration_compressed / query_count) : 0) << " microseconds" << std::endl;
+        
+    };
+    query_and_log(query_pairs);
+
+    // 关闭日志文件
+    logFile.close();
+
+}
+
+
+TEST_F(ReachabilityTest, DISABLED_BasicTest) {
     
     // string edgeFile = PROJECT_ROOT_DIR "/Edges/large/tweibo-edgelist";
     // string edgefileDAG = PROJECT_ROOT_DIR "/Edges/DAGs/large/tweibo-edgelist_DAG";
@@ -841,9 +936,6 @@ TEST_F(ReachabilityTest, BasicTest) {
         FAIL() << "无法打开日志文件: " << logFilePath;
     }
 
-
-
-
     // 读取查询点对
     // vector<pair<int, int>> query_pairs_6 = readQueryPairs(queryFile, 6, 100);
     // vector<pair<int, int>> query_pairs_8 = readQueryPairs(queryFile, 8, 100);
@@ -866,9 +958,9 @@ TEST_F(ReachabilityTest, BasicTest) {
     Graph g(true);  // 确保存储边集
     Graph dag(true);
     // 读取边文件
-    // InputHandler inputHandler(edgeFile);
-    // inputHandler.readGraph(g);
-    // g.setFilename(edgeFile);
+    InputHandler inputHandler(edgeFile);
+    inputHandler.readGraph(g);
+    g.setFilename(edgeFile);
     InputHandler inputHandlerDAG(edgefileDAG);
     inputHandlerDAG.readGraph(dag);
     dag.setFilename(edgefileDAG);

@@ -34,7 +34,7 @@ TEST(PartitionTest, DISABLED_LouvainTest) {
 TEST(PartitionTest, PartitionerTest) {
     // 创建一个图
     Graph g(true);  // 确保存储边集    
-    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/DAGs/medium/cit-DBLP_DAG");
+    InputHandler inputHandler(PROJECT_ROOT_DIR"/Edges/generate/test_123456");
     inputHandler.readGraph(g);
     // OutputHandler::printGraphInfo(g);
 
@@ -45,7 +45,7 @@ TEST(PartitionTest, PartitionerTest) {
     // ReachRatioPartitioner partitioner;
     // RandomPartitioner partitioner;
     // partitioner.partition(g, partition_manager);
-    CompressedSearch comps(g, "Random");
+    CompressedSearch comps(g, "MultiCut");
     comps.offline_industry(200, 0.6);
     // PLL pll(g);
     // pll.offline_industry();

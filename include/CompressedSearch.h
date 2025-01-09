@@ -37,7 +37,8 @@ public:
           csr(nullptr),
           part_bfs(nullptr),
           is_index(is_index),
-          filter_name_("")
+          filter_name_(""),
+          pll_connect_g(nullptr)
     {
         set_partitioner(partitioner_name);
         this->csr = partition_manager_.csr;
@@ -48,7 +49,7 @@ public:
         {
             delete pll.second;
         }
-        delete csr;
+        //delete csr;
     }
 
     // 设置分区器
@@ -61,6 +62,7 @@ public:
     bool reachability_query(int source, int target) override;
 
     std::vector<std::string> get_index_info();
+
 
     PartitionManager &get_partition_manager()
     {
@@ -165,8 +167,10 @@ private:
     bool query_across_partitions_with_all_paths(int source, int target);
     bool dfs_paths_search(int current_partition, int target_partition, std::vector<int> &path, std::vector<std::vector<int>> &all_paths, std::unordered_set<int> &visited, int source, int target);
     bool dfs_partition_search(int u, std::vector<std::pair<int, int>> edges, std::vector<int> path, int target);
+    bool part_connection_graph_search(std::vector<int> path, int source, int target);
     void build_partition_index(float ratio, size_t num_vertices); ///< 构建分区索引
     void construct_filter(float ratio);
+    bool set_and_nodes_reachability(vector<int> source_set, vector<int> target_set, int source, int target);
 
     // std::unique_ptr<BidirectionalBFS> part_bfs;           ///< 分区图上的双向BFS类。
     std::unique_ptr<Algorithm> filter; ///< 过滤器，看a来实现
@@ -177,9 +181,8 @@ private:
     CSRGraph *csr;
     PartitionManager partition_manager_;            ///< 分区管理器。
     std::unique_ptr<GraphPartitioner> partitioner_; ///< 图分区器，支持多种分区算法。
-    // BloomFilter bloom_filter_;                      ///< Bloom Filter，用于快速判断节点间可能的连接。
-    // NodeEmbedding node_embedding_; ///< 节点嵌入，用于压缩邻接矩阵。
     std::string partitioner_name_;
+    shared_ptr<PLL> pll_connect_g; ///< 分区间的联系的可达查询
     unordered_map<size_t, vector<vector<size_t>>> unreachable_index_;          ///< 不可达分区索引，存储分区内的不可达点对的邻接表。
     unordered_map<size_t, unordered_map<size_t, size_t>> unreachable_mapping_; ///< 不可达分区里面的点的映射关系，不连续点到连续的数据结构的映射关系
     unordered_map<size_t, vector<vector<bitset<1>>>> small_index_;             ///< 小分区索引,存储可达点对的邻接矩阵。

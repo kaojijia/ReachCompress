@@ -44,6 +44,7 @@ void RandomPartitioner::partition(Graph &graph, PartitionManager &partition_mana
     // 建立分区图和对应的信息
     partition_manager.update_partition_connections();
     partition_manager.build_partition_graph();
+    partition_manager.build_connections_graph();
 }
 
 

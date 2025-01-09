@@ -1,16 +1,24 @@
 #include "PartitionManager.h"
 #include "ReachRatio.h"
+#include "BidirectionalBFS.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstdint>
+#include <unordered_map>
+using namespace std;
+
+
+
+
+
 
 /**
  * @brief 设置节点的分区ID。
  * @param node 节点编号。
  * @param partitionId 分区ID。
  */
-PartitionManager::PartitionManager(Graph &graph) : g(graph), part_g(false)
+PartitionManager::PartitionManager(Graph &graph) : g(graph), part_g(false), part_connect_csr(nullptr),part_connect_g(nullptr)
 {
     this->csr = new CSRGraph();
     this->csr->fromGraph(g);
@@ -415,6 +423,73 @@ void PartitionManager::update_partition_connections()
     }
 }
 
+
+/**
+ * @brief partition_manager中的分区之间的连边+分区内的出口入口点集之间若可达则相互连接，组成一个新的图
+ * 会删除已有的重新建立
+ */
+void PartitionManager::build_connections_graph()
+{
+    if (this->part_connect_g != nullptr) {
+        this->part_connect_g.reset();
+    }
+    if (this->part_connect_csr != nullptr) {
+        this->part_connect_csr.reset();
+    }
+
+    this->part_connect_g = make_shared<Graph>(false);
+    this->part_connect_csr = make_shared<CSRGraph>();
+    BidirectionalBFS bibfs(this->g);
+    bibfs.offline_industry();
+
+    //1、先添加partition_manager的所有点到part_connect中，顺带记录每个分区的出口和入口点集，后面可能有用
+
+    connect_nodes.clear();
+    for(auto const &[source_partition, all_edges]: partition_adjacency){
+        for(auto const &[target_partition, edges]: all_edges){
+            for(auto const &[u, v]: edges.original_edges){
+                // 为分区间的连接边，将边的起点加入到源分区的出口点集，将边的终点加入目标分区的入口点集
+                connect_nodes[source_partition][target_partition].add_outgoing_node(u);
+                connect_nodes[target_partition][source_partition].add_incoming_node(v);
+                // 分区间的连接边，在part_connect中添加边
+                part_connect_g->addEdge(u, v);
+            }
+        }
+    }
+
+    // 2、对每个分区的出口点集和入口点集，若可达则相互连接，也就是在part_connect中添加边
+    for(auto const &[source_partition, all_nodes]: connect_nodes){
+        vector<int> outgoing_nodes;
+        vector<int> incoming_nodes;
+        for(auto const &[target_partition, nodes]: all_nodes){
+            for(auto const &u: nodes.outgoing_nodes){
+                outgoing_nodes.push_back(u);
+            }
+            for(auto const &v: nodes.incoming_nodes){
+                incoming_nodes.push_back(v);
+            }
+        }
+        if(outgoing_nodes.empty() || incoming_nodes.empty()) continue;
+        for(auto u:incoming_nodes){
+            for(auto v: outgoing_nodes){
+                if(u == v) continue;
+                // 如果相互可达则连接
+                if(bibfs.reachability_query(u, v))
+                    part_connect_g->addEdge(u, v);
+            }
+        }
+    }
+
+    // 设置分区号都是0，防止一些逻辑判断里面因为分区是-1导致出错
+    for(auto v: part_connect_g->vertices){
+        if(v.in_degree == 0 && v.out_degree == 0)
+            v.partition_id = -1;
+        else
+            v.partition_id = 1;
+    }
+    part_connect_csr->fromGraph(*part_connect_g);
+}
+
 // void PartitionManager::update_partition_connections_CSR()
 // {
 //     for (size_t u = 0; u < this->csr->max_node_id+1; ++u)
@@ -455,6 +530,14 @@ void PartitionManager::update_partition_connections()
 //     }
 // }
 
+
+/**
+ * @brief 更新节点的分区id、分区图、分区之间的连接、分区和顶点的映射
+ * 
+ * @param node 
+ * @param old_partition_id 
+ * @param new_partition_id 
+ */
 void PartitionManager::update_partition_info(int node, int old_partition_id, int new_partition_id)
 {
     // 更新节点的分区id

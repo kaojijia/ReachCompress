@@ -1,4 +1,4 @@
-// #define DEBUG
+#define DEBUG
 
 #include "CompressedSearch.h"
 #include "ReachRatio.h"
@@ -337,15 +337,26 @@ bool CompressedSearch::dfs_paths_search(int current_partition, int target_partit
     visited.insert(current_partition);
     path.push_back(current_partition);
     bool result = false;
+
+    //跑到了目标分区，将途径的分区放到path里面，传给dfs函数，递归去找各个出口和入口点集合能不能依次有边相连
     if (current_partition == target_partition)
     {
         all_paths.push_back(path);
+#ifdef DEBUG
+        cout << getCurrentTimestamp() << " 分区可达，开始用新方法查询" << endl;
+        result = part_connection_graph_search(path, source, target);
+        if(result)
+            return true;
+        else 
+            goto target;
+#endif
         auto edges = partition_manager_.get_partition_adjacency(path[0], path[1]);
         result = dfs_partition_search(source, edges.original_edges, path, target);
         if (result)
             return true;
         cout << getCurrentTimestamp() << " 分区可达，但顶点之间没有可达路径" << endl;
     }
+    // 如果当前分区不是目标分区，继续递归搜索
     else
     {
         // 获取当前分区的所有相邻分区
@@ -360,7 +371,9 @@ bool CompressedSearch::dfs_paths_search(int current_partition, int target_partit
             }
         }
     }
-
+#ifdef DEBUG
+    target:
+#endif
     path.pop_back();
     // 当前的分区改成未访问，在以此为根的生成树中已经遍历完成，不需要防止重复遍历
     // 从别的分区还可以有边过来，也就是说从别的点为根的子树中可以被访问，等下次访问到再说防止重复遍历的事情
@@ -369,7 +382,7 @@ bool CompressedSearch::dfs_paths_search(int current_partition, int target_partit
 }
 
 /**
- * @brief 辅助方法，执行分区间的迭代式DFS搜索。
+ * @brief 已有分区级别的可达路径，按照这个路径执行分区间的迭代式DFS搜索。看是否确实有边相连
  * @param current_partition 当前分区ID。
  * @param target_partition 目标分区ID。
  * @param visited 已访问的分区集合。
@@ -423,6 +436,39 @@ bool CompressedSearch::dfs_partition_search(int u, std::vector<std::pair<int, in
 
     return result;
 }
+
+
+/**
+ * @brief 判断可达的分区是否存在可达路径。
+ * 
+ * @param path 
+ * @return true 
+ * @return false 
+ */
+bool CompressedSearch::part_connection_graph_search(std::vector<int> path, int source, int target)
+{
+    auto current_partition = path[0];
+    auto second_partition  = path[1];
+    auto tail_partition = path[path.size() - 1];
+    auto tail_second_partition = path[path.size() - 2];
+
+    vector<int> outgoing_nodes = partition_manager_.connect_nodes[current_partition][second_partition].outgoing_nodes;
+    vector<int> incoming_nodes = partition_manager_.connect_nodes[tail_partition][tail_second_partition].incoming_nodes;
+
+    bool result = set_and_nodes_reachability(outgoing_nodes, incoming_nodes, source, target);
+    //如果有边相连，看一下能不能
+    if(result){
+
+    }
+    
+    
+    return result;
+}
+
+
+
+
+
 // TODO:构建索引的时候用全局搜索，避免两个点绕过一个分区来相连
 // 但是如果分区方法用连通度来计算，会不会有情况是加进去的点都是相连的呢
 void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
@@ -444,6 +490,12 @@ void CompressedSearch::build_partition_index(float ratio, size_t num_vertices)
     }
 #endif
 
+
+    //TODO： 计算分区链接图上的索引，在后面能 一次性获取所有出口点到入口点的可达点对
+    //这个索引能接收两个点集，返回两个点集的笛卡尔积中的可达的部分
+    //先做个pll去循环吧
+    this->pll_connect_g = make_shared<PLL>(*(this->partition_manager_.part_connect_g));
+    this->pll_connect_g->offline_industry();
 
     this->ratio = ratio;
     this->num_vertices = num_vertices;
@@ -708,4 +760,25 @@ std::vector<std::string> CompressedSearch::get_index_info()
     }
 
     return lines;
+}
+
+
+
+/**
+ * @brief 集合之间的可达性，有一个可达就整体返回true, 若遍历全图仍没有就返回false
+ * 
+ */
+bool CompressedSearch::set_and_nodes_reachability(vector<int> source_set, vector<int> target_set, int source, int target)
+{
+    bool result = false;
+    for (auto u : source_set)
+    {
+        for (auto v : target_set)
+        {
+            if (pll_connect_g->reachability_query(u, v))
+                result = query_within_partition(source, u)&&query_within_partition(v, target);
+                if(result) return true;
+        }
+    }
+    return false;
 }

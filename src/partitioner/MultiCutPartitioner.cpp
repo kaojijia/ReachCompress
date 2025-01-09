@@ -11,10 +11,12 @@
 
 int min_cut = INT_MAX;
 int max_partition_difference = 50000;// 分出来的两个区最多差多少个顶点
-int min_size = 20; // 最小分区大小
-int total_iterations = 50000; // 随机化试验次数
-int max_cut_edges = 20; // 最大割边数
-int max_partitions_count = 6; // 最大分区数
+int min_size = 2; // 所有分区顶点数目小于这个值会停止迭代
+int total_iterations = 100; // 随机化试验次数
+int max_cut_edges = 1; // 最大割边数，大于这个会停止迭代
+int max_partitions_count = 6; // 最大分区数，大于这个会停止迭代
+
+int force_times = 5; // 强制划分次数
 
 // 辅助函数：划分弱连通分量，先做初步分区
 void initial_partition(CSRGraph &csr, std::vector<int> &partition)
@@ -282,7 +284,7 @@ void MultiCutPartitioner::partition(Graph &g, PartitionManager &partition_manage
     int times = 0;
     while (partition_statics.size() < new_max_size && max_size > min_size)
     {
-        if(times++ > 50)
+        if(++times > force_times)
             break; 
         int current_min_cut = min_cut;
         auto temp_partition = std::make_shared<std::vector<int>>(csr.max_node_id + 1, -1);
@@ -307,8 +309,9 @@ void MultiCutPartitioner::partition(Graph &g, PartitionManager &partition_manage
                 temp_partition = partition; // 直接将指针赋值
             }
         }
+        // 如果最小割大于预设值，停止迭代
         if(current_min_cut > max_cut_edges && current_min_cut != min_cut)
-            break; // 如果最小割大于预设值，停止迭代
+            break; 
         // 更新最佳分区
         best_partition = temp_partition;
 
@@ -360,6 +363,7 @@ void MultiCutPartitioner::partition(Graph &g, PartitionManager &partition_manage
     // 建立分区图和对应的信息
     partition_manager.update_partition_connections();
     partition_manager.build_partition_graph();
+    partition_manager.build_connections_graph();
 
     // //构造顶点的分区可达集合
     // auto i = get_reachable_partitions(g, 3);

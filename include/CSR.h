@@ -101,6 +101,10 @@ public:
     // 设置节点个数
     uint32_t setNodesNum(uint32_t);
 
+    // 重设节点个数，之前创建空的CSR的时候会设置一个很大的数，
+    // 现在要将节点个数设置为实际大小，减少空间占用
+    void resetNodesNum(){};
+
 private:
 
 };

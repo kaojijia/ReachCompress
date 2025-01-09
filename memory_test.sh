@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # 配置
-PID=3479403  # 替换为你要监控的进程PID
-LOG_FILE="/home/reco/Projects/ReachCompress/result/memory_log.txt"
+PID=621099  # 替换为你要监控的进程PID
+LOG_FILE="/home/reco/Projects/ReachCompress/memory_log_0108.txt"
 INTERVAL=60  # 时间间隔（秒）
 
 # 检查PID是否存在
