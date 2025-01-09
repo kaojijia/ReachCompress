@@ -455,12 +455,22 @@ bool CompressedSearch::part_connection_graph_search(std::vector<int> path, int s
     vector<int> outgoing_nodes = partition_manager_.connect_nodes[current_partition][second_partition].outgoing_nodes;
     vector<int> incoming_nodes = partition_manager_.connect_nodes[tail_partition][tail_second_partition].incoming_nodes;
 
-    bool result = set_and_nodes_reachability(outgoing_nodes, incoming_nodes, source, target);
-    //如果有边相连，看一下能不能
-    if(result){
-
+    //TODO：从出口集合和入口集合中找source和target能相连的点
+    vector <int> source_set;
+    vector <int> target_set;
+    for (auto &node : outgoing_nodes)
+    {
+        if (query_within_partition(source, node))
+            source_set.push_back(node);
     }
-    
+
+    for(auto &node : incoming_nodes)
+    {
+        if (query_within_partition(node,target))
+            target_set.push_back(node);
+    }
+
+    bool result = set_reachability(source_set, target_set, source, target);    
     
     return result;
 }
@@ -768,16 +778,14 @@ std::vector<std::string> CompressedSearch::get_index_info()
  * @brief 集合之间的可达性，有一个可达就整体返回true, 若遍历全图仍没有就返回false
  * 
  */
-bool CompressedSearch::set_and_nodes_reachability(vector<int> source_set, vector<int> target_set, int source, int target)
+bool CompressedSearch::set_reachability(vector<int> source_set, vector<int> target_set)
 {
     bool result = false;
     for (auto u : source_set)
     {
-        for (auto v : target_set)
-        {
-            if (pll_connect_g->reachability_query(u, v))
-                result = query_within_partition(source, u)&&query_within_partition(v, target);
-                if(result) return true;
+        for (auto v : target_set){
+            result = pll_connect_g->reachability_query(u, v);
+            if(result) return true;
         }
     }
     return false;
