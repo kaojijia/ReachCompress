@@ -779,10 +779,14 @@ std::vector<std::string> CompressedSearch::get_index_info()
  * 
  */
 bool CompressedSearch::set_reachability(vector<int> source_set, vector<int> target_set)
+bool CompressedSearch::set_reachability(vector<int> source_set, vector<int> target_set)
 {
     bool result = false;
     for (auto u : source_set)
     {
+        for (auto v : target_set){
+            result = pll_connect_g->reachability_query(u, v);
+            if(result) return true;
         for (auto v : target_set){
             result = pll_connect_g->reachability_query(u, v);
             if(result) return true;
