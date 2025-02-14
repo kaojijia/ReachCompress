@@ -213,14 +213,17 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     {
         for (auto &t_root : target_forest)
         {
-            if (topo_level[s_root->id] > topo_level[t_root->id])
-                continue;
+            // if (topo_level[s_root->id] > topo_level[t_root->id])
+            //     continue;
             queue.push({s_root, t_root, s_root->depth + t_root->depth});
         }
     }
 
     vector<pair<int, int>> results;
     unordered_map<size_t, bool> cache;
+
+
+    cout<<queue.size()<<endl;
 
     while (!queue.empty())
     {

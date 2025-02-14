@@ -38,7 +38,7 @@ TEST(TEST_Set, index_test){
 
     EXPECT_TRUE(set_search.reachability_query(1,15));
 
-    vector<int> source_set = {1, 2, 3, 4};
+    vector<int> source_set = {1, 2, 7};
     vector<int> target_set = {11, 17, 16, 9};
     auto result = set_search.set_reachability_query(source_set, target_set);
     for(auto i:result){
