@@ -213,14 +213,16 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     {
         for (auto &t_root : target_forest)
         {
-            if (topo_level[s_root->id] > topo_level[t_root->id])
-                continue;
+            // if (topo_level[s_root->id] > topo_level[t_root->id])
+            //     continue;
             queue.push({s_root, t_root, s_root->depth + t_root->depth});
         }
     }
 
     vector<pair<int, int>> results;
     unordered_map<size_t, bool> cache;
+
+    cout << queue.size() << endl;
 
     while (!queue.empty())
     {
@@ -233,34 +235,20 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
         // 生成缓存键
         size_t key = (reinterpret_cast<size_t>(s_node.get()) << 32) | reinterpret_cast<size_t>(t_node.get());
 
+        bool reachable = false;
         if (cache.count(key))
         {
-            if (cache[key])
-            {
-                // 记录覆盖节点对
-                for (int s : s_node->covered_nodes)
-                    for (int t : t_node->covered_nodes)
-                        results.emplace_back(s, t);
-            }
-            continue;
+            reachable = cache[key];
         }
-
-        // 实际可达性检查
-        bool reachable = false;
-        for (int s : s_node->covered_nodes)
+        else
         {
-            for (int t : t_node->covered_nodes)
-            {
-                if (reachability_query(s, t))
-                {
-                    reachable = true;
-                    goto end_check;
-                }
-            }
+            if (topo_level[s_node->id] > topo_level[t_node->id])
+                reachable = false;
+            else
+                reachable = reachability_query(s_node->id, t_node->id);
+            cache[key] = reachable;
         }
-    end_check:
 
-        cache[key] = reachable;
         if (reachable)
         {
             // 记录所有覆盖对
@@ -271,6 +259,7 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
         else
         {
             // 展开子节点组合
+            // 两个节点都有子节点，将所有子节点的笛卡尔积入队
             if (!s_node->children.empty() && !t_node->children.empty())
             {
                 for (auto &s_child : s_node->children)
@@ -301,8 +290,8 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
                 {
                     for (auto &t_child : t_node->children)
                     {
-                        if (topo_level[s_node->id] > topo_level[t_child->id])
-                            continue;
+                        // if (topo_level[s_node->id] > topo_level[t_child->id])
+                        //     continue;
                         queue.push({s_node, t_child,
                                     s_node->depth + t_child->depth});
                     }
@@ -315,20 +304,6 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     sort(results.begin(), results.end());
     results.erase(unique(results.begin(), results.end()), results.end());
     return results;
-
-    // 查找时过滤，进一步减少要循环的大小
-    // 减少n和m的大小
-    //  for(auto i :source_set_eq){
-    //      auto topo_level_i = this->topo_level[i];
-    //      for(auto j : target_set_eq){
-    //          // 用拓扑排序过滤，如果i的拓扑层级大于j的拓扑层级，那么i不可能到达j
-    //          if(topo_level_i > this->topo_level[j]){
-    //              continue;
-    //          }
-
-    //     }
-
-    // }
 }
 
 bool SetSearch::reachability_query(int source, int target)
@@ -345,13 +320,15 @@ std::vector<std::pair<std::string, std::string>> SetSearch::getIndexSizes() cons
 {
     return std::vector<std::pair<std::string, std::string>>();
 }
-vector<SetSearch::ForestNodePtr> SetSearch::build_source_forest(const set<int>& nodes) {
+vector<SetSearch::ForestNodePtr> SetSearch::build_source_forest(const set<int> &nodes)
+{
     vector<ForestNodePtr> forest;
     TopoLevelComparator cmp(topo_level);
-    
+
     // 初始化节点为一系列叶子节点并入队
     list<ForestNodePtr> node_list;
-    for (int v : nodes) {
+    for (int v : nodes)
+    {
         auto node = make_shared<ForestNode>(v);
         node->covered_nodes.insert(v);
         node->key_points = std::vector<int>(out_key_points[v].begin(), out_key_points[v].end()); // 加载预计算的关键点
@@ -359,63 +336,72 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_source_forest(const set<int>& 
     }
 
     // 合并循环
-    while (!node_list.empty()) {
+    while (!node_list.empty())
+    {
         auto current = node_list.front();
         node_list.pop_front();
         bool merged = false;
 
         auto it = node_list.begin();
-        while (it != node_list.end()) {
+        while (it != node_list.end())
+        {
             auto node = *it;
             // 双指针法查找共同关键点
             int cp = find_common_keypoint(current->key_points, node->key_points);
 
-            if (cp != -1) {
+            if (cp != -1)
+            {
                 // 创建父节点（使用实际找到的关键点）
                 auto parent = make_shared<ForestNode>(cp);
                 parent->children.push_back(current);
                 parent->children.push_back(node);
                 parent->covered_nodes.insert(current->covered_nodes.begin(),
-                                           current->covered_nodes.end());
+                                             current->covered_nodes.end());
                 parent->covered_nodes.insert(node->covered_nodes.begin(),
-                                           node->covered_nodes.end());
-                
+                                             node->covered_nodes.end());
+
                 // 合并关键点（取并集后重新排序）
                 vector<int> merged_kps;
                 set_union(current->key_points.begin(), current->key_points.end(),
-                         node->key_points.begin(), node->key_points.end(),
-                         back_inserter(merged_kps), cmp);
-                
+                          node->key_points.begin(), node->key_points.end(),
+                          back_inserter(merged_kps), cmp);
+
                 parent->key_points = merged_kps;
-                
+
                 node_list.push_front(parent);
                 it = node_list.erase(it);
                 merged = true;
                 break;
-            } else {
+            }
+            else
+            {
                 ++it;
             }
         }
 
-        if (!merged) {
+        if (!merged)
+        {
             forest.push_back(current);
         }
     }
 
-    for (auto& root : forest) {
+    for (auto &root : forest)
+    {
         establish_parent_links(root);
     }
 
     return forest;
 }
 
-vector<SetSearch::ForestNodePtr> SetSearch::build_target_forest(const set<int>& nodes) {
+vector<SetSearch::ForestNodePtr> SetSearch::build_target_forest(const set<int> &nodes)
+{
     vector<ForestNodePtr> forest;
     TopoLevelComparator cmp(topo_level);
 
     // 初始化目标节点列表
     list<ForestNodePtr> node_list;
-    for (int v : nodes) {
+    for (int v : nodes)
+    {
         auto node = make_shared<ForestNode>(v);
         node->covered_nodes.insert(v);
         node->key_points = std::vector<int>(in_key_points[v].begin(), in_key_points[v].end()); // 使用入方向关键点
@@ -423,42 +409,48 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_target_forest(const set<int>& 
     }
 
     // 合并循环（与源森林对称但方向相反）
-    while (!node_list.empty()) {
+    while (!node_list.empty())
+    {
         auto current = node_list.front();
         node_list.pop_front();
         bool merged = false;
 
         auto it = node_list.begin();
-        while (it != node_list.end()) {
+        while (it != node_list.end())
+        {
             auto node = *it;
-            
+
             // 查找共同前驱关键点（使用in_key_points）
             int cp = find_common_keypoint(current->key_points, node->key_points);
 
-            if (cp != -1) {
+            if (cp != -1)
+            {
                 // 创建父节点（使用实际前驱ID）
                 auto parent = make_shared<ForestNode>(cp);
-                
+
                 // 维护层级关系（父在前，子在后）
-                if (topo_level[parent->id] <= topo_level[current->id]) {
+                if (topo_level[parent->id] <= topo_level[current->id])
+                {
                     parent->children.push_back(current);
                     parent->children.push_back(node);
-                } else {
+                }
+                else
+                {
                     // 处理异常情况（理论上不应出现）
                     throw logic_error("Invalid topology hierarchy");
                 }
 
                 // 合并覆盖节点
                 parent->covered_nodes.insert(current->covered_nodes.begin(),
-                                           current->covered_nodes.end());
+                                             current->covered_nodes.end());
                 parent->covered_nodes.insert(node->covered_nodes.begin(),
-                                           node->covered_nodes.end());
+                                             node->covered_nodes.end());
 
                 // 合并关键点（保持有序性）
                 vector<int> merged_kps;
                 set_union(current->key_points.begin(), current->key_points.end(),
-                         node->key_points.begin(), node->key_points.end(),
-                         back_inserter(merged_kps), cmp);
+                          node->key_points.begin(), node->key_points.end(),
+                          back_inserter(merged_kps), cmp);
                 parent->key_points = merged_kps;
 
                 // 更新列表
@@ -466,18 +458,22 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_target_forest(const set<int>& 
                 it = node_list.erase(it);
                 merged = true;
                 break;
-            } else {
+            }
+            else
+            {
                 ++it;
             }
         }
 
-        if (!merged) {
+        if (!merged)
+        {
             forest.push_back(current);
         }
     }
 
     // 后处理：建立父指针
-    for (auto& root : forest) {
+    for (auto &root : forest)
+    {
         establish_parent_links(root);
     }
 
@@ -485,8 +481,10 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_target_forest(const set<int>& 
 }
 
 // 辅助函数：建立父节点链接
-void SetSearch::establish_parent_links(ForestNodePtr node) {
-    for (auto& child : node->children) {
+void SetSearch::establish_parent_links(ForestNodePtr node)
+{
+    for (auto &child : node->children)
+    {
         child->parent = node;
         establish_parent_links(child);
     }
@@ -515,8 +513,9 @@ int SetSearch::find_common_keypoint(const vector<int> &kps1,
             ++j;
         }
     }
-    
-    if(result.empty())return -1;
+
+    if (result.empty())
+        return -1;
     // 这里看看有没有优化
     return result[0];
 }

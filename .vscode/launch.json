@@ -1,26 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "Heaptrack Run PartReach",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/test/test_part_reach", // 替换为您的可执行文件路径
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "preLaunchTask": "", // 不关联任何预启动任务
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "miDebuggerPath": "/usr/bin/gdb" // 确保gdb已安装
-        },
+        
     ]
 }
