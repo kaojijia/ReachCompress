@@ -40,7 +40,7 @@ uint32_t TreeCover::post_traverse(uint32_t index, uint32_t tree_num, uint32_t& o
             uint32_t temp = this->post_traverse(neighbour, tree_num, order);
             min_order = (temp<min_order)?temp:min_order;
         }
-        //有被遍历过，但是是当前的就不管了（非树边）
+        //有被遍历过，但是是当前的子树就不管了（非树边）
         else if(this->tree_nodes[neighbour]->tree_id==tree_num){
             continue;
         }

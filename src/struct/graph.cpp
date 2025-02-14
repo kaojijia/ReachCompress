@@ -159,12 +159,12 @@ void Graph::removeEdge(int u, int v, bool is_directed) {
     // 更新点的数量
     if(vertices[u].out_degree==0&&vertices[u].in_degree==0){
         this->num_vertices--;
-        vertices[u].partition_id = -1;
+        vertices[u].partition_id = 999999990;
     }
 
     if(vertices[v].out_degree==0&&vertices[v].in_degree==0){
         this->num_vertices--;
-        vertices[v].partition_id = -1;
+        vertices[v].partition_id = 999999990;
     }
 
     if (store_edges) {

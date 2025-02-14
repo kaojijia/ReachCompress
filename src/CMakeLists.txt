@@ -10,6 +10,7 @@ add_library(reach_comp STATIC
     search/BidirectionalBFS.cpp
     search/pll.cpp 
     search/CompressedSearch.cpp
+    search/SetSearch.cpp
 
     partitioner/LouvainPartitioner.cpp
     partitioner/ReachRatioPartitioner.cpp

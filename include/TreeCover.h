@@ -10,12 +10,15 @@
 
 using namespace std;
 
+// 存两个值：在当前树上的后序遍历值和最小的后序遍历值
+// 看两个点的区间是否互相包含来确认是否可达
+
 struct TreeNode
 {
-    int tree_id;
+    int tree_id;//代表是哪棵树，一个图中可能有多个生成树，一个节点可能在多个生成树中都有值
     uint32_t min_postorder;
     uint32_t postorder;
-    TreeNode *next = nullptr;
+    TreeNode *next = nullptr; //没用
 };
 
 class TreeCover : public Algorithm

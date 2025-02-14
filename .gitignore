@@ -175,3 +175,5 @@ Edges/DAGs/in_DAG
 Edges/DAGs/in_mapping
 Edges/large/tweibo-edgelist.txt
 Partitions/in_partitions_louvain.txt
+
+.idea/

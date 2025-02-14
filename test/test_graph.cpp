@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "graph.h"
+#include "SetSearch.h"
 #include <algorithm>  // 确保包含算法库
 #include "utils/InputHandler.h"
 #include "utils/OutputHandler.h"
@@ -27,15 +28,17 @@ protected:
 };
 
 
-TEST_F(GraphTest, DISABLED_RemoveTest) {
+// TEST_F(GraphTest, DISABLED_RemoveTest) {
     
-    g.removeNode(2);
-    // g.removeEdge(2,3);
-    OutputHandler::printGraphInfo(g);
+//     g.removeNode(2);
+//     // g.removeEdge(2,3);
+//     OutputHandler::printGraphInfo(g);
+
+// }
+
+TEST_F(GraphTest, setTest) {
+    Graph g;
+    g.addEdge(0,1);
+    SetSearch set_search(g);
 
 }
-
-// TEST_F(GraphTest, RemoveNodeTest) {
-    
-
-// })
