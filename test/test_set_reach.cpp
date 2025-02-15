@@ -38,11 +38,14 @@ TEST(TEST_Set, index_test){
 
     EXPECT_TRUE(set_search.reachability_query(1,15));
 
-    vector<int> source_set = {1, 2, 7, 8};
-    vector<int> target_set = {11, 17, 16, 9};
+    vector<int> source_set = {1, 3, 5, 121};
+    vector<int> target_set = {2, 8,123,1, 122};
+
+    // auto c = set_search.build_source_forest(source_set);
     auto result = set_search.set_reachability_query(source_set, target_set);
     for(auto i:result){
         cout<<i.first<<"->"<<i.second<<endl;
+        EXPECT_TRUE(set_search.pll->reachability_query(i.first,i.second));
     }
     return ;
 }
