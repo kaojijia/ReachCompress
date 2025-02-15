@@ -32,11 +32,12 @@ public:
     void offline_industry() override;
     std::vector<std::pair<std::string, std::string>> getIndexSizes() const override;
 
+    shared_ptr<PLL> pll;
 private:
 
     shared_ptr<Graph> g;
     shared_ptr<CSRGraph> csr;
-    shared_ptr<PLL> pll;
+
 
     //关键路标点
     vector<set<int>> in_key_points;
@@ -76,28 +77,16 @@ private:
     struct QueueItem {
         SetSearch::ForestNodePtr s_node;
         SetSearch::ForestNodePtr t_node;
-        int depth_sum;
-        bool operator<(const QueueItem& other) const {
-            return depth_sum > other.depth_sum; // 最小堆
-        }
     };
 
-    // 关键点排序比较器
-    struct TopoLevelComparator {
-        const vector<int>& topo_level;
-        TopoLevelComparator(const vector<int>& tl) : topo_level(tl) {}
-        
-        bool operator()(int a, int b) const {
-            return topo_level[a] > topo_level[b]; // 降序排列
-        }
-    };
 
     // 森林构建函数
+    vector<ForestNodePtr>build_forest(const set<int>& nodes, bool is_source);
     vector<ForestNodePtr> build_source_forest(const set<int>& nodes);
     vector<ForestNodePtr> build_target_forest(const set<int>& targets);
     //维护到根节点的连接
     void establish_parent_links(ForestNodePtr node);
     // 找共同关键点
-    int find_common_keypoint(const vector<int> &kps1, const vector<int> &kps2);
+    int find_common_keypoint(const set<int> &kps1,const set<int> &kps2);
 };
 
