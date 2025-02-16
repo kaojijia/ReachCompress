@@ -19,7 +19,7 @@ public:
     virtual std::vector<std::pair<std::string, std::string>> getIndexSizes() const = 0;
     virtual ~Algorithm() = default;
     //输出当前时间
-    std::string getCurrentTimestamp() {
+    static std::string getCurrentTimestamp() {
         auto now = std::chrono::system_clock::now();
         auto now_time_t = std::chrono::system_clock::to_time_t(now);
         auto now_us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()) % 1000000;

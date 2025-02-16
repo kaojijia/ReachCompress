@@ -3,16 +3,17 @@
 #include "TreeCover.h"
 #define DEBUG
 
-SetSearch::SetSearch(Graph &g)
+SetSearch::SetSearch(Graph &g, int num_key_points)
 {
     this->g = std::make_shared<Graph>(g);
     this->csr = std::make_shared<CSRGraph>();
     this->csr->fromGraph(*this->g);
     this->pll = std::make_shared<PLL>(*this->g);
     this->tree_cover = std::make_shared<TreeCover>(*this->g);
-    in_key_points.resize(this->g->get_num_vertices() + 10);
-    out_key_points.resize(this->g->get_num_vertices() + 10);
-    topo_level.resize(this->g->get_num_vertices() + 10, -1);
+    in_key_points.resize(this->g->vertices.size() + 10);
+    out_key_points.resize(this->g->vertices.size() + 10);
+    topo_level.resize(this->g->vertices.size() + 10, 999999999);
+    this->num_key_points = num_key_points;
 }
 SetSearch::~SetSearch()
 {
@@ -30,10 +31,12 @@ void SetSearch::offline_industry()
 
     // 为每个顶点构建拓扑层级的索引
     build_topo_level();
+    // build_topo_level_optimized();
+
 
     // 为每个顶点构建n个生成树的索引
     //  build_tree_index();
-    this->tree_cover->offline_industry();
+    // this->tree_cover->offline_industry();
 }
 
 void SetSearch::build_key_points(int num)
@@ -42,7 +45,7 @@ void SetSearch::build_key_points(int num)
     std::priority_queue<std::pair<int, int>> pq; // first: degree, second: node id
 
     // 遍历所有节点，计算度数并加入优先队列
-    for (size_t i = 0; i < this->g->get_num_vertices(); ++i)
+    for (size_t i = 0; i < this->g->vertices.size(); ++i)
     {
         int degree = this->g->vertices[i].in_degree + this->g->vertices[i].out_degree;
         if (degree == 0)
@@ -58,11 +61,7 @@ void SetSearch::build_key_points(int num)
         pq.pop();
     }
 
-    // 确保返回的 vector 长度为 num
-    if (key_points.size() < num)
-    {
-        key_points.resize(num, -1); // 如果节点数不足，用 -1 填充
-    }
+
     // 确保pop出来的是按照度数从大到小的顺序
     reverse(key_points.begin(), key_points.end());
 
@@ -164,8 +163,73 @@ void SetSearch::build_topo_level()
     temp_graph.reset();
 }
 
+
+void SetSearch::build_topo_level_optimized()
+{
+    shared_ptr<Graph> temp_graph = make_shared<Graph>(false);
+    for (int i = 0; i < this->g->vertices.size(); i++)
+    {
+        if (this->g->vertices[i].in_degree != 0 || this->g->vertices[i].out_degree != 0)
+        {
+            for (auto in_neighbour : this->g->vertices[i].LIN)
+            {
+                temp_graph->addEdge(in_neighbour, i);
+            }
+            for (auto out_neighbour : this->g->vertices[i].LOUT)
+            {
+                temp_graph->addEdge(i, out_neighbour);
+            }
+        }
+    }
+
+    // 收集和分配
+    int level = 0;
+    vector<int> removed_nodes(0);
+    int num_nodes = temp_graph->get_num_vertices();
+    // 初始化 topological_levels 的大小并填充默认值
+    topological_levels.assign(this->g->vertices.size(), -1);
+    while (num_nodes > removed_nodes.size())
+    {
+        vector<int> remove_nodes(0);
+
+        for (int i = 0; i < this->g->vertices.size(); i++)
+        {
+            if (temp_graph->vertices[i].in_degree == 0 && temp_graph->vertices[i].out_degree != 0 
+                && find(removed_nodes.begin(), removed_nodes.end(), i) == removed_nodes.end())
+            {
+                remove_nodes.push_back(i);
+            }
+            // 节点没有度（被减没了），但是有入边
+            if (temp_graph->vertices[i].in_degree == 0 && temp_graph->vertices[i].out_degree == 0 
+                && !temp_graph->vertices[i].LIN.empty() 
+                && find(removed_nodes.begin(), removed_nodes.end(), i) == removed_nodes.end())
+            {
+                remove_nodes.push_back(i);
+            }
+        }
+        for (auto i : remove_nodes)
+        {
+            // 修改前：this->topo_level[i] = level;
+            // 修改后：
+            this->topological_levels[i] = level;
+            for (auto out_neighbour : temp_graph->vertices[i].LOUT)
+            {
+                temp_graph->vertices[out_neighbour].in_degree--;
+            }
+            removed_nodes.push_back(i);
+        }
+        level++;
+    }
+    temp_graph.reset();
+}
+
+
+
 vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set, vector<int> target_set)
 {
+
+
+    auto start = std::chrono::high_resolution_clock::now();
     u_int32_t count = 0;
     // 对source_set和target_set进行合并，减少集合大小
     // 1、两个set过来先找等价点，并过滤不存在的点
@@ -180,7 +244,7 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     for (auto i : source_set)
     {
         if(i > this->g->vertices.size()) continue;
-        if( this->g->vertices[i].in_degree == 0 && this->g->vertices[i].out_degree == 0){
+        if(this->g->vertices[i].out_degree == 0){
             continue;
         }
         if (this->g->vertices[i].equivalance != 999999999)
@@ -197,7 +261,7 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     for (auto i : target_set)
     {
         if(i > this->g->vertices.size()) continue;
-        if( this->g->vertices[i].in_degree == 0 && this->g->vertices[i].out_degree == 0){
+        if( this->g->vertices[i].in_degree == 0){
             continue;
         }
         if (this->g->vertices[i].equivalance != 999999999)
@@ -223,26 +287,36 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     auto target_forest = build_target_forest(target_set_eq);
 
 
+
+
     // 存储要匹配的值
     // O(n*m)
-    queue<pair<ForestNodePtr, ForestNodePtr>> queue; 
+    //双端队列
+    deque<pair<ForestNodePtr, ForestNodePtr>> queue; 
     for (auto &s_root : source_forest) {
         for (auto &t_root : target_forest) {
-            queue.emplace(s_root, t_root);
+            queue.emplace_back(s_root, t_root);
         }
     }
 
     vector<pair<int, int>> results;
     unordered_map<size_t, bool> cache;
 
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "在线构建索引用时 " << duration << " 微秒" << std::endl;
+
+
+
 #ifdef DEBUG
-    cout << queue.size() << endl;
+    cout <<"可达树的根节点笛卡尔积总数为："<< queue.size() << endl;
 #endif
 
     while (!queue.empty())
     {
         auto item = queue.front();
-        queue.pop();
+        queue.pop_front();
 
         auto s_node = item.first;
         auto t_node = item.second;
@@ -252,17 +326,19 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
 
         bool reachable = false;
         if (cache.count(key))
-        {
-            reachable = cache[key];
+        {   
+            continue;
         }
         else
         {
+            cache[key] = true;
+            // 拓扑层级过滤
             if (topo_level[s_node->id] > topo_level[t_node->id])
                 reachable = false;
             else
                 count++;
                 reachable = reachability_query(s_node->id, t_node->id);
-            cache[key] = reachable;
+
         }
 
         if (reachable)
@@ -271,8 +347,9 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
             for (int s : s_node->covered_nodes)
                 for (int t : t_node->covered_nodes){
                     if(source_set_unordered.find(s) == source_set_unordered.end() || target_set_unordered.find(t) == target_set_unordered.end()){
-                        continue; // 如果遍历到的不属于要查询的点，就不要进入队列了
+                        continue; // 如果遍历到的不属于要查询的点，就不要进入结果集了
                     }
+                    if(s==t) continue;
                     results.emplace_back(s, t);
                 }
 
@@ -283,11 +360,18 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
             // 两个节点都有子节点，将所有子节点的笛卡尔积入队
             if (!s_node->children.empty() && !t_node->children.empty())
             {
+                // 先将根节点和对面的子节点入队
+                for (auto &s_child : s_node->children) {
+                    queue.emplace_back(s_child, t_node);
+                }
+                for (auto &t_child : t_node->children) {
+                    queue.emplace_back(s_node, t_child);
+                }
                 for (auto &s_child : s_node->children)
                 {
                     for (auto &t_child : t_node->children)
                     {
-                        queue.push({s_child, t_child});
+                        queue.emplace_back(s_child, t_child);
                     }
                 }
             }
@@ -298,14 +382,14 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
                 {
                     for (auto &s_child : s_node->children)
                     {
-                        queue.push({s_child, t_node});
+                        queue.emplace_back(s_child, t_node);
                     }
                 }
                 if (!t_node->children.empty())
                 {
                     for (auto &t_child : t_node->children)
                     {
-                        queue.push({s_node, t_child});
+                        queue.emplace_back(s_node, t_child);
                     }
                 }
             }
@@ -326,11 +410,6 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
 
 bool SetSearch::reachability_query(int source, int target)
 {
-
-    // 拓扑层级过滤
-    if (topo_level[source] > topo_level[target])
-        return false;
-
     return this->pll->query(source, target);
 }
 
@@ -437,190 +516,6 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_target_forest(const set<int>& 
     return build_forest(nodes, false);
 }
 
-
-// vector<SetSearch::ForestNodePtr> SetSearch::build_source_forest(const set<int>& nodes) {
-//     vector<ForestNodePtr> forest;
-//     unordered_map<int, ForestNodePtr> node_registry;
-
-//     // 初始化节点并入队
-//     list<ForestNodePtr> node_list;
-//     for (int v : nodes) {
-//         auto node = make_shared<ForestNode>(v);
-//         node->covered_nodes.insert(v);
-//         node_registry[v] = node;
-//         node_list.push_back(node);
-//     }
-
-//     // 合并循环
-//     while (!node_list.empty()) {
-//         auto current = node_list.front();
-//         node_list.pop_front();
-//         bool merged = false;
-
-//         auto it = node_list.begin();
-//         while (it != node_list.end()) {
-//             auto peer = *it;
-            
-//             // 从全局key_points获取关键点
-//             const auto& kps_current = out_key_points[current->id];
-//             const auto& kps_peer = out_key_points[peer->id];
-            
-//             // 查找共同关键点
-//             int cp = find_common_keypoint(kps_current, kps_peer);
-
-//             if (cp != -1) {
-//                 // 查找或创建父节点
-//                 ForestNodePtr parent;
-//                 auto parent_iter = node_registry.find(cp);
-                
-//                 if (parent_iter != node_registry.end()) {
-//                     parent = parent_iter->second;
-//                 } else {
-//                     parent = make_shared<ForestNode>(cp);
-//                     parent->covered_nodes.insert(cp); // 初始化覆盖自己
-//                     node_registry[cp] = parent;
-//                 }
-
-//                 // 维护层级关系
-//                 if (topo_level[parent->id] <= topo_level[current->id]) {
-//                     throw logic_error("Invalid hierarchy");
-//                 }
-
-//                 // 合并覆盖集
-//                 parent->covered_nodes.insert(current->covered_nodes.begin(),
-//                                            current->covered_nodes.end());
-//                 parent->covered_nodes.insert(peer->covered_nodes.begin(),
-//                                            peer->covered_nodes.end());
-
-//                 // 建立父子关系
-//                 parent->children.push_back(current);
-//                 parent->children.push_back(peer);
-//                 current->parent = parent;
-//                 peer->parent = parent;
-
-//                 // 更新工作队列
-//                 node_list.push_front(parent);
-//                 it = node_list.erase(it);
-//                 merged = true;
-//                 break;
-//             } else {
-//                 ++it;
-//             }
-//         }
-
-//         if (!merged) {
-//             forest.push_back(current);
-//         }
-//     }
-
-//     // 后处理：清理孤立节点
-//     unordered_set<int> valid_roots;
-//     for (auto& root : forest) {
-//         valid_roots.insert(root->id);
-//     }
-
-//     // 注册表中未被引用的节点加入森林
-//     for (auto& [id, node] : node_registry) {
-//         if (!node->parent.lock() && !valid_roots.count(id)) {
-//             forest.push_back(node);
-//         }
-//     }
-
-//     return forest;
-// }
-
-
-
-// vector<SetSearch::ForestNodePtr> SetSearch::build_target_forest(const set<int>& nodes) {
-//     vector<ForestNodePtr> forest;
-//     unordered_map<int, ForestNodePtr> node_registry;
-
-//     // 初始化节点并入队
-//     list<ForestNodePtr> node_list;
-//     for (int v : nodes) {
-//         auto node = make_shared<ForestNode>(v);
-//         node->covered_nodes.insert(v);
-//         node_registry[v] = node;
-//         node_list.push_back(node);
-//     }
-
-//     // 合并循环（逆向拓扑层级）
-//     while (!node_list.empty()) {
-//         auto current = node_list.front();
-//         node_list.pop_front();
-//         bool merged = false;
-
-//         auto it = node_list.begin();
-//         while (it != node_list.end()) {
-//             auto peer = *it;
-            
-//             // 从全局in_key_points获取关键点
-//             const auto& kps_current = in_key_points[current->id];
-//             const auto& kps_peer = in_key_points[peer->id];
-            
-//             // 查找共同关键点
-//             int cp = find_common_keypoint(kps_current, kps_peer);
-
-//             if (cp != -1) {
-//                 // 查找或创建父节点
-//                 ForestNodePtr parent;
-//                 auto parent_iter = node_registry.find(cp);
-                
-//                 if (parent_iter != node_registry.end()) {
-//                     parent = parent_iter->second;
-//                 } else {
-//                     parent = make_shared<ForestNode>(cp);
-//                     parent->covered_nodes.insert(cp);
-//                     node_registry[cp] = parent;
-//                 }
-
-//                 // 验证逆向层级关系（父节点必须层级更低）
-//                 if (topo_level[parent->id] >= topo_level[current->id]) {
-//                     throw logic_error("Invalid target hierarchy");
-//                 }
-
-//                 // 合并覆盖集
-//                 parent->covered_nodes.insert(current->covered_nodes.begin(),
-//                                            current->covered_nodes.end());
-//                 parent->covered_nodes.insert(peer->covered_nodes.begin(),
-//                                            peer->covered_nodes.end());
-
-//                 // 建立父子关系
-//                 parent->children.push_back(current);
-//                 parent->children.push_back(peer);
-//                 current->parent = parent;
-//                 peer->parent = parent;
-
-//                 // 更新工作队列
-//                 node_list.push_front(parent);
-//                 it = node_list.erase(it);
-//                 merged = true;
-//                 break;
-//             } else {
-//                 ++it;
-//             }
-//         }
-
-//         if (!merged) {
-//             forest.push_back(current);
-//         }
-//     }
-
-//     // 后处理：清理孤立节点
-//     unordered_set<int> valid_roots;
-//     for (auto& root : forest) {
-//         valid_roots.insert(root->id);
-//     }
-
-//     // 注册表中未被引用的节点加入森林
-//     for (auto& [id, node] : node_registry) {
-//         if (!node->parent.lock() && !valid_roots.count(id)) {
-//             forest.push_back(node);
-//         }
-//     }
-
-//     return forest;
-// }
 
 
 // 辅助函数：建立父节点链接

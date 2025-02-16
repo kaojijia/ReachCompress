@@ -25,7 +25,7 @@ using namespace std;
 class SetSearch : public Algorithm {
 
 public:
-    SetSearch(Graph &g);
+    SetSearch(Graph &g, int num_key_points=5);
     ~SetSearch() override;
     vector<pair<int, int>> set_reachability_query(vector<int> source_set, vector<int> target_set);
     bool reachability_query(int source, int target) override;
@@ -45,43 +45,35 @@ private:
 
     //拓扑层级
     vector<int> topo_level;
+    vector<int> topological_levels;
 
     // 树索引
     shared_ptr<TreeCover> tree_cover;
 
 
     //关键路标点索引构建
-    int num_key_points = 2;
+    int num_key_points = 5;
     void build_key_points(int num);
     //拓扑索引
     void build_topo_level();
-    //生成树索引
-    // void build_tree_index();
-
-
+    void build_topo_level_optimized();
+    // 生成树索引
+    //  void build_tree_index();
 
     // 集合森林节点
     struct ForestNode {
         int id;
-        int depth;
         std::unordered_set<int> covered_nodes; // 覆盖的原始节点
-        std::vector<std::shared_ptr<ForestNode>> children;
-        std::weak_ptr<ForestNode> parent;
-        std::vector<int> key_points; // 缓存该节点代表的关键点
-        ForestNode(int id) : id(id), depth(0) {}
+        std::vector<std::shared_ptr<ForestNode>> children; // 当前的孩子节点
+        std::weak_ptr<ForestNode> parent; // 当前的父节点
+        ForestNode(int id) : id(id) {}
     };
 
     using ForestNodePtr = std::shared_ptr<ForestNode>;
-    
-    // 优先队列比较器
-    struct QueueItem {
-        SetSearch::ForestNodePtr s_node;
-        SetSearch::ForestNodePtr t_node;
-    };
 
 
     // 森林构建函数
-    vector<ForestNodePtr>build_forest(const set<int>& nodes, bool is_source);
+    vector<ForestNodePtr> build_forest(const set<int>& nodes, bool is_source);
     vector<ForestNodePtr> build_source_forest(const set<int>& nodes);
     vector<ForestNodePtr> build_target_forest(const set<int>& targets);
     //维护到根节点的连接

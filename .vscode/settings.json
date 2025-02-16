@@ -74,5 +74,6 @@
         "codecvt": "cpp",
         "shared_mutex": "cpp",
         "bitset": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }
