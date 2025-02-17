@@ -335,10 +335,10 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
             // 拓扑层级过滤
             if (topo_level[s_node->id] > topo_level[t_node->id])
                 reachable = false;
-            else
+            else{
                 count++;
                 reachable = reachability_query(s_node->id, t_node->id);
-
+            }
         }
 
         if (reachable)
