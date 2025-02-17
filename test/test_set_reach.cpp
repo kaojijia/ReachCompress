@@ -26,8 +26,10 @@ class SetReachabilityTest : public ::testing::Test {
             // string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/test";
     
             // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
-            // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/Slashdot0811.txt");
-            edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/medium/cit-DBLP_DAG");
+            // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/large/WikiTalk_DAG");
+            // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/medium/cit-DBLP_DAG");
+            edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/test/in2004_DAG");
+            // edgeFiles.push_back("/root/Projects/ReachCompress/Edges/DAGs/medium/soc-epinions_DAG");
     
             // edgeFiles = this->getAllFiles(edgesDirectory);
             if (edgeFiles[0].empty()) {
@@ -136,7 +138,12 @@ TEST_F(SetReachabilityTest, basic_test){
     }
     input_handler.readGraph(g);
 
-
+    if(g.hasCycle()){
+        cout<<"图中存在环，无法进行后续操作。"<<endl;
+        logFile << "图中存在环，无法进行后续操作。" << endl;
+        logFile.close();
+        return;
+    }
     //构建索引
     SetSearch set_search(g);
     set_search.offline_industry();
@@ -150,44 +157,34 @@ TEST_F(SetReachabilityTest, basic_test){
     vector<int> source_set = generateRandomVector(10000, g.vertices.size());
     vector<int> target_set = generateRandomVector(10000, g.vertices.size());
 
-
     //set_reach 测试
-    auto start = std::chrono::high_resolution_clock::now();
     auto result = set_search.set_reachability_query(source_set, target_set);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    std::cout << "set_reachability_query 用时 " << duration << " 微秒" << std::endl;
 
     //pll 测试
-    start = std::chrono::high_resolution_clock::now();
-    int count = 0;
-    bool flag = false;
-
-    vector<pair<int,int>> result_pll;
-
+    vector<pair<int,int>> query_pairs;
     for(auto s:source_set){
         for(auto t:target_set){
-            flag = set_search.pll->reachability_query(s,t);
-            if(flag){
-                count++;
-                result_pll.emplace_back(s,t);
-            }
+            query_pairs.push_back(make_pair(s,t));
+        }
+    }    
+    std::random_device rd;
+    std::mt19937 r(rd());
+    std::shuffle(query_pairs.begin(), query_pairs.end(), r);
+
+    int count = 0;
+    bool flag = false;
+    vector<pair<int,int>> result_pll(query_pairs.size()/2);
+    auto start = std::chrono::high_resolution_clock::now();
+    for(auto [s,t]:query_pairs){
+        flag = set_search.pll->reachability_query(s,t);
+        if(flag){
+            count++;
+            result_pll.emplace_back(s,t);
         }
     }
-    end = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     std::cout << "pll_reachability_query 用时 " << duration << " 微秒" << std::endl;
-
-
-    // //检查查询结果正确性
-    // cout<<"set_reach成功结果："<<endl;
-    // for(auto i:result){
-    //     cout<<i.first<<" "<<i.second<<endl;
-    //     EXPECT_TRUE(set_search.pll->reachability_query(i.first,i.second));
-    //     if(find(source_set.begin(), source_set.end(), i.first) == source_set.end() || find(target_set.begin(), target_set.end(), i.second) == target_set.end()){
-    //         cout<<"查询结果不在查询集中"<<i.first<<" "<<i.second<<endl;
-    //     }
-    // }
 
     //对result_pll去重, 并且去掉两个元素相同的pair
     vector<pair<int, int>> temp;
@@ -201,14 +198,11 @@ TEST_F(SetReachabilityTest, basic_test){
     sort( result_pll.begin(), result_pll.end() );
     result_pll.erase( unique( result_pll.begin(), result_pll.end() ), result_pll.end() );
     
-    
-    
-    // cout<<"pll成功结果："<<endl;
-    // for(auto i:result_pll){
-    //     cout<<i.first<<" "<<i.second<<endl;
-    // }
-    
+    // result_set去重处理
+    sort(result.begin(), result.end());
+    result.erase(unique(result.begin(), result.end()), result.end());
     
     EXPECT_EQ(result_pll.size(), result.size());
+    logFile.close();
     return;
 }

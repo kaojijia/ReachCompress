@@ -238,3 +238,40 @@ std::pair<int, int> Graph::statics(const std::string& filename) const {
 
     return std::make_pair(node_count, edge_count);
 }
+
+
+// DFS 辅助函数
+bool Graph::isCyclicUtil(int v, std::vector<bool> &visited, std::vector<bool> &recursionStack) {
+    if (!visited[v]) {
+        // 标记当前节点为已访问，并加入递归栈
+        visited[v] = true;
+        recursionStack[v] = true;
+
+        // 遍历当前节点的所有邻接点
+        for (int neighbor : vertices[v].LOUT) {
+            if (!visited[neighbor] && isCyclicUtil(neighbor, visited, recursionStack))
+                return true;
+            else if (recursionStack[neighbor])
+                return true;
+        }
+    }
+
+    // 将节点从递归栈中移除
+    recursionStack[v] = false;
+    return false;
+}
+
+// 检测是否有环
+bool Graph::hasCycle() {
+    int num_vertices = vertices.size();
+    std::vector<bool> visited(num_vertices, false);
+    std::vector<bool> recursionStack(num_vertices, false);
+
+    // 对图中的每个节点调用 DFS
+    for (int i = 0; i < num_vertices; i++) {
+        if (!visited[i] && isCyclicUtil(i, visited, recursionStack))
+            return true;
+    }
+
+    return false;
+}

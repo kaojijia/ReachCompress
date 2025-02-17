@@ -45,7 +45,7 @@ private:
 
     //拓扑层级
     vector<int> topo_level;
-    vector<int> topological_levels;
+
 
     // 树索引
     shared_ptr<TreeCover> tree_cover;

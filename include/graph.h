@@ -52,8 +52,11 @@ public:
 
     // 边和点的数量存进去
     std::pair<int, int> statics(const std::string &filename = "") const;
-    
-    
+
+    bool isCyclicUtil(int v, std::vector<bool> &visited, std::vector<bool> &recursionStack);
+
+    bool hasCycle();
+
     long get_partition_degree(int target_patition) const;
 
     int get_partition_id(int node) const;

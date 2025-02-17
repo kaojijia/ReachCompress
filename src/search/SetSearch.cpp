@@ -24,14 +24,30 @@ SetSearch::~SetSearch()
 
 void SetSearch::offline_industry()
 {
+#ifdef DEBUG
+    auto start = std::chrono::high_resolution_clock::now();
+#endif  
     this->pll->offline_industry();
-
+#ifdef DEBUG
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "pll索引构建用时 " << duration << " 微秒" << std::endl;
+#endif 
     // 为每个顶点构建关键路标点索引
     build_key_points(num_key_points);
 
     // 为每个顶点构建拓扑层级的索引
-    build_topo_level();
-    // build_topo_level_optimized();
+    // build_topo_level();
+#ifdef DEBUG
+    start = std::chrono::high_resolution_clock::now();
+#endif    
+    build_topo_level_optimized();
+#ifdef DEBUG
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "topo层级索引构建用时 " << duration << " 微秒" << std::endl;
+#endif 
+
 
 
     // 为每个顶点构建n个生成树的索引
@@ -167,56 +183,47 @@ void SetSearch::build_topo_level()
 void SetSearch::build_topo_level_optimized()
 {
     shared_ptr<Graph> temp_graph = make_shared<Graph>(false);
-    for (int i = 0; i < this->g->vertices.size(); i++)
-    {
-        if (this->g->vertices[i].in_degree != 0 || this->g->vertices[i].out_degree != 0)
-        {
-            for (auto in_neighbour : this->g->vertices[i].LIN)
-            {
+    int n = this->g->vertices.size();
+    for (int i = 0; i < n; i++) {
+        if (this->g->vertices[i].in_degree != 0 || this->g->vertices[i].out_degree != 0) {
+            for (auto in_neighbour : this->g->vertices[i].LIN) {
                 temp_graph->addEdge(in_neighbour, i);
             }
-            for (auto out_neighbour : this->g->vertices[i].LOUT)
-            {
+            for (auto out_neighbour : this->g->vertices[i].LOUT) {
                 temp_graph->addEdge(i, out_neighbour);
             }
         }
     }
 
-    // 收集和分配
-    int level = 0;
-    vector<int> removed_nodes(0);
-    int num_nodes = temp_graph->get_num_vertices();
-    // 初始化 topological_levels 的大小并填充默认值
-    topological_levels.assign(this->g->vertices.size(), -1);
-    while (num_nodes > removed_nodes.size())
-    {
-        vector<int> remove_nodes(0);
+    // 初始化 topo_level 数组（默认值 999999999 或其它大数）
+    this->topo_level.assign(n, 999999999);
 
-        for (int i = 0; i < this->g->vertices.size(); i++)
-        {
-            if (temp_graph->vertices[i].in_degree == 0 && temp_graph->vertices[i].out_degree != 0 
-                && find(removed_nodes.begin(), removed_nodes.end(), i) == removed_nodes.end())
-            {
-                remove_nodes.push_back(i);
-            }
-            // 节点没有度（被减没了），但是有入边
-            if (temp_graph->vertices[i].in_degree == 0 && temp_graph->vertices[i].out_degree == 0 
-                && !temp_graph->vertices[i].LIN.empty() 
-                && find(removed_nodes.begin(), removed_nodes.end(), i) == removed_nodes.end())
-            {
-                remove_nodes.push_back(i);
-            }
+    // 使用队列进行层次遍历：先将所有满足 in_degree==0 的节点入队
+    std::queue<int> q;
+    for (int i = 0; i < n; i++) {
+        // 按原代码判断条件：如果节点出度不为 0 或者虽然度为0但有入边，则放入队列
+        if (temp_graph->vertices[i].in_degree == 0 && 
+           (temp_graph->vertices[i].out_degree != 0 || !temp_graph->vertices[i].LIN.empty())) {
+            q.push(i);
         }
-        for (auto i : remove_nodes)
-        {
-            // 修改前：this->topo_level[i] = level;
-            // 修改后：
-            this->topological_levels[i] = level;
-            for (auto out_neighbour : temp_graph->vertices[i].LOUT)
-            {
+    }
+
+    int level = 0;
+    while (!q.empty()) {
+        int size = q.size();
+        // 当前层的所有节点统一赋予同一层级
+        for (int i = 0; i < size; i++) {
+            int node = q.front();
+            q.pop();
+            this->topo_level[node] = level;
+            // 对当前节点的每个后继，将其 in_degree 减 1
+            for (auto out_neighbour : temp_graph->vertices[node].LOUT) {
                 temp_graph->vertices[out_neighbour].in_degree--;
+                // 当后继节点 in_degree 减为 0 时，加入下一层队列
+                if (temp_graph->vertices[out_neighbour].in_degree == 0) {
+                    q.push(out_neighbour);
+                }
             }
-            removed_nodes.push_back(i);
         }
         level++;
     }
@@ -228,8 +235,9 @@ void SetSearch::build_topo_level_optimized()
 vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set, vector<int> target_set)
 {
 
-
+#ifdef DEBUG
     auto start = std::chrono::high_resolution_clock::now();
+#endif
     u_int32_t count = 0;
     // 对source_set和target_set进行合并，减少集合大小
     // 1、两个set过来先找等价点，并过滤不存在的点
@@ -396,13 +404,15 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
         }
     }
 
-    // // 去重处理
-    sort(results.begin(), results.end());
-    results.erase(unique(results.begin(), results.end()), results.end());
+
 #ifdef DEBUG
     cout <<" 共比较次数  :" << count <<" 次 "<< endl;
     cout <<" 原始比较次数 ：" << source_set.size() * target_set.size() << " 次 " << endl;
     cout <<" 比较次数压缩为原来的 ：" << fixed << setprecision(3) << (double)count / (source_set.size() * target_set.size()) * 100 << " % " << endl;
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "set_reachability_query用时 " << duration << " 微秒" << std::endl;
+
 #endif
     return results;
     

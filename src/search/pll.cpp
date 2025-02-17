@@ -205,17 +205,38 @@ void PLL::buildPLLLabels(){
 
 // 检查是否存在2-hop路径，这样可以用来剪枝
 // from u to v
+// bool PLL::HopQuery(int u, int v) {
+//     if (u >= g.vertices.size() || v >= g.vertices.size()) return false;
+//     const auto& LOUT_u = OUT[u];
+//     const auto& LIN_v = IN[v];
+
+//     std::unordered_set<int> loutSet(LOUT_u.begin(), LOUT_u.end());
+//     for (int node : LIN_v) {
+//         if (loutSet.count(node)) return true;  // 存在交集，表示可达
+//     }
+//     return false;  // 无交集，不可达
+// }
 bool PLL::HopQuery(int u, int v) {
     if (u >= g.vertices.size() || v >= g.vertices.size()) return false;
     const auto& LOUT_u = OUT[u];
     const auto& LIN_v = IN[v];
 
-    std::unordered_set<int> loutSet(LOUT_u.begin(), LOUT_u.end());
-    for (int node : LIN_v) {
-        if (loutSet.count(node)) return true;  // 存在交集，表示可达
+    // 双指针法检查有序集合的交集
+    size_t i = 0, j = 0;
+    while (i < LOUT_u.size() && j < LIN_v.size()) {
+        if (LOUT_u[i] == LIN_v[j]) {
+            return true;
+        } else if (LOUT_u[i] < LIN_v[j]) {
+            ++i;
+        } else {
+            ++j;
+        }
     }
-    return false;  // 无交集，不可达
+    return false;
 }
+
+
+
 
 // 可达性查询，外部查询
 bool PLL::query(int u, int v){
@@ -281,15 +302,29 @@ void PLL::buildPLLLabelsUnpruned() {
 }
 
 //精简每个节点的in和out集合
+// void PLL::simplifyInOutSets() {
+//     for (auto& in_set : IN) {
+//         std::unordered_set<int> unique_in(in_set.begin(), in_set.end());
+//         in_set.assign(unique_in.begin(), unique_in.end());
+//     }
+
+//     for (auto& out_set : OUT) {
+//         std::unordered_set<int> unique_out(out_set.begin(), out_set.end());
+//         out_set.assign(unique_out.begin(), unique_out.end());
+//     }
+// }
+
 void PLL::simplifyInOutSets() {
     for (auto& in_set : IN) {
-        std::unordered_set<int> unique_in(in_set.begin(), in_set.end());
-        in_set.assign(unique_in.begin(), unique_in.end());
+        std::sort(in_set.begin(), in_set.end());
+        auto last = std::unique(in_set.begin(), in_set.end());
+        in_set.erase(last, in_set.end());
     }
 
     for (auto& out_set : OUT) {
-        std::unordered_set<int> unique_out(out_set.begin(), out_set.end());
-        out_set.assign(unique_out.begin(), unique_out.end());
+        std::sort(out_set.begin(), out_set.end());
+        auto last = std::unique(out_set.begin(), out_set.end());
+        out_set.erase(last, out_set.end());
     }
 }
 PLL::~PLL() {
