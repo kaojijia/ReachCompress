@@ -33,7 +33,7 @@ public:
         std::stringstream ss;
         ss << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S");
         ss << "." << std::setw(6) << std::setfill('0') << now_us.count();
-        return ss.str();
+        return "["+ss.str()+"] ";
     }
 
     //返回内存占用

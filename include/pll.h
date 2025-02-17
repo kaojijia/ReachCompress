@@ -5,6 +5,7 @@
 #include "CSR.h"
 #include "Algorithm.h"
 #include <vector>
+#include <set>
 
 class PLL : public Algorithm
 {
@@ -24,8 +25,8 @@ public:
     // 用构造的数组做可达性查询
     bool queryinArray(int source, int target);
 
-    std::vector<std::vector<int>> IN;
-    std::vector<std::vector<int>> OUT;
+    std::vector<std::set<int>> IN;
+    std::vector<std::set<int>> OUT;
 
     // std::unordered_map<std::string, size_t> getIndexSizes() const override {
     //     size_t inSize = 0;

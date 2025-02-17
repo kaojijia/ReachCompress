@@ -18,7 +18,7 @@ void PLL::offline_industry()
     buildPLLLabels();
     adjList.clear();
     reverseAdjList.clear();
-    convertToArray();
+    // convertToArray();
 }
 
 bool PLL::reachability_query(int source, int target)
@@ -125,8 +125,8 @@ bool PLL::convertToArray() {
     in_pointers[0] = 0;
     for (size_t i = 0; i < IN.size(); ++i) {
         in_pointers[i + 1] = in_pointers[i] + IN[i].size();
-        for (size_t j = 0; j < IN[i].size(); ++j) {
-            in_sets[in_index++] = IN[i][j];
+        for (auto j : IN[i]) {
+            in_sets[in_index++] = j;
         }
     }
 
@@ -135,8 +135,8 @@ bool PLL::convertToArray() {
     out_pointers[0] = 0;
     for (size_t i = 0; i < OUT.size(); ++i) {
         out_pointers[i + 1] = out_pointers[i] + OUT[i].size();
-        for (size_t j = 0; j < OUT[i].size(); ++j) {
-            out_sets[out_index++] = OUT[i][j];
+        for (auto j : OUT[i]) {
+            out_sets[out_index++] = j;
         }
     }
 
@@ -160,7 +160,7 @@ void PLL::bfsPruned(int start){
         q_forward.pop();
 
         if (HopQuery(start, current)) continue;
-        if(current != start) IN[current].push_back(start);
+        if(current != start) IN[current].insert(start);
 
         for(auto neighbor : adjList[current]){
             if(!visited_forward.count(neighbor)) {
@@ -182,7 +182,7 @@ void PLL::bfsPruned(int start){
         q_backward.pop();
 
         if (HopQuery(current, start)) continue;
-        if(current != start) OUT[current].push_back(start);
+        if(current != start) OUT[current].insert(start);
 
         for(auto neighbor : reverseAdjList[current]){
             if(!visited_backward.count(neighbor)) {
@@ -196,8 +196,12 @@ void PLL::bfsPruned(int start){
 void PLL::buildPLLLabels(){
     std::vector<int> nodes = orderByDegree();
     int i = 0;
+    int count = 0;
     for (int node : nodes) {
         bfsPruned(node);
+        if(count++ % 10000 == 0){
+            std::cout<<Algorithm::getCurrentTimestamp()<< "PLL处理完成 " << count << " 个节点的索引..." << std::endl;
+        }
     }
     simplifyInOutSets();
 }
@@ -218,23 +222,22 @@ void PLL::buildPLLLabels(){
 // }
 bool PLL::HopQuery(int u, int v) {
     if (u >= g.vertices.size() || v >= g.vertices.size()) return false;
-    const auto& LOUT_u = OUT[u];
-    const auto& LIN_v = IN[v];
+    const auto& LOUT_u = OUT[u];  // set<int>
+    const auto& LIN_v = IN[v];    // set<int>
 
-    // 双指针法检查有序集合的交集
-    size_t i = 0, j = 0;
-    while (i < LOUT_u.size() && j < LIN_v.size()) {
-        if (LOUT_u[i] == LIN_v[j]) {
+    auto it1 = LOUT_u.begin();
+    auto it2 = LIN_v.begin();
+    while (it1 != LOUT_u.end() && it2 != LIN_v.end()) {
+        if (*it1 == *it2) {
             return true;
-        } else if (LOUT_u[i] < LIN_v[j]) {
-            ++i;
+        } else if (*it1 < *it2) {
+            ++it1;
         } else {
-            ++j;
+            ++it2;
         }
     }
     return false;
 }
-
 
 
 
@@ -315,17 +318,17 @@ void PLL::buildPLLLabelsUnpruned() {
 // }
 
 void PLL::simplifyInOutSets() {
-    for (auto& in_set : IN) {
-        std::sort(in_set.begin(), in_set.end());
-        auto last = std::unique(in_set.begin(), in_set.end());
-        in_set.erase(last, in_set.end());
-    }
+    // for (auto& in_set : IN) {
+    //     std::sort(in_set.begin(), in_set.end());
+    //     auto last = std::unique(in_set.begin(), in_set.end());
+    //     in_set.erase(last, in_set.end());
+    // }
 
-    for (auto& out_set : OUT) {
-        std::sort(out_set.begin(), out_set.end());
-        auto last = std::unique(out_set.begin(), out_set.end());
-        out_set.erase(last, out_set.end());
-    }
+    // for (auto& out_set : OUT) {
+    //     std::sort(out_set.begin(), out_set.end());
+    //     auto last = std::unique(out_set.begin(), out_set.end());
+    //     out_set.erase(last, out_set.end());
+    // }
 }
 PLL::~PLL() {
     // 释放动态数组
