@@ -131,7 +131,7 @@ TEST_F(SetReachabilityTest, basic_test){
     cout<<Algorithm::getCurrentTimestamp()<<"读图完成，开始构建索引"<<endl;
     
     //构建索引
-    SetSearch set_search(g);
+    SetSearch set_search(g,50);
     set_search.offline_industry();
     logFile<<Algorithm::getCurrentTimestamp()<<"构建索引完成，生成随机查询集"<<endl;
 
@@ -197,9 +197,9 @@ TEST_F(SetReachabilityTest, basic_test){
     result.erase(unique(result.begin(), result.end()), result.end());
     
     EXPECT_EQ(result_pll.size(), result.size());
-    logFile <<Algorithm::getCurrentTimestamp()<< " result_pll可达点对数量 = " << result_pll.size() << endl;
-    logFile <<Algorithm::getCurrentTimestamp()<< " result_set可达点对数量 = " << result.size() << endl;
-    cout <<Algorithm::getCurrentTimestamp()<< ((result_pll.size() == result.size()) ? "测试完成，可达性正确" : "测试完成，可达性错误") << endl;
+    logFile << Algorithm::getCurrentTimestamp()<< " result_pll可达点对数量 = " << result_pll.size() << endl;
+    logFile << Algorithm::getCurrentTimestamp()<< " result_set可达点对数量 = " << result.size() << endl;
+    cout << Algorithm::getCurrentTimestamp()<< ((result_pll.size() == result.size()) ? "测试完成，可达性正确" : "测试完成，可达性错误") << endl;
     logFile.close();
     return;
 }

@@ -348,7 +348,7 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     std::chrono::_V2::system_clock::time_point start1, end1, start2, end2, start3, end3, start4, end4, start5, end5;
     int64_t duration1 = 0, duration2 = 0, duration3 = 0, duration4 = 0, duration5 = 0;
     int topo_count = 0;
-    vector<ReachRecord> reachable_records;
+    // vector<ReachRecord> reachable_records;
 #endif
     int loop_count = 0;
     while (!queue.empty())
@@ -390,7 +390,7 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
                 end1 = std::chrono::high_resolution_clock::now();
                 auto temp_duration = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
                 duration1 += temp_duration;
-                reachable_records.emplace_back(ReachRecord{s_node->id, t_node->id, this->g->vertices[s_node->id].out_degree, this->g->vertices[t_node->id].in_degree, this->pll->OUT[s_node->id].size(), this->pll->IN[t_node->id].size(), temp_duration});
+                // reachable_records.emplace_back(ReachRecord{s_node->id, t_node->id, this->g->vertices[s_node->id].out_degree, this->g->vertices[t_node->id].in_degree, this->pll->OUT[s_node->id].size(), this->pll->IN[t_node->id].size(), temp_duration});
 #endif
             }
         }
@@ -483,29 +483,29 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     cout << Algorithm::getCurrentTimestamp() << "构建子节点组合耗时 " << duration3 << " 微秒" << endl;
     cout << Algorithm::getCurrentTimestamp() << "set_reachability_query用时 " << duration << " 微秒" << std::endl;
     // Save reachability records to a file
-    std::ofstream record_file("reachability_records.csv");
-    if (record_file.is_open())
-    {
-        // Write the title line
-        record_file << "Source ID,Target ID,Source Degree,Target Degree,Source OUT Size,Target IN Size,Query Time (microseconds)" << std::endl;
+    // std::ofstream record_file("reachability_records.csv");
+    // if (record_file.is_open())
+    // {
+    //     // Write the title line
+    //     record_file << "Source ID,Target ID,Source Degree,Target Degree,Source OUT Size,Target IN Size,Query Time (microseconds)" << std::endl;
 
-        // Write the data lines
-        for (const auto &record : reachable_records)
-        {
-            record_file << record.source_id << ","
-                        << record.target_id << ","
-                        << record.source_degree << ","
-                        << record.target_degree << ","
-                        << record.source_OUT_size << ","
-                        << record.target_IN_size << ","
-                        << record.query_time << std::endl;
-        }
-        record_file.close();
-    }
-    else
-    {
-        std::cerr << "Unable to open file for writing reachability records." << std::endl;
-    }
+    //     // Write the data lines
+    //     for (const auto &record : reachable_records)
+    //     {
+    //         record_file << record.source_id << ","
+    //                     << record.target_id << ","
+    //                     << record.source_degree << ","
+    //                     << record.target_degree << ","
+    //                     << record.source_OUT_size << ","
+    //                     << record.target_IN_size << ","
+    //                     << record.query_time << std::endl;
+    //     }
+    //     record_file.close();
+    // }
+    // else
+    // {
+    //     std::cerr << "Unable to open file for writing reachability records." << std::endl;
+    // }
 #endif
     return results;
 }
