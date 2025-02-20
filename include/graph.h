@@ -57,6 +57,8 @@ public:
 
     bool hasCycle();
 
+    bool isExist(int v);
+
     long get_partition_degree(int target_patition) const;
 
     int get_partition_id(int node) const;

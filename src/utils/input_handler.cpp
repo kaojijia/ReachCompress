@@ -35,7 +35,9 @@ void InputHandler::readGraph(Graph& g) {
             continue;  // 跳过无效行
         }
         g.addEdge(u, v);
+#ifdef DEBUG
         if(++num % 10000 == 0)cout<<"已经添加"<<num<<"条边"<<endl;
+#endif
     }
     infile.close();
     cout<<"读取文件结束"<<endl;

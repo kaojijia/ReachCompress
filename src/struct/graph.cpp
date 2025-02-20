@@ -275,3 +275,12 @@ bool Graph::hasCycle() {
 
     return false;
 }
+
+bool Graph::isExist(int v)
+{
+    if(v>=vertices.size())
+        return false;
+    if(vertices[v].in_degree==0&&vertices[v].out_degree==0)
+        return false;
+    return true;
+}

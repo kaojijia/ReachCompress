@@ -42,6 +42,7 @@ private:
     //关键路标点
     vector<set<int>> in_key_points;
     vector<set<int>> out_key_points;
+    std::vector<int> key_points;
 
     //拓扑层级
     vector<int> topo_level;
@@ -76,6 +77,7 @@ private:
     vector<ForestNodePtr> build_forest(const set<int>& nodes, bool is_source);
     vector<ForestNodePtr> build_source_forest(const set<int>& nodes);
     vector<ForestNodePtr> build_target_forest(const set<int>& targets);
+    vector<ForestNodePtr> build_forest_optimized(const set<int>& nodes, bool is_source);
     //维护到根节点的连接
     void establish_parent_links(ForestNodePtr node);
     // 找共同关键点

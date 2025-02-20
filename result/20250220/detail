@@ -1,0 +1,377 @@
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 08:44:17.025286] 读图完成，开始构建索引
+[2025-02-20 08:46:10.550761] pll索引构建用时 112669241 微秒
+[2025-02-20 08:46:11.494738] topo层级索引构建用时 644342 微秒
+[2025-02-20 08:46:11.496556] 随机查询集生成完成，开始测试
+[2025-02-20 08:46:11.505519] 在线构建索引用时 8906 微秒
+[2025-02-20 08:46:11.505556] 可达树的根节点笛卡尔积总数为：18600
+[2025-02-20 08:46:16.347576] 进入查询循环 1331184次
+[2025-02-20 08:46:16.347622] 原始可达性查询次数 ：100000000 次 
+[2025-02-20 08:46:16.347629] 压缩可达性查询次数  :653267 次 
+[2025-02-20 08:46:16.347633] 查询次数压缩为原来的 ：0.653 % 
+[2025-02-20 08:46:16.347649] 可达性查询耗时 3568585 微秒
+[2025-02-20 08:46:16.347651] 记录覆盖对耗时 1766 微秒
+[2025-02-20 08:46:16.347653] 构建子节点组合耗时 76013 微秒
+[2025-02-20 08:46:16.347655] set_reachability_query用时 4850962 微秒
+[2025-02-20 08:46:17.095669] set_reachability_query 用时 5599047 微秒
+[2025-02-20 08:46:40.048840] pll_reachability_query 用时 5380642 微秒
+[2025-02-20 08:46:40.339781] 测试完成，可达性正确
+[       OK ] SetReachabilityTest.basic_test (144859 ms)
+[----------] 1 test from SetReachabilityTest (144859 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (144859 ms total)
+[  PASSED  ] 1 test.
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 08:48:40.688632] 读图完成，开始构建索引
+[2025-02-20 08:50:32.712507] pll索引构建用时 111264566 微秒
+[2025-02-20 08:50:33.522230] topo层级索引构建用时 535305 微秒
+[2025-02-20 08:50:33.524325] 随机查询集生成完成，开始测试
+[2025-02-20 08:50:33.718223] 在线构建索引用时 193811 微秒
+[2025-02-20 08:50:33.718278] 可达树的根节点笛卡尔积总数为：522830
+[2025-02-20 08:50:35.386900] 进入查询循环 1731280次
+[2025-02-20 08:50:35.386952] 原始可达性查询次数 ：100000000 次 
+[2025-02-20 08:50:35.386960] 压缩可达性查询次数  :601839 次 
+[2025-02-20 08:50:35.386965] 查询次数压缩为原来的 ：0.602 % 
+[2025-02-20 08:50:35.386983] 可达性查询耗时 128456 微秒
+[2025-02-20 08:50:35.386986] 记录覆盖对耗时 937 微秒
+[2025-02-20 08:50:35.386989] 构建子节点组合耗时 76399 微秒
+[2025-02-20 08:50:35.386991] set_reachability_query用时 1862489 微秒
+[2025-02-20 08:50:36.139950] set_reachability_query 用时 2615546 微秒
+[2025-02-20 08:50:59.029176] pll_reachability_query 用时 5520484 微秒
+[2025-02-20 08:50:59.344202] 测试完成，可达性正确
+[       OK ] SetReachabilityTest.basic_test (140121 ms)
+[----------] 1 test from SetReachabilityTest (140121 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (140121 ms total)
+[  PASSED  ] 1 test.
+nohup: ignoring input
+nohup: failed to run command 'test_Set': No such file or directory
+nohup: ignoring input
+nohup: failed to run command 'test_Set': No such file or directory
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 10:13:16.566094] 读图完成，开始构建索引
+[2025-02-20 10:15:11.085959] pll索引构建用时 113763029 微秒
+[2025-02-20 10:15:11.990732] topo层级索引构建用时 610089 微秒
+[2025-02-20 10:15:11.992645] 随机查询集生成完成，开始测试
+[2025-02-20 10:15:12.000982] 在线构建索引用时 8271 微秒
+[2025-02-20 10:15:12.001020] 可达树的根节点笛卡尔积总数为：18600
+[2025-02-20 10:15:16.700169] 进入查询循环 1331799次
+[2025-02-20 10:15:16.700232] 拓扑排序过滤 490558次
+[2025-02-20 10:15:16.700241] 原始可达性查询次数 ：100000000 次 
+[2025-02-20 10:15:16.700244] 压缩可达性查询次数  :653267 次 
+[2025-02-20 10:15:16.700250] 查询次数压缩为原来的 ：0.653 % 
+[2025-02-20 10:15:16.700563] 可达性查询耗时 3484083 微秒
+[2025-02-20 10:15:16.700572] 记录覆盖对耗时 1614 微秒
+[2025-02-20 10:15:16.700575] 构建子节点组合耗时 74563 微秒
+[2025-02-20 10:15:16.700578] set_reachability_query用时 4707458 微秒
+[2025-02-20 10:15:17.422952] set_reachability_query 用时 5430234 微秒
+[2025-02-20 10:15:42.408902] pll_reachability_query 用时 5263921 微秒
+[2025-02-20 10:15:42.736099] 测试完成，可达性正确
+[       OK ] SetReachabilityTest.basic_test (147777 ms)
+[----------] 1 test from SetReachabilityTest (147777 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (147777 ms total)
+[  PASSED  ] 1 test.
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 10:20:50.358495] 读图完成，开始构建索引
+[2025-02-20 10:22:52.820171] pll索引构建用时 121673833 微秒
+[2025-02-20 10:22:53.689548] topo层级索引构建用时 573027 微秒
+[2025-02-20 10:22:53.692101] 随机查询集生成完成，开始测试
+[2025-02-20 10:22:53.702382] 在线构建索引用时 10164 微秒
+[2025-02-20 10:22:53.702416] 可达树的根节点笛卡尔积总数为：18032
+[2025-02-20 10:22:55.051052] 进入查询循环 1033531次
+[2025-02-20 10:22:55.051125] 拓扑排序过滤 400975次
+[2025-02-20 10:22:55.051134] 原始可达性查询次数 ：100000000 次 
+[2025-02-20 10:22:55.051138] 压缩可达性查询次数  :632556 次 
+[2025-02-20 10:22:55.051142] 查询次数压缩为原来的 ：0.633 % 
+[2025-02-20 10:22:55.051166] 可达性查询耗时 250837 微秒
+[2025-02-20 10:22:55.051170] 记录覆盖对耗时 37 微秒
+[2025-02-20 10:22:55.051173] 构建子节点组合耗时 64124 微秒
+[2025-02-20 10:22:55.051175] set_reachability_query用时 1358834 微秒
+[2025-02-20 10:22:55.768310] set_reachability_query 用时 2076126 微秒
+[2025-02-20 10:23:20.540785] pll_reachability_query 用时 5462335 微秒
+/root/Projects/ReachCompress/test/test_set_reach.cpp:199: Failure
+Expected equality of these values:
+  result_pll.size()
+    Which is: 2706
+  result.size()
+    Which is: 41
+
+[2025-02-20 10:23:20.829693] 测试完成，可达性错误
+[  FAILED  ] SetReachabilityTest.basic_test (152087 ms)
+[----------] 1 test from SetReachabilityTest (152087 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (152087 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] SetReachabilityTest.basic_test
+
+ 1 FAILED TEST
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 10:23:47.927089] 读图完成，开始构建索引
+[2025-02-20 10:25:41.501786] pll索引构建用时 112783446 微秒
+[2025-02-20 10:25:42.348930] topo层级索引构建用时 556425 微秒
+[2025-02-20 10:25:42.352551] 随机查询集生成完成，开始测试
+[2025-02-20 10:25:42.361903] 在线构建索引用时 9215 微秒
+[2025-02-20 10:25:42.361954] 可达树的根节点笛卡尔积总数为：18032
+[2025-02-20 10:25:43.670669] 进入查询循环 1033531次
+[2025-02-20 10:25:43.670716] 拓扑排序过滤 400975次
+[2025-02-20 10:25:43.670721] 原始可达性查询次数 ：100000000 次 
+[2025-02-20 10:25:43.670724] 压缩可达性查询次数  :632556 次 
+[2025-02-20 10:25:43.670728] 查询次数压缩为原来的 ：0.633 % 
+[2025-02-20 10:25:43.670744] 可达性查询耗时 238184 微秒
+[2025-02-20 10:25:43.670746] 记录覆盖对耗时 40 微秒
+[2025-02-20 10:25:43.670748] 构建子节点组合耗时 58142 微秒
+[2025-02-20 10:25:43.670750] set_reachability_query用时 1317981 微秒
+[2025-02-20 10:25:44.373090] set_reachability_query 用时 2020470 微秒
+[2025-02-20 10:26:09.470648] pll_reachability_query 用时 5882684 微秒
+/root/Projects/ReachCompress/test/test_set_reach.cpp:199: Failure
+Expected equality of these values:
+  result_pll.size()
+    Which is: 2706
+  result.size()
+    Which is: 41
+
+[2025-02-20 10:26:09.794578] 测试完成，可达性错误
+[  FAILED  ] SetReachabilityTest.basic_test (143431 ms)
+[----------] 1 test from SetReachabilityTest (143432 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (143432 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] SetReachabilityTest.basic_test
+
+ 1 FAILED TEST
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 10:29:21.129944] 读图完成，开始构建索引
+[2025-02-20 10:31:18.183120] pll索引构建用时 116252485 微秒
+[2025-02-20 10:31:19.157099] topo层级索引构建用时 657565 微秒
+[2025-02-20 10:31:19.159268] 随机查询集生成完成，开始测试
+[2025-02-20 10:31:19.167759] 在线构建索引用时 8398 微秒
+[2025-02-20 10:31:19.167792] 可达树的根节点笛卡尔积总数为：18032
+[2025-02-20 10:31:20.540885] 进入查询循环 1033531次
+[2025-02-20 10:31:20.540935] 拓扑排序过滤 400975次
+[2025-02-20 10:31:20.540940] 原始可达性查询次数 ：100000000 次 
+[2025-02-20 10:31:20.540943] 压缩可达性查询次数  :632556 次 
+[2025-02-20 10:31:20.540947] 查询次数压缩为原来的 ：0.633 % 
+[2025-02-20 10:31:20.540964] 可达性查询耗时 237832 微秒
+[2025-02-20 10:31:20.540966] 记录覆盖对耗时 41 微秒
+[2025-02-20 10:31:20.540968] 构建子节点组合耗时 65550 微秒
+[2025-02-20 10:31:20.540970] set_reachability_query用时 1381524 微秒
+[2025-02-20 10:31:21.259772] set_reachability_query 用时 2100436 微秒
+[2025-02-20 10:31:45.352034] pll_reachability_query 用时 5118842 微秒
+/root/Projects/ReachCompress/test/test_set_reach.cpp:199: Failure
+Expected equality of these values:
+  result_pll.size()
+    Which is: 2706
+  result.size()
+    Which is: 41
+
+[2025-02-20 10:31:45.638179] 测试完成，可达性错误
+[  FAILED  ] SetReachabilityTest.basic_test (146112 ms)
+[----------] 1 test from SetReachabilityTest (146112 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (146112 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] SetReachabilityTest.basic_test
+
+ 1 FAILED TEST
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 10:33:55.553813] 读图完成，开始构建索引
+[2025-02-20 10:36:08.007074] pll索引构建用时 131549569 微秒
+[2025-02-20 10:36:09.147449] topo层级索引构建用时 831801 微秒
+[2025-02-20 10:36:09.150315] 随机查询集生成完成，开始测试
+[2025-02-20 10:36:09.160479] 在线构建索引用时 10035 微秒
+[2025-02-20 10:36:09.160516] 可达树的根节点笛卡尔积总数为：18032
+[2025-02-20 10:36:11.024783] 进入查询循环 1033531次
+[2025-02-20 10:36:11.024849] 拓扑排序过滤 400975次
+[2025-02-20 10:36:11.024855] 原始可达性查询次数 ：100000000 次 
+[2025-02-20 10:36:11.024858] 压缩可达性查询次数  :632556 次 
+[2025-02-20 10:36:11.024862] 查询次数压缩为原来的 ：0.633 % 
+[2025-02-20 10:36:11.024875] 可达性查询耗时 489875 微秒
+[2025-02-20 10:36:11.024877] 记录覆盖对耗时 65 微秒
+[2025-02-20 10:36:11.024879] 构建子节点组合耗时 73389 微秒
+[2025-02-20 10:36:11.024881] set_reachability_query用时 1874340 微秒
+[2025-02-20 10:36:11.784019] set_reachability_query 用时 2633626 微秒
+[2025-02-20 10:36:39.838004] pll_reachability_query 用时 7704790 微秒
+/root/Projects/ReachCompress/test/test_set_reach.cpp:199: Failure
+Expected equality of these values:
+  result_pll.size()
+    Which is: 2706
+  result.size()
+    Which is: 41
+
+[2025-02-20 10:36:40.188451] 测试完成，可达性错误
+[  FAILED  ] SetReachabilityTest.basic_test (166384 ms)
+[----------] 1 test from SetReachabilityTest (166384 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (166384 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] SetReachabilityTest.basic_test
+
+ 1 FAILED TEST
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 10:51:43.034915] 读图完成，开始构建索引
+[2025-02-20 10:53:37.963498] pll索引构建用时 114113677 微秒
+[2025-02-20 10:53:38.814034] topo层级索引构建用时 562338 微秒
+[2025-02-20 10:53:38.816598] 随机查询集生成完成，开始测试
+[2025-02-20 10:53:38.827489] 在线构建索引用时 10737 微秒
+[2025-02-20 10:53:38.827550] 可达树的根节点笛卡尔积总数为：18032
+[2025-02-20 10:53:40.380779] 进入查询循环 1033531次
+[2025-02-20 10:53:40.380837] 拓扑排序过滤 400975次
+[2025-02-20 10:53:40.380844] 原始可达性查询次数 ：100000000 次 
+[2025-02-20 10:53:40.380846] 压缩可达性查询次数  :632556 次 
+[2025-02-20 10:53:40.380852] 查询次数压缩为原来的 ：0.633 % 
+[2025-02-20 10:53:40.380879] 可达性查询耗时 327409 微秒
+[2025-02-20 10:53:40.380881] 记录覆盖对耗时 46 微秒
+[2025-02-20 10:53:40.380883] 构建子节点组合耗时 68882 微秒
+[2025-02-20 10:53:40.380885] set_reachability_query用时 1564028 微秒
+[2025-02-20 10:53:41.102988] set_reachability_query 用时 2286319 微秒
+[2025-02-20 10:54:05.529159] pll_reachability_query 用时 5290551 微秒
+/root/Projects/ReachCompress/test/test_set_reach.cpp:199: Failure
+Expected equality of these values:
+  result_pll.size()
+    Which is: 2706
+  result.size()
+    Which is: 41
+
+[2025-02-20 10:54:05.828996] 测试完成，可达性错误
+[  FAILED  ] SetReachabilityTest.basic_test (144265 ms)
+[----------] 1 test from SetReachabilityTest (144265 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (144265 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] SetReachabilityTest.basic_test
+
+ 1 FAILED TEST
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 10:59:10.602399] 读图完成，开始构建索引
+[2025-02-20 11:01:04.481060] pll索引构建用时 113116206 微秒
+[2025-02-20 11:01:05.409652] topo层级索引构建用时 656479 微秒
+[2025-02-20 11:01:05.411757] 随机查询集生成完成，开始测试
+[2025-02-20 11:01:05.420547] 在线构建索引用时 8733 微秒
+[2025-02-20 11:01:05.420580] 可达树的根节点笛卡尔积总数为：18179
+[2025-02-20 11:01:10.397736] 进入查询循环 1353082次
+[2025-02-20 11:01:10.397788] 拓扑排序过滤 490558次
+[2025-02-20 11:01:10.397794] 原始可达性查询次数 ：100000000 次 
+[2025-02-20 11:01:10.397796] 压缩可达性查询次数  :656030 次 
+[2025-02-20 11:01:10.397800] 查询次数压缩为原来的 ：0.656 % 
+[2025-02-20 11:01:10.397812] 可达性查询耗时 3603732 微秒
+[2025-02-20 11:01:10.397814] 记录覆盖对耗时 1594 微秒
+[2025-02-20 11:01:10.397816] 构建子节点组合耗时 84737 微秒
+[2025-02-20 11:01:10.397818] set_reachability_query用时 4985922 微秒
+[2025-02-20 11:01:11.141879] set_reachability_query 用时 5730050 微秒
+[2025-02-20 11:01:35.975289] pll_reachability_query 用时 5508974 微秒
+[2025-02-20 11:01:36.263889] 测试完成，可达性正确
+[       OK ] SetReachabilityTest.basic_test (147261 ms)
+[----------] 1 test from SetReachabilityTest (147261 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (147261 ms total)
+[  PASSED  ] 1 test.
+nohup: ignoring input
+Running main() from /root/Projects/ReachCompress/external/googletest/googletest/src/gtest_main.cc
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from SetReachabilityTest
+[ RUN      ] SetReachabilityTest.basic_test
+开始读取文件
+读取文件结束
+节点数量为367598
+边数量为494596
+[2025-02-20 11:18:40.186134] 读图完成，开始构建索引
+[2025-02-20 11:20:45.649307] pll索引构建用时 124760383 微秒
+[2025-02-20 11:20:46.572715] topo层级索引构建用时 600394 微秒
+[2025-02-20 11:20:46.575228] 随机查询集生成完成，开始测试

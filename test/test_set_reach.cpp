@@ -25,10 +25,10 @@ class SetReachabilityTest : public ::testing::Test {
             // 获取所有边文件
             // string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/test";
     
-            // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/ia-radoslaw-email_edges.txt");
-            edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/large/WikiTalk_DAG");
+            // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/medium/soc-LiveJournal1_DAG");
+            // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/large/WikiTalk_DAG");
             // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/medium/cit-DBLP_DAG");
-            // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/test/in2004_DAG");
+            edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/test/in2004_DAG");
             // edgeFiles.push_back("/root/Projects/ReachCompress/Edges/DAGs/medium/soc-epinions_DAG");
     
             // edgeFiles = this->getAllFiles(edgesDirectory);
@@ -40,29 +40,7 @@ class SetReachabilityTest : public ::testing::Test {
         void TearDown() override {
             // 清理代码
         }
-    
-        std::vector<int> generateRandomVector(int num, int range) {
-            std::vector<int> vec(num);
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            // 生成 [1, 10000] 范围内的随机整数
-            std::uniform_int_distribution<int> dis(1, range);
-            std::generate(vec.begin(), vec.end(), [&]() { return dis(gen); });
-            return vec;
-        }
-        string getCurrentTimestamp() {
-            auto now = chrono::system_clock::now();
-            time_t now_time = chrono::system_clock::to_time_t(now);
-            tm local_tm;
-        #if defined(_WIN32) || defined(_WIN64)
-            localtime_s(&local_tm, &now_time);
-        #else
-            localtime_r(&now_time, &local_tm);
-        #endif
-            stringstream ss;
-            ss << put_time(&local_tm, "%Y-%m-%d %H:%M:%S");
-            return "[" + ss.str()+"]";
-        }
+
         string getCurrentDaystamp() {
             auto now = chrono::system_clock::now();
             time_t now_time = chrono::system_clock::to_time_t(now);
@@ -140,7 +118,7 @@ TEST_F(SetReachabilityTest, basic_test){
     logFile<<"====================================="<<endl;
     logFile<<"====================================="<<endl;
     logFile<<"====================================="<<endl;
-    logFile<<getCurrentTimestamp()<<" 读图开始，当前路径为"<<edgeFiles[0]<<endl;
+    logFile<<Algorithm::getCurrentTimestamp()<<" 读图开始，当前路径为"<<edgeFiles[0]<<endl;
     input_handler.readGraph(g);
 
     if(g.hasCycle()){
@@ -149,11 +127,13 @@ TEST_F(SetReachabilityTest, basic_test){
         logFile.close();
         return;
     }
-    logFile<<getCurrentTimestamp()<<" 读图完成，开始构建索引"<<endl;
+    logFile<<Algorithm::getCurrentTimestamp()<<"读图完成，开始构建索引"<<endl;
+    cout<<Algorithm::getCurrentTimestamp()<<"读图完成，开始构建索引"<<endl;
+    
     //构建索引
     SetSearch set_search(g);
     set_search.offline_industry();
-    logFile<<getCurrentTimestamp()<<" 构建索引完成，生成随机查询集"<<endl;
+    logFile<<Algorithm::getCurrentTimestamp()<<"构建索引完成，生成随机查询集"<<endl;
 
     // EXPECT_TRUE(set_search.reachability_query(1,15));
 
@@ -161,15 +141,17 @@ TEST_F(SetReachabilityTest, basic_test){
     // vector<int> target_set = {7, 8,123,1, 122};
 
     //产生随机查询集
-    vector<int> source_set = generateRandomVector(10000, g.vertices.size());
-    vector<int> target_set = generateRandomVector(10000, g.vertices.size());
-    logFile<<getCurrentTimestamp()<<" 随机查询集生成完成，开始测试"<<endl;
+    vector<int> source_set = RandomUtils::generateRandomVector(10000, g.vertices.size(),12);
+    vector<int> target_set = RandomUtils::generateRandomVector(10000, g.vertices.size(),35);
+    logFile<<Algorithm::getCurrentTimestamp()<<"随机查询集生成完成，开始测试"<<endl;
+    cout<<Algorithm::getCurrentTimestamp()<<"随机查询集生成完成，开始测试"<<endl;
     //set_reach 测试
     auto start = std::chrono::high_resolution_clock::now();
     auto result = set_search.set_reachability_query(source_set, target_set);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    logFile<<getCurrentTimestamp() << " set_reachability_query 用时 " << duration << " 微秒" << std::endl;
+    logFile<<Algorithm::getCurrentTimestamp() << "set_reachability_query 用时 " << duration << " 微秒" << std::endl;
+    cout<<Algorithm::getCurrentTimestamp() << "set_reachability_query 用时 " << duration << " 微秒" << std::endl;
 
     //pll 测试
     vector<pair<int,int>> query_pairs;
@@ -195,8 +177,8 @@ TEST_F(SetReachabilityTest, basic_test){
     }
     end = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    std::cout << "pll_reachability_query 用时 " << duration << " 微秒" << std::endl;
-    logFile <<getCurrentTimestamp()<<" pll_reachability_query 用时 " << duration << " 微秒" << std::endl;
+    logFile <<Algorithm::getCurrentTimestamp()<<"pll_reachability_query 用时 " << duration << " 微秒" << std::endl;
+    cout <<Algorithm::getCurrentTimestamp()<<"pll_reachability_query 用时 " << duration << " 微秒" << std::endl;
 
     //对result_pll去重, 并且去掉两个元素相同的pair
     vector<pair<int, int>> temp;
@@ -215,8 +197,9 @@ TEST_F(SetReachabilityTest, basic_test){
     result.erase(unique(result.begin(), result.end()), result.end());
     
     EXPECT_EQ(result_pll.size(), result.size());
-    logFile <<getCurrentTimestamp()<< " result_pll可达点对数量 = " << result_pll.size() << endl;
-    logFile <<getCurrentTimestamp()<< " result_set可达点对数量 = " << result.size() << endl;
+    logFile <<Algorithm::getCurrentTimestamp()<< " result_pll可达点对数量 = " << result_pll.size() << endl;
+    logFile <<Algorithm::getCurrentTimestamp()<< " result_set可达点对数量 = " << result.size() << endl;
+    cout <<Algorithm::getCurrentTimestamp()<< ((result_pll.size() == result.size()) ? "测试完成，可达性正确" : "测试完成，可达性错误") << endl;
     logFile.close();
     return;
 }
