@@ -336,8 +336,8 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
         }
     }
 
-    vector<pair<int, int>> results;
-    unordered_map<size_t, bool> cache;
+    vector<pair<int, int>> results(source_set_eq.size() * target_set_eq.size());
+    unordered_map<size_t, bool> cache(source_set_eq.size() * target_set_eq.size());
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -345,14 +345,24 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
 
 #ifdef DEBUG
     cout << Algorithm::getCurrentTimestamp() << "可达树的根节点笛卡尔积总数为：" << queue.size() << endl;
-    std::chrono::_V2::system_clock::time_point start1, end1, start2, end2, start3, end3, start4, end4, start5, end5;
-    int64_t duration1 = 0, duration2 = 0, duration3 = 0, duration4 = 0, duration5 = 0;
+    std::chrono::_V2::system_clock::time_point start1, end1, start2, end2, start3, end3, start4, end4, start5, end5, start6, end6;
+    int64_t duration1 = 0, duration2 = 0, duration3 = 0, duration4 = 0, duration5 = 0, duration6 = 0;
     int topo_count = 0;
     // vector<ReachRecord> reachable_records;
+    start6 = std::chrono::high_resolution_clock::now();
 #endif
     int loop_count = 0;
+    bool reachable = false;
+    bool topo_hit = false;
+    bool cache_hit = false;
     while (!queue.empty())
     {
+#ifdef DEBUG
+
+        end6 = std::chrono::high_resolution_clock::now();
+        duration6 += std::chrono::duration_cast<std::chrono::microseconds>(end6 - start6).count();
+        start4 = std::chrono::high_resolution_clock::now();
+#endif
         loop_count++;
         auto item = queue.front();
         queue.pop_front();
@@ -360,20 +370,32 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
         auto s_node = item.first;
         auto t_node = item.second;
 
+        int s_id = s_node->id;
+        int t_id = t_node->id;
+
         // 生成缓存键
         size_t key = (reinterpret_cast<size_t>(s_node.get()) << 32) | reinterpret_cast<size_t>(t_node.get());
+        cache_hit = cache.count(key);
 
-        bool reachable = false;
-        if (cache.count(key))
+#ifdef DEBUG
+        end4 = std::chrono::high_resolution_clock::now();
+        duration4 += std::chrono::duration_cast<std::chrono::microseconds>(end4 - start4).count();
+#endif
+        if (cache_hit)
         {
             continue;
         }
         else
         {
+#ifdef DEBUG
+            start5 = std::chrono::high_resolution_clock::now();
             cache[key] = true;
-
+            topo_hit = (topo_level[s_node->id] > topo_level[t_node->id]);
+            end5 = std::chrono::high_resolution_clock::now();
+            duration5 += std::chrono::duration_cast<std::chrono::microseconds>(end5 - start5).count();
+#endif
             // 拓扑层级过滤
-            if (topo_level[s_node->id] > topo_level[t_node->id])
+            if (topo_hit)
             {
                 reachable = false;
                 topo_count++;
@@ -467,20 +489,25 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
             duration3 += std::chrono::duration_cast<std::chrono::microseconds>(end3 - start3).count();
 #endif
         }
+#ifdef DEBUG
+        start6 = std::chrono::high_resolution_clock::now();
+#endif
     }
 
 #ifdef DEBUG
     end = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-
     cout << Algorithm::getCurrentTimestamp() << "进入查询循环 " << loop_count << "次" << endl;
     cout << Algorithm::getCurrentTimestamp() << "拓扑排序过滤 " << topo_count << "次" << endl;
     cout << Algorithm::getCurrentTimestamp() << "原始可达性查询次数 ：" << source_set.size() * target_set.size() << " 次 " << endl;
     cout << Algorithm::getCurrentTimestamp() << "压缩可达性查询次数  :" << count << " 次 " << endl;
     cout << Algorithm::getCurrentTimestamp() << "查询次数压缩为原来的 ：" << fixed << setprecision(3) << (double)count / (source_set.size() * target_set.size()) * 100 << " % " << endl;
+    cout << Algorithm::getCurrentTimestamp() << "逻辑处理、和缓存键查找的耗时 " << duration4 << " 微秒" << endl;
+    cout << Algorithm::getCurrentTimestamp() << "缓存键和拓扑生成耗时 " << duration5 << " 微秒" << endl;
     cout << Algorithm::getCurrentTimestamp() << "可达性查询耗时 " << duration1 << " 微秒" << endl;
     cout << Algorithm::getCurrentTimestamp() << "记录覆盖对耗时 " << duration2 << " 微秒" << endl;
     cout << Algorithm::getCurrentTimestamp() << "构建子节点组合耗时 " << duration3 << " 微秒" << endl;
+    cout << Algorithm::getCurrentTimestamp() << "循环处理耗时 " << duration6 << " 微秒" << endl;
     cout << Algorithm::getCurrentTimestamp() << "set_reachability_query用时 " << duration << " 微秒" << std::endl;
     // Save reachability records to a file
     // std::ofstream record_file("reachability_records.csv");
@@ -628,7 +655,8 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_forest_optimized(const set<int
         // 对于源点集合，这个关键点如果入度很少就不要参与运算了
         // 对于目标点集合，这个关键点如果出度很少就不要参与运算了
         int degree = is_source ? this->g->vertices[kp].in_degree : this->g->vertices[kp].out_degree;
-        if(degree<50)continue;
+        if (degree < 50)
+            continue;
         auto root = make_shared<ForestNode>(kp);
         root->covered_nodes.insert(kp); // 关键点自身加入覆盖集合
         forest_roots[kp] = root;
@@ -640,14 +668,16 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_forest_optimized(const set<int
     // 这里不使用 erase 删除元素，而是仅建立挂接关系
     for (size_t i = 0; i < keypoints_copy.size(); ++i)
     {
-        if(!forest_roots.count(keypoints_copy[i]))continue;
+        if (!forest_roots.count(keypoints_copy[i]))
+            continue;
         for (size_t j = i + 1; j < keypoints_copy.size(); ++j)
         {
-            if(!forest_roots.count(keypoints_copy[j]))continue;
+            if (!forest_roots.count(keypoints_copy[j]))
+                continue;
             int kp1 = keypoints_copy[i];
             int kp2 = keypoints_copy[j];
             // 根据 is_source 选择对应的关键点集合：当 is_source 为 true 时使用 out_key_points，否则使用 in_key_points
-            const set<int>& kps1 = is_source ? out_key_points[kp1] : in_key_points[kp1];
+            const set<int> &kps1 = is_source ? out_key_points[kp1] : in_key_points[kp1];
 
             if (kps1.count(kp2))
             {
@@ -658,7 +688,7 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_forest_optimized(const set<int
             else
             {
                 // 反向判断：如果 kp2 包含 kp1，则将 kp2 挂接在 kp1 下
-                const set<int>& kps2 = is_source ? out_key_points[kp2] : in_key_points[kp2];
+                const set<int> &kps2 = is_source ? out_key_points[kp2] : in_key_points[kp2];
                 if (kps2.count(kp1))
                 {
                     forest_roots[kp1]->children.emplace_back(forest_roots[kp2]);
@@ -683,7 +713,7 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_forest_optimized(const set<int
     for (int v : nodes)
     {
         int flag = 0;
-        const set<int>& node_kps = is_source ? out_key_points[v] : in_key_points[v];
+        const set<int> &node_kps = is_source ? out_key_points[v] : in_key_points[v];
         if (!node_kps.empty())
         {
             // 若节点有关键点信息，则挂接到对应的关键点树上
@@ -711,7 +741,7 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_forest_optimized(const set<int
             }
         }
         // 遍历完所有关键点也无处可去的，就直接挂上去就好了
-        if(flag == 0 && this->g->isExist(v))
+        if (flag == 0 && this->g->isExist(v))
         {
             auto isolated = make_shared<ForestNode>(v);
             isolated->covered_nodes.insert(v);
@@ -719,7 +749,6 @@ vector<SetSearch::ForestNodePtr> SetSearch::build_forest_optimized(const set<int
             flag = 1;
         }
     }
-
 
     // 4. 最终结果：将关键点产生的森林放前面，孤立节点接在后面
     forest_keys.insert(forest_keys.end(), isolated_forest.begin(), isolated_forest.end());
