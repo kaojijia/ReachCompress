@@ -165,100 +165,200 @@ bool PLL::convertToArray()
     return true;
 }
 
+
 void PLL::bfsPruned(int start)
 {
-    // 第一轮 BFS：从 start 出发，构建 IN 集合
-    std::unordered_set<int> visited_forward;
+    // 使用 vector<bool> 来记录正向 BFS 中的访问情况，避免 unordered_set 的哈希开销
+    std::vector<bool> visited_forward(g.vertices.size(), false);
     std::queue<int> q_forward;
     q_forward.push(start);
-    visited_forward.insert(start);
+    visited_forward[start] = true;  // 标记起点已访问
+
+    // 第一轮 BFS：从 start 出发，构建 IN 集合
+    while (!q_forward.empty())
+    {
+        int current = q_forward.front();
+        q_forward.pop();
+
+        // 如果已有标签证明 start 到 current 可达，则剪枝
+        if (HopQuery(start, current))
+            continue;
+        // 除了起点外，将 start 加入 current 的 IN 标签集合中
+        if (current != start)
+            IN[current].insert(start);
+
+        // 遍历 current 的后继节点
+        for (auto neighbor : adjList[current])
+        {
+            if (!visited_forward[neighbor])
+            {
+                q_forward.push(neighbor);
+                visited_forward[neighbor] = true;
+            }
+        }
+    }
+
+    // 使用 vector<bool> 来记录反向 BFS 的访问情况
+    std::vector<bool> visited_backward(g.vertices.size(), false);
+    std::queue<int> q_backward;
+    q_backward.push(start);
+    visited_backward[start] = true;  // 标记起点已访问
+
+    // 第二轮 BFS：从 start 出发，构建 OUT 集合
+    while (!q_backward.empty())
+    {
+        int current = q_backward.front();
+        q_backward.pop();
+
+        // 如果已有标签证明 current 到 start 可达，则剪枝
+        if (HopQuery(current, start))
+            continue;
+        // 除了起点外，将 start 加入 current 的 OUT 标签集合中
+        if (current != start)
+            OUT[current].insert(start);
+
+        // 遍历 current 的前驱节点（反向邻接表）
+        for (auto neighbor : reverseAdjList[current])
+        {
+            if (!visited_backward[neighbor])
+            {
+                q_backward.push(neighbor);
+                visited_backward[neighbor] = true;
+            }
+        }
+    }
+}
+
+
+// 构建 IN 集合：从 start 出发，进行正向 BFS 更新 IN 标签
+void PLL::bfsPrunedIN(int start)
+{
+    size_t numVertices = g.vertices.size();
+    std::vector<bool> visited_forward(numVertices, false);
+    std::queue<int> q_forward;
+    q_forward.push(start);
+    visited_forward[start] = true;
 
     while (!q_forward.empty())
     {
         int current = q_forward.front();
         q_forward.pop();
 
+        // 剪枝：如果已有标签证明 start 到 current 可达，则跳过扩展 current
         if (HopQuery(start, current))
             continue;
         if (current != start)
             IN[current].insert(start);
 
+        // 遍历 current 的后继节点
         for (auto neighbor : adjList[current])
         {
-            if (!visited_forward.count(neighbor))
+            // 如果图中存在非连续点，请确保 neighbor 是有效的
+            if (neighbor < 0 || neighbor >= numVertices)
+                continue;
+            if (!visited_forward[neighbor])
             {
                 q_forward.push(neighbor);
-                visited_forward.insert(neighbor);
+                visited_forward[neighbor] = true;
             }
         }
     }
+}
 
-    // 第二轮 BFS：从 start 出发，构建 OUT 集合
-    std::unordered_set<int> visited_backward;
+// 构建 OUT 集合：从 start 出发，进行反向 BFS 更新 OUT 标签
+void PLL::bfsPrunedOUT(int start)
+{
+    size_t numVertices = g.vertices.size();
+    std::vector<bool> visited_backward(numVertices, false);
     std::queue<int> q_backward;
     q_backward.push(start);
-    visited_backward.insert(start);
+    visited_backward[start] = true;
 
     while (!q_backward.empty())
     {
         int current = q_backward.front();
         q_backward.pop();
 
+        // 剪枝：如果已有标签证明 current 到 start 可达，则跳过扩展 current
         if (HopQuery(current, start))
             continue;
         if (current != start)
             OUT[current].insert(start);
 
+        // 遍历 current 的前驱节点（使用逆邻接表）
         for (auto neighbor : reverseAdjList[current])
         {
-            if (!visited_backward.count(neighbor))
+            if (neighbor < 0 || neighbor >= numVertices)
+                continue;
+            if (!visited_backward[neighbor])
             {
                 q_backward.push(neighbor);
-                visited_backward.insert(neighbor);
+                visited_backward[neighbor] = true;
             }
         }
     }
 }
 
-void PLL::add_self()
-{
-    for(int i = 0; i < g.vertices.size(); i++){
-        IN[i].insert(i);
-        OUT[i].insert(i);
-    }
-}
 
-void PLL::buildPLLLabels()
-{
-    std::vector<int> nodes = orderByDegree();
-    int i = 0;
-    int count = 0;
-    for (int node : nodes)
-    {
-        bfsPruned(node);
-#ifdef DEBUG
-        if (++count % 10000 == 0)
-        {
-            std::cout << Algorithm::getCurrentTimestamp() << "PLL处理完成 " << count << " 个节点的索引..." << std::endl;
-        }
-#endif
-    }
-    simplifyInOutSets();
-}
+
+// void PLL::bfsPruned(int start)
+// {
+//     // 第一轮 BFS：从 start 出发，构建 IN 集合
+//     std::unordered_set<int> visited_forward;
+//     std::queue<int> q_forward;
+//     q_forward.push(start);
+//     visited_forward.insert(start);
+
+//     while (!q_forward.empty())
+//     {
+//         int current = q_forward.front();
+//         q_forward.pop();
+
+//         if (HopQuery(start, current))
+//             continue;
+//         if (current != start)
+//             IN[current].insert(start);
+
+//         for (auto neighbor : adjList[current])
+//         {
+//             if (!visited_forward.count(neighbor))
+//             {
+//                 q_forward.push(neighbor);
+//                 visited_forward.insert(neighbor);
+//             }
+//         }
+//     }
+
+//     // 第二轮 BFS：从 start 出发，构建 OUT 集合
+//     std::unordered_set<int> visited_backward;
+//     std::queue<int> q_backward;
+//     q_backward.push(start);
+//     visited_backward.insert(start);
+
+//     while (!q_backward.empty())
+//     {
+//         int current = q_backward.front();
+//         q_backward.pop();
+
+//         if (HopQuery(current, start))
+//             continue;
+//         if (current != start)
+//             OUT[current].insert(start);
+
+//         for (auto neighbor : reverseAdjList[current])
+//         {
+//             if (!visited_backward.count(neighbor))
+//             {
+//                 q_backward.push(neighbor);
+//                 visited_backward.insert(neighbor);
+//             }
+//         }
+//     }
+// }
+
 
 // 检查是否存在2-hop路径，这样可以用来剪枝
 // from u to v
-// bool PLL::HopQuery(int u, int v) {
-//     if (u >= g.vertices.size() || v >= g.vertices.size()) return false;
-//     const auto& LOUT_u = OUT[u];
-//     const auto& LIN_v = IN[v];
-
-//     std::unordered_set<int> loutSet(LOUT_u.begin(), LOUT_u.end());
-//     for (int node : LIN_v) {
-//         if (loutSet.count(node)) return true;  // 存在交集，表示可达
-//     }
-//     return false;  // 无交集，不可达
-// }
 bool PLL::HopQuery(int u, int v)
 {
     if (u >= g.vertices.size() || v >= g.vertices.size())
@@ -286,6 +386,48 @@ bool PLL::HopQuery(int u, int v)
     return false;
 }
 
+
+// bool PLL::HopQuery(int u, int v) {
+//     if (u >= g.vertices.size() || v >= g.vertices.size()) return false;
+//     const auto& LOUT_u = OUT[u];
+//     const auto& LIN_v = IN[v];
+
+//     std::unordered_set<int> loutSet(LOUT_u.begin(), LOUT_u.end());
+//     for (int node : LIN_v) {
+//         if (loutSet.count(node)) return true;  // 存在交集，表示可达
+//     }
+//     return false;  // 无交集，不可达
+// }
+
+void PLL::add_self()
+{
+    for(int i = 0; i < g.vertices.size(); i++){
+        IN[i].insert(i);
+        OUT[i].insert(i);
+    }
+}
+
+void PLL::buildPLLLabels()
+{
+    std::vector<int> nodes = orderByDegree();
+    int i = 0;
+    int count = 0;
+    for (int node : nodes)
+    {
+        bfsPruned(node);
+#ifdef DEBUG
+        if (++count % 10000 == 0)
+        {
+            std::cout << Algorithm::getCurrentTimestamp() << "PLL处理完成 " << count << " 个节点的索引..." << std::endl;
+        }
+#endif
+    }
+
+
+    simplifyInOutSets();
+}
+
+
 // 可达性查询，外部查询
 bool PLL::query(int u, int v)
 {
@@ -297,18 +439,6 @@ bool PLL::query(int u, int v)
     if (u == v)
         return true;
 
-
-    // 将自身加入自己的in和out集合中，减少这部分的查询耗时
-    // for (auto out_u : OUT[u])
-    // {
-    //     if (out_u == v)
-    //         return true;
-    // }
-    // for (auto in_v : IN[v])
-    // {
-    //     if (in_v == u)
-    //         return true;
-    // }
 
     for (auto out_u : OUT[u])
     {

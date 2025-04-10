@@ -59,13 +59,11 @@ void SetSearch::offline_industry()
 #endif
     // 为每个顶点构建关键路标点索引
     build_key_points(num_key_points);
-
-    // 为每个顶点构建拓扑层级的索引
-    // build_topo_level();
 #ifdef DEBUG
     start = std::chrono::high_resolution_clock::now();
 #endif
     build_topo_level_optimized();
+    // build_equivalent_index();
 #ifdef DEBUG
     end = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -260,6 +258,24 @@ void SetSearch::build_topo_level_optimized()
     temp_graph.reset();
 }
 
+// 创建等价类索引
+// 1、单个出度和入度的，找连过去的那个点作为等价类
+//
+void SetSearch::build_equivalent_index()
+{
+    for (int i = 0; i < this->g->vertices.size(); i++)
+    {
+        if(this->g->vertices[i].in_degree==1 && this->g->vertices[i].out_degree==0)
+        {
+            this->g->vertices[i].equivalance = this->g->vertices[i].LIN[0];
+        }
+        if(this->g->vertices[i].in_degree==0 && this->g->vertices[i].out_degree==1)
+        {
+            this->g->vertices[i].equivalance = this->g->vertices[i].LOUT[0];
+        }
+    }
+}
+
 vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set, vector<int> target_set)
 {
 
@@ -328,6 +344,7 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     // O(n*m)
     // 双端队列
     deque<pair<ForestNodePtr, ForestNodePtr>> queue;
+    
     for (auto &s_root : source_forest)
     {
         for (auto &t_root : target_forest)
@@ -355,6 +372,8 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     bool reachable = false;
     bool topo_hit = false;
     bool cache_hit = false;
+
+    
     while (!queue.empty())
     {
 #ifdef DEBUG
@@ -507,7 +526,7 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     cout << Algorithm::getCurrentTimestamp() << "可达性查询耗时 " << duration1 << " 微秒" << endl;
     cout << Algorithm::getCurrentTimestamp() << "记录覆盖对耗时 " << duration2 << " 微秒" << endl;
     cout << Algorithm::getCurrentTimestamp() << "构建子节点组合耗时 " << duration3 << " 微秒" << endl;
-    cout << Algorithm::getCurrentTimestamp() << "循环处理耗时 " << duration6 << " 微秒" << endl;
+    // cout << Algorithm::getCurrentTimestamp() << "循环处理耗时 " << duration6 << " 微秒" << endl;
     cout << Algorithm::getCurrentTimestamp() << "set_reachability_query用时 " << duration << " 微秒" << std::endl;
     // Save reachability records to a file
     // std::ofstream record_file("reachability_records.csv");

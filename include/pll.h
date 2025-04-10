@@ -97,6 +97,10 @@ private:
     void bfsUnpruned(int start, bool is_reversed);
     void bfsPruned(int start);
 
+    void bfsPrunedIN(int start);
+
+    void bfsPrunedOUT(int start);
+
     void add_self();
 
     // 确定剪枝顺序

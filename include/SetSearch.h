@@ -58,6 +58,8 @@ private:
     //拓扑索引
     void build_topo_level();
     void build_topo_level_optimized();
+    // 等价类索引
+    void build_equivalent_index();
     // 生成树索引
     //  void build_tree_index();
 
