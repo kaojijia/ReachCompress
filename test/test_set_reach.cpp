@@ -25,10 +25,10 @@ class SetReachabilityTest : public ::testing::Test {
             // 获取所有边文件
             // string edgesDirectory = string(PROJECT_ROOT_DIR) + "/Edges/test";
     
-            // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/medium/soc-LiveJournal1_DAG");
+            edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/medium/soc-LiveJournal1_DAG");
             // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/large/WikiTalk_DAG");
             // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/medium/cit-DBLP_DAG");
-            edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/test/in2004_DAG");
+            // edgeFiles.push_back(string(PROJECT_ROOT_DIR) + "/Edges/DAGs/test/in2004_DAG");
             // edgeFiles.push_back("/root/Projects/ReachCompress/Edges/DAGs/medium/soc-epinions_DAG");
     
             // edgeFiles = this->getAllFiles(edgesDirectory);

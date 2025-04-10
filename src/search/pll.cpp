@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include "Algorithm.h"
 
 // 构造函数，接收图结构
 PLL::PLL(Graph &graph) : g(graph)
@@ -173,7 +174,6 @@ void PLL::bfsPruned(int start)
     std::queue<int> q_forward;
     q_forward.push(start);
     visited_forward[start] = true;  // 标记起点已访问
-
     // 第一轮 BFS：从 start 出发，构建 IN 集合
     while (!q_forward.empty())
     {
@@ -295,8 +295,8 @@ bool PLL::HopQuery(int u, int v)
 {
     if (u >= g.vertices.size() || v >= g.vertices.size())
         return false;
-    const auto &LOUT_u = OUT[u]; // set<int>
-    const auto &LIN_v = IN[v];   // set<int>
+    const auto &LOUT_u = OUT[u]; // vector<int>
+    const auto &LIN_v = IN[v];   // vector<int>
 
     auto it1 = LOUT_u.begin();
     auto it2 = LIN_v.begin();

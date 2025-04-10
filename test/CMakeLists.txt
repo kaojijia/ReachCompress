@@ -40,6 +40,11 @@
 add_executable(test_Set test_set_reach.cpp)
 target_link_libraries(test_Set reach_comp gtest gtest_main)
 
+
+
+add_executable(test_Hyper test_hyper.cpp)
+target_link_libraries(test_Hyper reach_comp gtest gtest_main)
+
 # add_executable(tes1t test.cpp)
 # target_link_libraries(tes1t gtest gtest_main)
 
