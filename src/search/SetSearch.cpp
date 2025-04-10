@@ -354,7 +354,8 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
     }
 
     vector<pair<int, int>> results(source_set_eq.size() * target_set_eq.size());
-    unordered_map<size_t, bool> cache(source_set_eq.size() * target_set_eq.size());
+    unordered_map<size_t, bool> cache;
+    // unordered_map<size_t, bool> cache(source_set_eq.size() * target_set_eq.size());
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -393,8 +394,8 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
         int t_id = t_node->id;
 
         // 生成缓存键
-        size_t key = (reinterpret_cast<size_t>(s_node.get()) << 32) | reinterpret_cast<size_t>(t_node.get());
-        cache_hit = cache.count(key);
+        // size_t key = (reinterpret_cast<size_t>(s_node.get()) << 32) | reinterpret_cast<size_t>(t_node.get());
+        // cache_hit = cache.count(key);
 
 #ifdef DEBUG
         end4 = std::chrono::high_resolution_clock::now();
@@ -408,7 +409,7 @@ vector<pair<int, int>> SetSearch::set_reachability_query(vector<int> source_set,
         {
 #ifdef DEBUG
             start5 = std::chrono::high_resolution_clock::now();
-            cache[key] = true;
+            // cache[key] = true;
             topo_hit = (topo_level[s_node->id] > topo_level[t_node->id]);
             end5 = std::chrono::high_resolution_clock::now();
             duration5 += std::chrono::duration_cast<std::chrono::microseconds>(end5 - start5).count();
