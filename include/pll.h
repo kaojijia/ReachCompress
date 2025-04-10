@@ -13,6 +13,9 @@ public:
     PLL(Graph &graph); // 构造函数，传入图的引用
     ~PLL();
 
+    // IN和OUT集合的有序插入
+    void insertSorted(std::vector<int> &labelVec, int val);
+
     void offline_industry() override;
     bool reachability_query(int source, int target) override;
 
@@ -25,8 +28,10 @@ public:
     // 用构造的数组做可达性查询
     bool queryinArray(int source, int target);
 
-    std::vector<std::set<int>> IN;
-    std::vector<std::set<int>> OUT;
+    std::vector<std::vector<int>> IN;
+    std::vector<std::vector<int>> OUT;
+
+
 
     // std::unordered_map<std::string, size_t> getIndexSizes() const override {
     //     size_t inSize = 0;
@@ -96,10 +101,6 @@ private:
 
     void bfsUnpruned(int start, bool is_reversed);
     void bfsPruned(int start);
-
-    void bfsPrunedIN(int start);
-
-    void bfsPrunedOUT(int start);
 
     void add_self();
 

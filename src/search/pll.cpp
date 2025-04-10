@@ -185,7 +185,8 @@ void PLL::bfsPruned(int start)
             continue;
         // 除了起点外，将 start 加入 current 的 IN 标签集合中
         if (current != start)
-            IN[current].insert(start);
+            insertSorted(IN[current], start);
+            // IN[current].insert(start);
 
         // 遍历 current 的后继节点
         for (auto neighbor : adjList[current])
@@ -215,81 +216,12 @@ void PLL::bfsPruned(int start)
             continue;
         // 除了起点外，将 start 加入 current 的 OUT 标签集合中
         if (current != start)
-            OUT[current].insert(start);
+            insertSorted(OUT[current], start);
+            // OUT[current].insert(start);
 
         // 遍历 current 的前驱节点（反向邻接表）
         for (auto neighbor : reverseAdjList[current])
         {
-            if (!visited_backward[neighbor])
-            {
-                q_backward.push(neighbor);
-                visited_backward[neighbor] = true;
-            }
-        }
-    }
-}
-
-
-// 构建 IN 集合：从 start 出发，进行正向 BFS 更新 IN 标签
-void PLL::bfsPrunedIN(int start)
-{
-    size_t numVertices = g.vertices.size();
-    std::vector<bool> visited_forward(numVertices, false);
-    std::queue<int> q_forward;
-    q_forward.push(start);
-    visited_forward[start] = true;
-
-    while (!q_forward.empty())
-    {
-        int current = q_forward.front();
-        q_forward.pop();
-
-        // 剪枝：如果已有标签证明 start 到 current 可达，则跳过扩展 current
-        if (HopQuery(start, current))
-            continue;
-        if (current != start)
-            IN[current].insert(start);
-
-        // 遍历 current 的后继节点
-        for (auto neighbor : adjList[current])
-        {
-            // 如果图中存在非连续点，请确保 neighbor 是有效的
-            if (neighbor < 0 || neighbor >= numVertices)
-                continue;
-            if (!visited_forward[neighbor])
-            {
-                q_forward.push(neighbor);
-                visited_forward[neighbor] = true;
-            }
-        }
-    }
-}
-
-// 构建 OUT 集合：从 start 出发，进行反向 BFS 更新 OUT 标签
-void PLL::bfsPrunedOUT(int start)
-{
-    size_t numVertices = g.vertices.size();
-    std::vector<bool> visited_backward(numVertices, false);
-    std::queue<int> q_backward;
-    q_backward.push(start);
-    visited_backward[start] = true;
-
-    while (!q_backward.empty())
-    {
-        int current = q_backward.front();
-        q_backward.pop();
-
-        // 剪枝：如果已有标签证明 current 到 start 可达，则跳过扩展 current
-        if (HopQuery(current, start))
-            continue;
-        if (current != start)
-            OUT[current].insert(start);
-
-        // 遍历 current 的前驱节点（使用逆邻接表）
-        for (auto neighbor : reverseAdjList[current])
-        {
-            if (neighbor < 0 || neighbor >= numVertices)
-                continue;
             if (!visited_backward[neighbor])
             {
                 q_backward.push(neighbor);
@@ -402,8 +334,11 @@ bool PLL::HopQuery(int u, int v)
 void PLL::add_self()
 {
     for(int i = 0; i < g.vertices.size(); i++){
-        IN[i].insert(i);
-        OUT[i].insert(i);
+        // IN[i].insert(i);
+        // OUT[i].insert(i);
+        insertSorted(IN[i], i);
+        insertSorted(OUT[i], i);
+
     }
 }
 
@@ -583,4 +518,17 @@ PLL::~PLL()
     }
 
     // std::cout << "PLL destructor completed." << std::endl;
+}
+
+
+
+// 有序插入：
+void PLL::insertSorted(std::vector<int>& labelVec, int val)
+{
+    // 利用二分查找找到应插入的位置
+    auto it = std::lower_bound(labelVec.begin(), labelVec.end(), val);
+    // 如果不存在该元素，则插入
+    if (it == labelVec.end() || *it != val) {
+        labelVec.insert(it, val);
+    }
 }
