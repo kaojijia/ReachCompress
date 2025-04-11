@@ -21,8 +21,8 @@ public:
     PrunedLandmarkIndex(const WeightedGraph &graph);
 
     // 建立离线索引
-    // threshold: 边权小于 threshold 的边将被忽略，视为不存在
-    void offline_industry(int threshold);
+
+    void offline_industry();
 
     // 查询可达性：判断两点是否在忽略小权重边的情况下连通
     bool reachability_query(int u, int v) const;
@@ -34,7 +34,8 @@ private:
     // label[v]：存储所有能使v和其他点相通的Landmark
     std::vector<std::vector<int>> label;
 
-    int weightThreshold; // 在buildIndex时设定
+    // threshold: 边权小于 threshold 的边将被忽略，视为不存在
+    int weightThreshold = 0; 
 
     // 对顶点做 BFS，更新标签
     // curLandmark: 当前使用的Landmark
@@ -60,11 +61,8 @@ PrunedLandmarkIndex::PrunedLandmarkIndex(const WeightedGraph &graph)
 }
 
 // ============ 对外的 buildIndex ============
-void PrunedLandmarkIndex::offline_industry(int threshold)
+void PrunedLandmarkIndex::offline_industry()
 {
-    // 保存边权阈值，后续 BFS 中忽略权重大于此阈值的边
-    this->weightThreshold = threshold;
-
     int n = g.numVertices();
     // 计算每个顶点的度（邻接表大小）
     std::vector<std::pair<int, int>> degrees(n);

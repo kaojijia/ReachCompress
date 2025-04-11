@@ -10,7 +10,7 @@
 #include <unordered_set>
 #include <queue>
 #include <memory>
-
+#include "UndirectedPLL.h"
 #include "WeightedGraph.h"
 
 using namespace std;
@@ -108,7 +108,7 @@ class Hypergraph
 public:
     // 使用预估的顶点数和超边数构造，避免频繁扩容
     Hypergraph(size_t expected_vertices = 100, size_t expected_edges = 100)
-        : ds_valid(false)
+        : ds_valid(false), pll_graph(nullptr), pll(nullptr)
     {
         vertices.reserve(expected_vertices);
         hyperedges.reserve(expected_edges);
@@ -326,6 +326,7 @@ public:
         // 检查是否需要重建无向加权图
         if (!graphs_built)
         {
+
             // 清空现有的图
             weighted_graphs.clear();
             weighted_graphs.resize(MAX_INTERSECTION_SIZE + 1);
@@ -350,7 +351,7 @@ public:
             for (int min_size = 0; min_size <= MAX_INTERSECTION_SIZE; min_size++)
             {
                 // 创建对应约束级别的图
-                weighted_graphs[min_size] = std::make_unique<WeightedGraph>(hyperedges.size(),min_size);
+                weighted_graphs[min_size] = std::make_unique<WeightedGraph>(hyperedges.size(), min_size);
 
                 // 只添加满足约束的边
                 for (const auto &[i, j, size] : all_edge_pairs)
@@ -365,6 +366,16 @@ public:
                 weighted_graphs[min_size]->offline_industry();
             }
 
+            // 建立包含全部全权值的pll图
+            pll_graph.release();
+            pll_graph = std::make_unique<WeightedGraph>(hyperedges.size());
+            for (const auto &[i, j, size] : all_edge_pairs)
+            {
+
+                pll_graph->addEdge(i, j, size);
+            }
+            pll = make_unique<PrunedLandmarkIndex>(*pll_graph);
+            pll->offline_industry();
             graphs_built = true;
         }
     }
@@ -512,17 +523,17 @@ public:
         if (source == target)
             return true;
 
-    
         // 检查两点是否属于同一超边（直接可达）
-        const auto& source_edges = vertex_to_edges[source];
-        const auto& target_edges = vertex_to_edges[target];
-        
-        for (int edge_id : source_edges) {
-            if (std::find(target_edges.begin(), target_edges.end(), edge_id) != target_edges.end()) {
-                return true;  // 两点属于同一超边，直接可达
+        const auto &source_edges = vertex_to_edges[source];
+        const auto &target_edges = vertex_to_edges[target];
+
+        for (int edge_id : source_edges)
+        {
+            if (std::find(target_edges.begin(), target_edges.end(), edge_id) != target_edges.end())
+            {
+                return true; // 两点属于同一超边，直接可达
             }
         }
-        
 
         // 如果没有交集约束，使用普通BFS
         if (minIntersectionSize <= 0)
@@ -653,8 +664,60 @@ public:
         return false;
     }
 
-
     // 使用转换后的带权图进行顶点可达性查询
+    bool isReachableViaPLLWeightedGraph(int sourceVertex, int targetVertex, int minIntersectionSize = 0)
+    {
+        if (sourceVertex < 0 || sourceVertex >= static_cast<int>(vertices.size()) ||
+            targetVertex < 0 || targetVertex >= static_cast<int>(vertices.size()))
+            throw std::invalid_argument("Vertex id does not exist");
+
+        // 同一顶点必然可达
+        if (sourceVertex == targetVertex)
+            return true;
+
+        // 确保图已构建，并且使用正确的交集约束级别
+        if (!graphs_built || minIntersectionSize > MAX_INTERSECTION_SIZE)
+        {
+            const_cast<Hypergraph *>(this)->offline_industry();
+        }
+
+        // 调整交集约束到有效范围
+        int effective_min_size = minIntersectionSize;
+
+        // 获取源顶点和目标顶点关联的所有超边
+        const auto &source_edges = vertex_to_edges[sourceVertex];
+        const auto &target_edges = vertex_to_edges[targetVertex];
+
+        if (source_edges.empty() || target_edges.empty())
+        {
+            return false; // 如果源点或终点没有关联的超边，不可达
+        }
+
+        // 如果源点和目标点有共同的超边，则直接可达
+        for (int source_edge : source_edges)
+        {
+            if (std::find(target_edges.begin(), target_edges.end(), source_edge) != target_edges.end())
+            {
+                return true;
+            }
+        }
+
+        // 对源点集和目标点集做笛卡尔积检查
+        for (int source_edge : source_edges)
+        {
+            for (int target_edge : target_edges)
+            {
+                // 使用预构建的对应交集约束级别的图进行查询
+                if (weighted_graphs[effective_min_size]->landmark_reachability_query(source_edge, target_edge))
+                {
+                    return true; // 找到一对可达的超边
+                }
+            }
+        }
+
+        return false; // 所有笛卡尔积对都不可达
+    }
+
     bool isReachableViaWeightedGraph(int sourceVertex, int targetVertex, int minIntersectionSize = 0)
     {
         if (sourceVertex < 0 || sourceVertex >= static_cast<int>(vertices.size()) ||
@@ -698,7 +761,7 @@ public:
             for (int target_edge : target_edges)
             {
                 // 使用预构建的对应交集约束级别的图进行查询
-                if (weighted_graphs[effective_min_size]->reachability_query(source_edge, target_edge))
+                if (weighted_graphs[effective_min_size]->disjointSet_reachability_query(source_edge, target_edge))
                 {
                     return true; // 找到一对可达的超边
                 }
@@ -707,10 +770,6 @@ public:
 
         return false; // 所有笛卡尔积对都不可达
     }
-
-
-
-
 
     // 计算所有连通分量 - 优化使用缓存的并查集
     std::vector<std::vector<int>> getConnectedComponents()
@@ -847,6 +906,8 @@ private:
     // 新增：存储不同交集约束下的无向加权图
     static const int MAX_INTERSECTION_SIZE = 10;
     std::vector<std::unique_ptr<WeightedGraph>> weighted_graphs; // 索引对应交集大小
+    std::unique_ptr<WeightedGraph> pll_graph;                    // 专门为pll做的图，权值全保留
+    std::unique_ptr<PrunedLandmarkIndex> pll;
     bool graphs_built = false;                                   // 标记图是否已构建
 };
 
