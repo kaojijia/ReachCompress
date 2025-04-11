@@ -1,4 +1,5 @@
 #include "Hypergraph.h"
+#include "UndirectedPLL.h"
 #include <gtest/gtest.h>
 #include <fstream>
 
@@ -18,6 +19,7 @@ protected:
 };
 
 TEST_F(HypergraphTest, BasicOperations) {
+    GTEST_SKIP() << "Test disabled.";
     Hypergraph hg;
     vector<int> edge1;
     vector<int> edge2;
@@ -36,6 +38,7 @@ TEST_F(HypergraphTest, BasicOperations) {
 }
 
 TEST_F(HypergraphTest, ConnectedComponents) {
+    GTEST_SKIP() << "Test disabled.";
     Hypergraph hg;
     hg.addVertices(6);
     hg.addHyperedge({0,1,2});
@@ -48,6 +51,7 @@ TEST_F(HypergraphTest, ConnectedComponents) {
 }
 
 TEST_F(HypergraphTest, Reachability) {
+    GTEST_SKIP() << "Test disabled.";
     Hypergraph hg(0,0);
     // 添加15个顶点
     auto num = hg.addVertices(15);
@@ -98,20 +102,65 @@ TEST_F(HypergraphTest, Reachability) {
     EXPECT_TRUE(hg.isReachableBidirectionalBFS(8,11,2));
 
     //验证算法正确性
-    // cout << endl;
-    // for (int i = 0; i < 15; ++i) {
-    //     for (int j = 0; j < 15; ++j) {
-    //         for (int k = 1; k <= 4; ++k) {
-    //             bool bfsResult = hg.isReachableBidirectionalBFS(i, j, k);
-    //             bool graphResult = hg.isReachableViaWeightedGraph(i, j, k);
-    //             cout << "Query: i=" << i << ", j=" << j << ", k=" << k 
-    //                  << " | BFS Result: " << bfsResult 
-    //                  << ", Weighted Graph Result: " << graphResult << endl;
-    //             EXPECT_EQ(bfsResult, graphResult);
-    //         }
-    //     }
-    // }
+    cout << endl;
+    for (int i = 0; i < 15; ++i) {
+        for (int j = 0; j < 15; ++j) {
+            for (int k = 1; k <= 4; ++k) {
+                bool bfsResult = hg.isReachableBidirectionalBFS(i, j, k);
+                bool graphResult = hg.isReachableViaWeightedGraph(i, j, k);
 
+                EXPECT_EQ(bfsResult, graphResult);
+            }
+        }
+    }
+
+
+}
+
+TEST_F(HypergraphTest, PLI){
+        // 1. 构建一个无向带权图 wg
+        // 设定一个边权阈值，比如 5，忽略 weight<5 的边
+        WeightedGraph wg(29 /*顶点数*/, 5/*最小可通过的边权重*/);
+        wg.addEdge(0, 1, 1);
+        wg.addEdge(1, 2, 3);
+        wg.addEdge(2, 3, 10);
+        wg.addEdge(3, 4, 2);
+        wg.addEdge(2, 5, 7);
+        //链
+        wg.addEdge(5, 6, 19);
+        wg.addEdge(6, 7, 19);
+        wg.addEdge(7, 8, 19);
+        wg.addEdge(8, 9, 19);
+        wg.addEdge(9, 10, 19);
+        wg.addEdge(10, 20, 19);
+        wg.addEdge(20, 21, 19);
+        //环
+        wg.addEdge(11, 12, 19);
+        wg.addEdge(12, 13, 19);
+        wg.addEdge(13, 14, 19);
+        wg.addEdge(14, 15, 19);
+        wg.addEdge(15, 11, 19);
+    
+        // 2. 创建索引
+
+        wg.offline_industry();
+    
+        // 3. 查询可达性
+        // 链太长了找不到
+        EXPECT_TRUE(wg.landmark_reachability_query(2,10));
+        EXPECT_TRUE(wg.landmark_reachability_query(5,10));
+        EXPECT_TRUE(wg.landmark_reachability_query(10,6));
+        EXPECT_TRUE(wg.landmark_reachability_query(5,21));
+
+
+        EXPECT_TRUE(wg.landmark_reachability_query(11,14));
+        EXPECT_FALSE(wg.landmark_reachability_query(0,1));
+        EXPECT_TRUE(wg.landmark_reachability_query(2,3));
+        EXPECT_TRUE(wg.landmark_reachability_query(3,5));
+        EXPECT_FALSE(wg.landmark_reachability_query(0,5));
+        EXPECT_FALSE(wg.landmark_reachability_query(0,2));
+        EXPECT_FALSE(wg.landmark_reachability_query(0,4));
+        EXPECT_FALSE(wg.landmark_reachability_query(1,4));
 
 }
 

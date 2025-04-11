@@ -350,7 +350,7 @@ public:
             for (int min_size = 0; min_size <= MAX_INTERSECTION_SIZE; min_size++)
             {
                 // 创建对应约束级别的图
-                weighted_graphs[min_size] = std::make_unique<WeightedGraph>(hyperedges.size());
+                weighted_graphs[min_size] = std::make_unique<WeightedGraph>(hyperedges.size(),min_size);
 
                 // 只添加满足约束的边
                 for (const auto &[i, j, size] : all_edge_pairs)
