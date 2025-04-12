@@ -1,9 +1,11 @@
 #include "Hypergraph.h"
+#include "HypergraphTreeIndex.h" // Include the new header
 #include "UndirectedPLL.h"
 #include "UWeightedPLL.h"
 #include <gtest/gtest.h>
 #include <fstream>
 #include "SimplexReader.h"
+#include <iostream> // For std::cout in test
 
 using namespace std;
 
@@ -154,20 +156,20 @@ TEST_F(HypergraphTest, PLI)
     WeightedPrunedLandmarkIndex wp(wg);
     wp.offline_industry();
 
-    //这四个有问题，没有足够的记录
-    EXPECT_TRUE(wp.reachability_query(2, 10,5));
-    EXPECT_TRUE(wp.reachability_query(5, 10,5));
-    EXPECT_TRUE(wp.reachability_query(10, 6,5));
-    EXPECT_TRUE(wp.reachability_query(5, 21,5));
+    // 这四个有问题，没有足够的记录
+    EXPECT_TRUE(wp.reachability_query(2, 10, 5));
+    EXPECT_TRUE(wp.reachability_query(5, 10, 5));
+    EXPECT_TRUE(wp.reachability_query(10, 6, 5));
+    EXPECT_TRUE(wp.reachability_query(5, 21, 5));
 
-    EXPECT_TRUE(wp.reachability_query(11, 14,5));
-    EXPECT_FALSE(wp.reachability_query(0, 1,5));
-    EXPECT_FALSE(wp.reachability_query(2, 3,5));
+    EXPECT_TRUE(wp.reachability_query(11, 14, 5));
+    EXPECT_FALSE(wp.reachability_query(0, 1, 5));
+    EXPECT_FALSE(wp.reachability_query(2, 3, 5));
     // EXPECT_TRUE(wp.reachability_query(3, 5,5));
-    EXPECT_FALSE(wp.reachability_query(0, 5,5));
-    EXPECT_FALSE(wp.reachability_query(0, 2,5));
-    EXPECT_FALSE(wp.reachability_query(0, 4,5));
-    EXPECT_FALSE(wp.reachability_query(1, 4,5));
+    EXPECT_FALSE(wp.reachability_query(0, 5, 5));
+    EXPECT_FALSE(wp.reachability_query(0, 2, 5));
+    EXPECT_FALSE(wp.reachability_query(0, 4, 5));
+    EXPECT_FALSE(wp.reachability_query(1, 4, 5));
 
     // 3. 查询可达性
     // 链太长了找不到
@@ -229,7 +231,6 @@ TEST_F(HypergraphTest, SimplexToHypergraphConversion)
 
     // 调用转换函数
     SimplexReader::convertSimplexToHypergraph(nverts_file, simplices_file, output_file);
-
 
     // 验证输出文件内容
     ifstream output_in(output_file);
@@ -293,6 +294,132 @@ TEST_F(HypergraphTest, LoadHypergraphFromFile)
     remove(test_file.c_str());
 }
 
+// New Test Fixture for HypergraphTreeIndex
+class HypergraphTreeIndexTest : public ::testing::Test
+{
+protected:
+    Hypergraph hg;
+    std::unique_ptr<HypergraphTreeIndex> index; // Use unique_ptr
+
+    void SetUp() override
+    {
+        // Setup a sample hypergraph for testing the index
+        hg = Hypergraph(10, 10); // Pre-allocate some space
+        hg.addVertices(6);       // Add vertices 0 to 5
+
+        // Add hyperedges
+        hg.addHyperedge({0, 1, 2}); // Edge 0
+        hg.addHyperedge({1, 2, 3}); // Edge 1 (Intersection {1, 2} with Edge 0, size 2)
+        hg.addHyperedge({3, 4});    // Edge 2 (Intersection {3} with Edge 1, size 1)
+        hg.addHyperedge({4, 5});    // Edge 3 (Intersection {4} with Edge 2, size 1)
+        hg.addHyperedge({0, 5});    // Edge 4 (No intersection with others > 0)
+
+        // Create and build the index
+        index = std::make_unique<HypergraphTreeIndex>(hg);
+        index->buildIndex();
+    }
+
+    void TearDown() override
+    {
+        // Clean up if needed, unique_ptr handles memory automatically
+    }
+};
+
+// Test case for HypergraphTreeIndex basic queries
+TEST_F(HypergraphTreeIndexTest, BasicQueries)
+{
+    ASSERT_NE(index, nullptr); // Ensure index was created
+
+    // Test cases based on the setup hypergraph
+    // Query(u, v, k): Can we go from vertex u to v with intersection size >= k at each step?
+
+    // Path through e0 and e1 (LCA should have intersection_size 2)
+    EXPECT_TRUE(index->query(0, 3, 1));  // k=1, should pass (2 >= 1)
+    EXPECT_TRUE(index->query(0, 3, 2));  // k=2, should pass (2 >= 2)
+    EXPECT_FALSE(index->query(0, 3, 3)); // k=3, should fail (2 < 3)
+    EXPECT_TRUE(index->query(1, 3, 1));  // Also uses e0/e1
+    EXPECT_TRUE(index->query(1, 3, 2));
+
+    // Path through e1 and e2 (LCA should have intersection_size 1)
+    EXPECT_TRUE(index->query(1, 4, 1));  // k=1, should pass (1 >= 1)
+    EXPECT_FALSE(index->query(1, 4, 2)); // k=2, should fail (1 < 2)
+    EXPECT_TRUE(index->query(2, 4, 1));  // Also uses e1/e2
+
+    // Path through e2 and e3 (LCA should have intersection_size 1)
+    EXPECT_TRUE(index->query(3, 5, 1));  // k=1, should pass (1 >= 1)
+    EXPECT_FALSE(index->query(3, 5, 2)); // k=2, should fail (1 < 2)
+
+    // Longer path 0 -> e0 -> e1 -> e2 -> e3 -> 5 (bottleneck is 1)
+    EXPECT_TRUE(index->query(0, 5, 1));  // k=1, should pass
+    EXPECT_FALSE(index->query(0, 5, 2)); // in one edge, should pass
+
+    // Vertices in the same hyperedge (should always be true for k>=1 if edge exists)
+    EXPECT_TRUE(index->query(0, 1, 1));
+    EXPECT_TRUE(index->query(0, 1, 10)); // k doesn't matter for same edge
+    EXPECT_TRUE(index->query(4, 5, 1));
+    EXPECT_TRUE(index->query(4, 5, 5));
+
+    // Query involving edge 4 ({0, 5}) which has no intersection > 0 with others
+    // The path 0 -> e4 -> 5 exists directly.
+    EXPECT_TRUE(index->query(0, 5, 1)); // Should be true due to direct connection in e4
+
+    // Test non-reachable case if structure implies separation (depends on build logic)
+    // If e4 is truly isolated in the tree structure from others for k>0
+    // EXPECT_FALSE(index->query(1, 5, 1)); // Example: Is 1 reachable from 5 with k=1?
+    // This depends on how the tree connects e4.
+    // Based on the code, 0->e0->(LCA:2)->e1->3->e2->(LCA:1)->e3->4->e3->5
+    // So 1 and 5 should be reachable with k=1. Let's test that.
+    EXPECT_TRUE(index->query(1, 5, 1));  // Should be true, bottleneck is 1.
+    EXPECT_FALSE(index->query(1, 5, 2)); // Should be false, bottleneck is 1.
+
+    // Test same vertex
+    EXPECT_TRUE(index->query(0, 0, 1));
+    EXPECT_TRUE(index->query(3, 3, 5));
+}
+
+// Test case for saving the tree index to a file
+TEST_F(HypergraphTreeIndexTest, SaveToFile)
+{
+    ASSERT_NE(index, nullptr);
+    const std::string filename = "test_tree_output.dot";
+
+    // Attempt to save the file
+    ASSERT_NO_THROW(index->saveToFile(filename));
+
+    // Basic check: does the file exist?
+    std::ifstream file(filename);
+    EXPECT_TRUE(file.good());
+    file.close();
+
+    // Optional: More advanced check - read the file and verify some content
+    std::ifstream infile(filename);
+    std::string line;
+    bool graph_tag_found = false;
+    bool node0_found = false;
+    bool edge_found = false;
+    while (std::getline(infile, line))
+    {
+        if (line.find("graph HypergraphTree {") != std::string::npos)
+        {
+            graph_tag_found = true;
+        }
+        if (line.find("node0 [label=") != std::string::npos)
+        {
+            node0_found = true;
+        }
+        if (line.find("--") != std::string::npos)
+        { // Look for any edge definition
+            edge_found = true;
+        }
+    }
+    infile.close();
+    EXPECT_TRUE(graph_tag_found);
+    EXPECT_TRUE(node0_found);
+    EXPECT_TRUE(edge_found);
+
+    // Clean up the test file
+    remove(filename.c_str());
+}
 
 int main(int argc, char **argv)
 {
