@@ -305,7 +305,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
 {
     // 加载超图数据 - 替换为你的实际大型数据集路径
     // 如果没有大型数据集，可以使用下面的测试文件，但结果可能不显著
-    const string hypergraph_file = PROJECT_ROOT_DIR"/Edges/Hyper/test1"; 
+    const string hypergraph_file = PROJECT_ROOT_DIR"/Edges/Hyper/Hyper_test1"; 
 
     Hypergraph hg;
     try {
