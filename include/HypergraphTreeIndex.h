@@ -139,32 +139,61 @@ public:
                 TreeNodePtr root1_node = nodes_[root1_id]; // 获取根节点1的指针
                 TreeNodePtr root2_node = nodes_[root2_id]; // 获取根节点2的指针
 
-                // 创建新的父节点（内部节点）
-                int parent_node_id = next_node_id_++;
-                TreeNodePtr parent = std::make_shared<TreeNode>(parent_node_id);
-                parent->is_leaf = false;
-                parent->intersection_size = size;       // 记录交集大小作为瓶颈
-                parent->intersection_vertices = vertices; // 记录交集顶点
-                parent->children.push_back(root1_node); // 添加子节点
-                parent->children.push_back(root2_node);
-
-                // 设置子节点的父节点指针（弱引用）
-                root1_node->parent = parent;
-                root2_node->parent = parent;
-
-                // 将新父节点加入节点列表
-                if (parent_node_id >= nodes_.size()) {
-                    nodes_.resize(parent_node_id + 1); // 动态扩展节点列表
+                // 新增合并逻辑：优先合并到现有内部节点（如果交集匹配）
+                bool merged = false;
+                
+                // 检查root1是否是内部节点且当前交集与其记录的交集完全一致
+                if (!root1_node->is_leaf && 
+                    root1_node->intersection_size == size &&
+                    root1_node->intersection_vertices == vertices) {
+                    
+                    // 将root2子树合并到root1节点下
+                    root1_node->children.push_back(root2_node); // 添加子节点
+                    root2_node->parent = root1_node;            // 更新父指针
+                    dsu_parent_[root2_id] = root1_id;           // 更新并查集
+                    merged = true;
                 }
-                nodes_[parent_node_id] = parent;
-
-                // 更新并查集：将两个子树的根指向新的父节点
-                if (parent_node_id >= dsu_parent_.size()) {
-                    dsu_parent_.resize(parent_node_id + 1); // 动态扩展并查集数组
+                // 检查root2是否是内部节点且当前交集与其记录的交集完全一致
+                else if (!root2_node->is_leaf && 
+                        root2_node->intersection_size == size &&
+                        root2_node->intersection_vertices == vertices) {
+                    
+                    // 将root1子树合并到root2节点下
+                    root2_node->children.push_back(root1_node); // 添加子节点
+                    root1_node->parent = root2_node;            // 更新父指针
+                    dsu_parent_[root1_id] = root2_id;           // 更新并查集
+                    merged = true;
                 }
-                dsu_parent_[parent_node_id] = parent_node_id; // 新父节点指向自己
-                dsu_parent_[root1_id] = parent_node_id;       // 子树根1指向新父节点
-                dsu_parent_[root2_id] = parent_node_id;       // 子树根2指向新父节点
+
+                // 如果没有匹配的现有内部节点，则创建新父节点（保留原有逻辑）
+                if (!merged) {
+                    // 创建新的父节点（内部节点）
+                    int parent_node_id = next_node_id_++;
+                    TreeNodePtr parent = std::make_shared<TreeNode>(parent_node_id);
+                    parent->is_leaf = false;
+                    parent->intersection_size = size;       // 记录交集大小作为瓶颈
+                    parent->intersection_vertices = vertices; // 记录交集顶点
+                    parent->children.push_back(root1_node); // 添加子节点
+                    parent->children.push_back(root2_node);
+
+                    // 设置子节点的父节点指针（弱引用）
+                    root1_node->parent = parent;
+                    root2_node->parent = parent;
+
+                    // 将新父节点加入节点列表
+                    if (parent_node_id >= nodes_.size()) {
+                        nodes_.resize(parent_node_id + 1); // 动态扩展节点列表
+                    }
+                    nodes_[parent_node_id] = parent;
+
+                    // 更新并查集：将两个子树的根指向新的父节点
+                    if (parent_node_id >= dsu_parent_.size()) {
+                        dsu_parent_.resize(parent_node_id + 1); // 动态扩展并查集数组
+                    }
+                    dsu_parent_[parent_node_id] = parent_node_id; // 新父节点指向自己
+                    dsu_parent_[root1_id] = parent_node_id;       // 子树根1指向新父节点
+                    dsu_parent_[root2_id] = parent_node_id;       // 子树根2指向新父节点
+                }
             }
         }
 
