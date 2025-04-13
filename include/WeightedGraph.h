@@ -8,6 +8,7 @@
 #include <memory>
 #include <queue>
 #include <utility>
+#include <numeric> // For std::accumulate
 
 using namespace std;
 
@@ -48,9 +49,12 @@ public:
         }
     }
 
-private:
+    // Make parent and rank public for memory calculation or add getters
     std::vector<int> parent;
     std::vector<int> rank;
+
+private:
+
 };
 
 // 无向带权图类 - 简化版本
@@ -126,12 +130,18 @@ public:
     // 获取边数
     size_t numEdges() const
     {
-        size_t total = 0;
-        for (const auto &neighbors : adj_list)
+        size_t edge_count = 0;
+        for (size_t u = 0; u < adj_list.size(); ++u)
         {
-            total += neighbors.size();
+            for (const auto &edge : adj_list[u])
+            {
+                if (u < static_cast<size_t>(edge.first))
+                {
+                    edge_count++;
+                }
+            }
         }
-        return total / 2; // 每条边被计数两次
+        return edge_count;
     }
 
     // 获取顶点的邻接表
@@ -148,19 +158,20 @@ public:
         // 创建新并查集
         ds = std::make_unique<GraphDisjointSets>(adj_list.size());
 
-        // 遍历所有边，合并连通的顶点
+        // 遍历所有边，合并连通的顶点 (只考虑权重 >= min_weight 的边)
         for (size_t u = 0; u < adj_list.size(); u++)
         {
-            for (const auto &[v, _] : adj_list[u])
+            for (const auto &[v, weight] : adj_list[u])
             {
-                if (u < v)
-                { // 只处理每条边一次
+                // 只处理每条边一次，并且只考虑权重符合要求的边
+                if (u < static_cast<size_t>(v) && static_cast<size_t>(weight) >= min_weight)
+                {
                     ds->merge(u, v);
                 }
             }
         }
-        // 2. 构建剪枝地标索引
-        buildPrunedLandmarkIndex();
+        // 2. 构建剪枝地标索引，先不做
+        // buildPrunedLandmarkIndex();
     }
 
     // 2. 基于并查集的可达性查询 - 假设已调用offline_industry
@@ -172,6 +183,13 @@ public:
 
         if (source == target)
             return true;
+
+        // 检查 ds 是否已构建
+        if (!ds) {
+             // 如果尚未构建，可能需要抛出错误或惰性构建
+             // 这里选择抛出错误，因为查询依赖于 offline_industry
+             throw std::runtime_error("Disjoint set not built. Call offline_industry first.");
+        }
 
         // 使用并查集检查连通性
         return ds->find(source) == ds->find(target);
@@ -190,6 +208,39 @@ public:
         // 直接判断 labels[u] & labels[v] 是否有交集
         return intersect(labels[u], labels[v]);
     }
+
+    // 新增：估算邻接表占用的内存（MB）
+    double getAdjListMemoryUsageMB() const {
+        size_t memory_bytes = 0;
+        memory_bytes += sizeof(adj_list); // Outer vector object itself
+        for(const auto& neighbors : adj_list) {
+            memory_bytes += sizeof(neighbors); // Inner vector object itself
+            // Memory for the elements (pairs) - using capacity for better estimate
+            memory_bytes += neighbors.capacity() * sizeof(std::pair<int, int>);
+        }
+        return static_cast<double>(memory_bytes) / (1024.0 * 1024.0); // Convert bytes to MB
+    }
+
+    // 新增：估算内部并查集占用的内存（MB）
+    double getDsMemoryUsageMB() const {
+        size_t memory_bytes = 0;
+        if (ds) {
+            memory_bytes += sizeof(*ds); // Size of the DisjointSets object itself
+            memory_bytes += ds->parent.capacity() * sizeof(int); // Memory for parent vector
+            memory_bytes += ds->rank.capacity() * sizeof(int);   // Memory for rank vector
+        }
+        return static_cast<double>(memory_bytes) / (1024.0 * 1024.0); // Convert bytes to MB
+    }
+
+    // 获取总内存占用 (MB)
+    double getMemoryUsageMB() const {
+        return getAdjListMemoryUsageMB() + getDsMemoryUsageMB();
+    }
+
+    // 允许 Hypergraph 访问内部数据以进行内存估计
+    friend class Hypergraph;
+    // 允许 WeightedPrunedLandmarkIndex 访问内部数据
+    friend class WeightedPrunedLandmarkIndex;
 
 private:
 

@@ -3,6 +3,8 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include <numeric> // For std::accumulate
+#include <limits>  // For std::numeric_limits
 
 /*
  * WeightedPrunedLandmarkIndex 实现了基于 2-hop 索引的无向加权图可达性（LCR）查询。
@@ -43,6 +45,32 @@ public:
     // 如果在查询时 u 与 v 存在公共 landmark，其记录的瓶颈值（取二者较小值） ≥ queryThreshold，则返回 true
     bool reachability_query(int u, int v, int queryThreshold) const;
 
+    // 新增：获取索引中存储的标签总数
+    size_t getTotalLabelSize() const {
+        size_t total_size = 0;
+        for (const auto& vec : label) {
+            total_size += vec.size();
+        }
+        return total_size;
+    }
+
+    // 允许 Hypergraph 访问内部数据以进行内存估计
+    const std::vector<std::vector<std::pair<int, int>>>& getLabels() const {
+        return label;
+    }
+
+    // 新增：估算此 WeightedPrunedLandmarkIndex 对象占用的内存（MB）
+    double getMemoryUsageMB() const {
+        size_t memory_bytes = 0;
+        memory_bytes += sizeof(label); // Outer vector object itself
+        for(const auto& vec : label) {
+            memory_bytes += sizeof(vec); // Inner vector object itself
+            // Memory for the elements (pairs) - using capacity for better estimate
+            memory_bytes += vec.capacity() * sizeof(std::pair<int, int>);
+        }
+        return static_cast<double>(memory_bytes) / (1024.0 * 1024.0); // Convert bytes to MB
+    }
+
 private:
     const WeightedGraph &g;
     int weightThreshold; // 内部剪枝时可用，通常设为 0 表示不额外过滤
@@ -66,8 +94,6 @@ private:
                                   const std::vector<std::pair<int, int>> &b,
                                   int threshold) const;
 };
-
-
 
 // ----------------------- 实现部分 -------------------------
 
