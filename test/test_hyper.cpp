@@ -12,6 +12,7 @@
 #include <iomanip> // For std::setw, std::fixed, std::setprecision
 #include <thread>  // Include thread header
 #include <atomic>  // Potentially useful for shared flags/counters if needed
+#include <map>     // For storing generated queries by type
 
 using namespace std;
 using namespace std::chrono;
@@ -307,7 +308,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
 {
     // 加载超图数据
     // const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/test1";
-    const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/random_hypergraph";
+    const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/random_hypergraph_4";
     Hypergraph hg;
     try {
         hg = Hypergraph::fromFile(hypergraph_file);
@@ -388,7 +389,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
          }
          auto start = high_resolution_clock::now();
          try {
-             tree_index_ptr->buildIndex();
+             tree_index_ptr->buildIndexSizeOnly();
          } catch (const std::exception& e) {
              cerr << "Error in TreeIndex build thread: " << e.what() << endl;
              tree_build_error = true;
@@ -459,11 +460,11 @@ TEST_F(HypergraphTest, PerformanceComparison)
     cout << "   - Calc: Sum of nodes, pointers, vectors (using capacity)" << endl;
 
     // --- 准备查询 ---
-    const int num_queries = 1000;
+    const int num_queries = 3000;
     std::vector<std::tuple<int, int, int>> queries;
     std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> vertex_dist(0, hg.numVertices() - 1);
-    std::uniform_int_distribution<int> k_dist(1, Hypergraph::MAX_INTERSECTION_SIZE);
+    std::uniform_int_distribution<int> k_dist(3, Hypergraph::MAX_INTERSECTION_SIZE);
 
     cout << "\nGenerating " << num_queries << " random queries (k range [1, " << Hypergraph::MAX_INTERSECTION_SIZE << "])..." << endl;
     for (int i = 0; i < num_queries; ++i) {
@@ -473,6 +474,9 @@ TEST_F(HypergraphTest, PerformanceComparison)
         queries.emplace_back(u, v, k);
     }
 
+
+
+    
     // --- 执行并计时查询 ---
     cout << "Running queries..." << endl;
     long long bfs_time_ns = 0;
@@ -513,7 +517,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
 
     auto start_tree_index = high_resolution_clock::now();
     for (const auto& q : queries) {
-         if (tree_index->query(get<0>(q), get<1>(q), get<2>(q))) {
+         if (tree_index->querySizeOnly(get<0>(q), get<1>(q), get<2>(q))) {
              tree_index_true_count++;
          }
     }

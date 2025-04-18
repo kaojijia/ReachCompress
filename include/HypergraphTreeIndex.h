@@ -469,6 +469,252 @@ public:
         return false; // 遍历完所有组合仍未找到满足条件的路径
     }
 
+    // --- 新增：只存储交集大小的构建方法 ---
+    void buildIndexSizeOnly()
+    {
+        int num_hyperedges = hypergraph_.numHyperedges();
+        if (num_hyperedges == 0) return;
+
+        // 清理旧数据 (与 buildIndex 相同)
+        nodes_.clear();
+        roots_.clear();
+        next_node_id_ = 0;
+        if (hyperedge_to_leaf_.size() < num_hyperedges) {
+            hyperedge_to_leaf_.resize(num_hyperedges, nullptr);
+        } else {
+            std::fill(hyperedge_to_leaf_.begin(), hyperedge_to_leaf_.end(), nullptr);
+        }
+        dsu_parent_.clear();
+
+        // 1. 创建叶子节点 (与 buildIndex 相同)
+        std::vector<TreeNodePtr> current_leaf_nodes;
+        current_leaf_nodes.reserve(num_hyperedges);
+        for (int i = 0; i < num_hyperedges; ++i) {
+            if (hypergraph_.getHyperedge(i).size() == 0) continue;
+            TreeNodePtr leaf = std::make_shared<TreeNode>(next_node_id_++);
+            leaf->is_leaf = true;
+            leaf->hyperedge_id = i;
+            nodes_.push_back(leaf);
+            if (i < hyperedge_to_leaf_.size()) {
+                hyperedge_to_leaf_[i] = leaf;
+            } else {
+                throw std::out_of_range("Hyperedge ID out of range for hyperedge_to_leaf_ vector");
+            }
+            current_leaf_nodes.push_back(leaf);
+        }
+
+        if (current_leaf_nodes.empty()) return;
+
+        // 2. 并行计算所有叶子节点对之间的交集大小
+        // 注意：这里存储的 tuple 不再包含 std::vector<int>
+        std::vector<std::tuple<int, int, int>> merge_candidates; // (交集大小, 节点1ID, 节点2ID)
+        std::mutex merge_candidates_mutex;
+        size_t num_leaves = current_leaf_nodes.size();
+        unsigned int num_threads = std::thread::hardware_concurrency();
+        if (num_threads == 0) num_threads = 1;
+        std::vector<std::thread> threads(num_threads);
+
+        merge_candidates.reserve(num_leaves * (num_leaves - 1) / 2);
+
+        auto calculate_leaf_intersections_size_only =
+            [&](size_t start_idx, size_t end_idx) {
+            // 注意：局部结果也不再包含 std::vector<int>
+            std::vector<std::tuple<int, int, int>> local_candidates;
+            local_candidates.reserve((end_idx - start_idx) * num_leaves / 2);
+
+            for (size_t i = start_idx; i < end_idx; ++i) {
+                for (size_t j = i + 1; j < num_leaves; ++j) {
+                    // calculate_intersection 返回 pair<int, vector<int>>
+                    // 我们只关心第一个元素 (size)
+                    auto intersection_result = calculate_intersection(current_leaf_nodes[i], current_leaf_nodes[j]);
+                    int intersection_size = intersection_result.first;
+
+                    if (intersection_size > 0) {
+                        // 只存储大小和节点 ID
+                        local_candidates.emplace_back(intersection_size, current_leaf_nodes[i]->node_id, current_leaf_nodes[j]->node_id);
+                    }
+                }
+            }
+            std::lock_guard<std::mutex> lock(merge_candidates_mutex);
+            // 直接插入，因为 tuple 不包含需要移动的大对象
+             merge_candidates.insert(merge_candidates.end(), local_candidates.begin(), local_candidates.end());
+        };
+
+        size_t chunk_size = (num_leaves + num_threads - 1) / num_threads;
+        size_t current_start = 0;
+        for (unsigned int t = 0; t < num_threads; ++t) {
+            size_t current_end = std::min(current_start + chunk_size, num_leaves);
+            if (current_start >= current_end) break;
+            // 使用新的 lambda 函数
+            threads[t] = std::thread(calculate_leaf_intersections_size_only, current_start, current_end);
+            current_start = current_end;
+        }
+
+        for (unsigned int t = 0; t < threads.size(); ++t) {
+            if (threads[t].joinable()) {
+                threads[t].join();
+            }
+        }
+
+        // 3. 按交集大小降序排序合并候选
+        // 注意：排序不再需要比较顶点列表
+        std::sort(merge_candidates.begin(), merge_candidates.end(),
+                  [](const auto &a, const auto &b) {
+                      // 只按交集大小降序排列
+                      return std::get<0>(a) > std::get<0>(b);
+                  });
+
+        // 初始化并查集 (与 buildIndex 相同)
+        dsu_parent_.resize(next_node_id_);
+        for (int i = 0; i < next_node_id_; ++i) {
+            dsu_parent_[i] = i;
+        }
+
+        // 4. 使用并查集合并节点，创建内部节点
+        for (const auto &candidate : merge_candidates) {
+            int size = std::get<0>(candidate);     // 交集大小
+            int node1_id = std::get<1>(candidate); // 节点1 ID
+            int node2_id = std::get<2>(candidate); // 节点2 ID
+
+            int root1_id = find_set(node1_id);
+            int root2_id = find_set(node2_id);
+
+            if (root1_id != root2_id && root1_id != -1 && root2_id != -1) {
+                TreeNodePtr root1_node = nodes_[root1_id];
+                TreeNodePtr root2_node = nodes_[root2_id];
+
+                // --- 合并逻辑简化：不再检查 intersection_vertices ---
+                bool merged = false;
+                 auto updateDsu = [&](const auto &self, TreeNodePtr node, int new_root_id) -> void
+                {
+                    dsu_parent_[node->node_id] = new_root_id;
+                    for (auto &child : node->children)
+                    {
+                        self(self, child, new_root_id);
+                    }
+                };
+
+                // 检查是否可以合并到现有内部节点 (只比较 size)
+                if (!root1_node->is_leaf && root1_node->intersection_size == size) {
+                    // 将 root2 合并到 root1
+                    root1_node->children.push_back(root2_node);
+                    root2_node->parent = root1_node;
+                    updateDsu(updateDsu, root2_node, root1_id); // 更新 root2 子树的 DSU
+                    dsu_parent_[root2_id] = root1_id;
+                    merged = true;
+                } else if (!root2_node->is_leaf && root2_node->intersection_size == size) {
+                     // 将 root1 合并到 root2
+                    root2_node->children.push_back(root1_node);
+                    root1_node->parent = root2_node;
+                    updateDsu(updateDsu, root1_node, root2_id); // 更新 root1 子树的 DSU
+                    dsu_parent_[root1_id] = root2_id;
+                    merged = true;
+                }
+
+
+                // 如果没有合并到现有节点，则创建新父节点
+                if (!merged) {
+                    int parent_node_id = next_node_id_++;
+                    TreeNodePtr parent = std::make_shared<TreeNode>(parent_node_id);
+                    parent->is_leaf = false;
+                    parent->intersection_size = size; // 只记录交集大小
+                    // parent->intersection_vertices 不再需要赋值
+
+                    parent->children.push_back(root1_node);
+                    parent->children.push_back(root2_node);
+                    root1_node->parent = parent;
+                    root2_node->parent = parent;
+
+                    if (parent_node_id >= nodes_.size()) {
+                        nodes_.resize(parent_node_id + 1);
+                    }
+                    nodes_[parent_node_id] = parent;
+
+                    if (parent_node_id >= dsu_parent_.size()) {
+                        dsu_parent_.resize(parent_node_id + 1);
+                    }
+                    dsu_parent_[parent_node_id] = parent_node_id;
+                    dsu_parent_[root1_id] = parent_node_id;
+                    dsu_parent_[root2_id] = parent_node_id;
+                }
+            }
+        }
+
+        // 5. 确定所有树的根节点 (与 buildIndex 相同)
+        roots_.clear();
+        std::vector<bool> is_root_added(next_node_id_, false);
+        for (int i = 0; i < next_node_id_; ++i) {
+            if (i < nodes_.size() && nodes_[i] && nodes_[i]->parent.expired()) {
+                int root_id = find_set(i);
+                if (root_id != -1 && root_id < is_root_added.size() && !is_root_added[root_id]) {
+                     if (root_id < nodes_.size() && nodes_[root_id]) {
+                        roots_.push_back(nodes_[root_id]);
+                        is_root_added[root_id] = true;
+                    }
+                }
+            }
+        }
+
+        // 6. 对每棵树进行 LCA 预计算 (与 buildIndex 相同)
+        if (up_.size() < next_node_id_) {
+            up_.resize(next_node_id_);
+        }
+        for (int i = 0; i < next_node_id_; ++i) {
+            up_[i].assign(MAX_LCA_LOG, nullptr);
+        }
+        for (const auto &root : roots_) {
+            precompute_lca(root, 0);
+        }
+    }
+
+    // --- 新增：使用只存储大小的索引进行查询 ---
+    // 这个函数的逻辑与原 query 函数几乎完全相同，因为原函数主要依赖 intersection_size
+    bool querySizeOnly(int u, int v, int k)
+    {
+        if (u == v) return true;
+
+        const auto &edges_u = hypergraph_.getIncidentHyperedges(u);
+        const auto &edges_v = hypergraph_.getIncidentHyperedges(v);
+
+        if (edges_u.empty() || edges_v.empty()) return false;
+
+        // 检查共享超边 (与 query 相同)
+        int max_edge_id = hypergraph_.numHyperedges();
+        std::vector<bool> v_edge_flags(max_edge_id, false);
+        for (int edge_id_v : edges_v) {
+            if (edge_id_v >= 0 && edge_id_v < max_edge_id) {
+                v_edge_flags[edge_id_v] = true;
+            }
+        }
+        for (int edge_id_u : edges_u) {
+            if (edge_id_u >= 0 && edge_id_u < max_edge_id && v_edge_flags[edge_id_u]) {
+                return true; // 直接可达
+            }
+        }
+
+        // 遍历所有超边对，查找 LCA (与 query 相同)
+        for (int edge_id_u : edges_u)
+        {
+            if (edge_id_u < 0 || edge_id_u >= hyperedge_to_leaf_.size() || !hyperedge_to_leaf_[edge_id_u]) continue;
+            TreeNodePtr leaf_u = hyperedge_to_leaf_[edge_id_u];
+
+            for (int edge_id_v : edges_v)
+            {
+                if (edge_id_v < 0 || edge_id_v >= hyperedge_to_leaf_.size() || !hyperedge_to_leaf_[edge_id_v]) continue;
+                TreeNodePtr leaf_v = hyperedge_to_leaf_[edge_id_v];
+
+                TreeNodePtr lca_node = find_lca(leaf_u, leaf_v);
+
+                // 检查 LCA 是否满足条件 (只依赖 intersection_size)
+                if (lca_node && !lca_node->is_leaf && lca_node->intersection_size >= k)
+                {
+                    return true; // 找到满足条件的路径
+                }
+            }
+        }
+        return false; // 未找到满足条件的路径
+    }
+
     // 将索引树保存为 DOT 文件，用于可视化
     void saveToFile(const std::string &filename) const;
 
