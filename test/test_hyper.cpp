@@ -10,6 +10,8 @@
 #include <random>   // For random number generation
 #include <vector>
 #include <iomanip> // For std::setw, std::fixed, std::setprecision
+#include <thread>  // Include thread header
+#include <atomic>  // Potentially useful for shared flags/counters if needed
 
 using namespace std;
 using namespace std::chrono;
@@ -303,10 +305,9 @@ TEST_F(HypergraphTest, LoadHypergraphFromFile)
 // --- 性能对比测试 ---
 TEST_F(HypergraphTest, PerformanceComparison)
 {
-    // 加载超图数据 - 替换为你的实际大型数据集路径
-    // 如果没有大型数据集，可以使用下面的测试文件，但结果可能不显著
-    const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/test1"; 
-
+    // 加载超图数据
+    // const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/test1";
+    const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/random_hypergraph";
     Hypergraph hg;
     try {
         hg = Hypergraph::fromFile(hypergraph_file);
@@ -325,28 +326,94 @@ TEST_F(HypergraphTest, PerformanceComparison)
          return;
     }
 
-    cout << "Building indices (offline_industry for Layered DS & UWeightedPLL)..." << endl;
-    auto build_start_ds_pll = high_resolution_clock::now();
-    hg.offline_industry(); // Builds indices for Layered DS and UWeightedPLL
-    auto build_end_ds_pll = high_resolution_clock::now();
-    auto build_duration_ds_pll = duration_cast<milliseconds>(build_end_ds_pll - build_start_ds_pll);
-    cout << "Layered DS & UWeightedPLL building finished in " << build_duration_ds_pll.count() << " ms." << endl;
+    // --- Build Indices Concurrently ---
+    cout << "Building indices concurrently (Layered DS, UWeightedPLL, TreeIndex)..." << endl;
 
-    // --- 构建 HypergraphTreeIndex ---
-    cout << "Building HypergraphTreeIndex..." << endl;
+    std::chrono::milliseconds build_duration_baseline(0);
+    std::chrono::milliseconds build_duration_pll(0);
+    std::chrono::milliseconds build_duration_tree(0);
+    std::atomic<bool> baseline_build_error(false);
+    std::atomic<bool> pll_build_error(false);
+    std::atomic<bool> tree_build_error(false);
+
+
+    // Create tree_index instance before launching thread
     std::unique_ptr<HypergraphTreeIndex> tree_index;
-    auto build_start_tree = high_resolution_clock::now();
     try {
-        tree_index = std::make_unique<HypergraphTreeIndex>(hg);
-        tree_index->buildIndex();
+         tree_index = std::make_unique<HypergraphTreeIndex>(hg);
     } catch (const std::exception& e) {
-        cerr << "Error building HypergraphTreeIndex: " << e.what() << endl;
-        FAIL() << "Failed to build HypergraphTreeIndex.";
+         cerr << "Error creating HypergraphTreeIndex object: " << e.what() << endl;
+         FAIL() << "Failed to create HypergraphTreeIndex object.";
+         return;
+    }
+
+    // Thread for Layered DS (baseline) build
+    std::thread baseline_thread([&hg, &build_duration_baseline, &baseline_build_error]() {
+        auto start = high_resolution_clock::now();
+        try {
+             // Assuming offline_industry was split into public methods
+             hg.offline_industry_baseline();
+        } catch (const std::exception& e) {
+             cerr << "Error in baseline build thread: " << e.what() << endl;
+             baseline_build_error = true;
+        }
+        auto end = high_resolution_clock::now();
+        build_duration_baseline = duration_cast<milliseconds>(end - start);
+        cout << "Layered DS build completed." << endl;
+    });
+
+    // Thread for UWeightedPLL build
+    std::thread pll_thread([&hg, &build_duration_pll, &pll_build_error]() {
+        auto start = high_resolution_clock::now();
+         try {
+            // Assuming offline_industry was split into public methods
+            hg.offline_industry_pll();
+         } catch (const std::exception& e) {
+             cerr << "Error in PLL build thread: " << e.what() << endl;
+             pll_build_error = true;
+         }
+        auto end = high_resolution_clock::now();
+        build_duration_pll = duration_cast<milliseconds>(end - start);
+        cout<< "PLL build completed." << endl;
+    });
+
+    // Thread for HypergraphTreeIndex build
+    // Pass raw pointer as unique_ptr cannot be copied into lambda capture easily
+    HypergraphTreeIndex* tree_index_ptr = tree_index.get();
+    std::thread tree_thread([tree_index_ptr, &build_duration_tree, &tree_build_error]() {
+         if (!tree_index_ptr) {
+             cerr << "Error: tree_index_ptr is null in thread." << endl;
+             tree_build_error = true;
+             return;
+         }
+         auto start = high_resolution_clock::now();
+         try {
+             tree_index_ptr->buildIndex();
+         } catch (const std::exception& e) {
+             cerr << "Error in TreeIndex build thread: " << e.what() << endl;
+             tree_build_error = true;
+         }
+         auto end = high_resolution_clock::now();
+         build_duration_tree = duration_cast<milliseconds>(end - start);
+         cout << "TreeIndex build completed." << endl;
+    });
+
+    // Wait for all threads to complete
+    baseline_thread.join();
+    pll_thread.join();
+    tree_thread.join();
+
+    // Check for errors during build
+    if (baseline_build_error || pll_build_error || tree_build_error) {
+        FAIL() << "Error occurred during concurrent index building. Check logs.";
         return;
     }
-    auto build_end_tree = high_resolution_clock::now();
-    auto build_duration_tree = duration_cast<milliseconds>(build_end_tree - build_start_tree);
-    cout << "HypergraphTreeIndex building finished in " << build_duration_tree.count() << " ms." << endl;
+
+    cout << "Index building finished." << endl;
+    cout << " - Layered DS build time:          " << build_duration_baseline.count() << " ms." << endl;
+    cout << " - UWeightedPLL build time:        " << build_duration_pll.count() << " ms." << endl;
+    cout << " - HypergraphTreeIndex build time: " << build_duration_tree.count() << " ms." << endl;
+
 
     // --- 估算 BFS 运行时内存 ---
     size_t N = hg.numVertices();

@@ -12,7 +12,10 @@
 #include <string>    // For std::string
 #include <iomanip>   // For std::quoted
 #include <sstream>   // For string stream in saveToFile
-
+#include <thread> // 需要包含头文件
+#include <mutex>  // 需要包含头文件
+#include <iostream> // For std::cout in test
+#include <chrono>   // For timing
 // 前向声明 HypergraphTreeIndex 类
 class HypergraphTreeIndex;
 
@@ -95,21 +98,62 @@ public:
         }
 
         if (current_leaf_nodes.empty()) return; // 没有有效超边
-
-        // 2. 计算所有叶子节点对之间的交集
+        // 2. 并行计算所有叶子节点对之间的交集
         std::vector<std::tuple<int, std::vector<int>, int, int>> merge_candidates; // (交集大小, 交集顶点, 节点1ID, 节点2ID)
-        merge_candidates.reserve(current_leaf_nodes.size() * (current_leaf_nodes.size() - 1) / 2); // 预估候选对数量
-        for (size_t i = 0; i < current_leaf_nodes.size(); ++i) {
-            for (size_t j = i + 1; j < current_leaf_nodes.size(); ++j) {
-                auto intersection_result = calculate_intersection(current_leaf_nodes[i], current_leaf_nodes[j]);
-                int intersection_size = intersection_result.first;
-                const auto& intersection_verts = intersection_result.second;
+        std::mutex merge_candidates_mutex; // 用于保护 merge_candidates 的互斥锁
+        size_t num_leaves = current_leaf_nodes.size();
+        unsigned int num_threads = std::thread::hardware_concurrency();
+        if (num_threads == 0) num_threads = 1;
+        std::vector<std::thread> threads(num_threads);
 
-                if (intersection_size > 0) { // 只考虑有交集的对
-                    merge_candidates.emplace_back(intersection_size, intersection_verts, current_leaf_nodes[i]->node_id, current_leaf_nodes[j]->node_id);
+        // 预估候选对数量并预分配，减少后续合并时的重分配
+        merge_candidates.reserve(num_leaves * (num_leaves - 1) / 2);
+
+        auto calculate_leaf_intersections =
+            [&](size_t start_idx, size_t end_idx) {
+            std::vector<std::tuple<int, std::vector<int>, int, int>> local_candidates; // 线程局部结果
+            // 预分配局部结果，避免频繁扩容
+            local_candidates.reserve((end_idx - start_idx) * num_leaves / 2);
+
+            for (size_t i = start_idx; i < end_idx; ++i) {
+                for (size_t j = i + 1; j < num_leaves; ++j) {
+                    // 注意：calculate_intersection 内部会调用 getHyperedgeIntersection，可能较慢
+                    auto intersection_result = calculate_intersection(current_leaf_nodes[i], current_leaf_nodes[j]);
+                    int intersection_size = intersection_result.first;
+                    // 使用 std::move 移动交集顶点数据，避免拷贝
+                    std::vector<int> intersection_verts = std::move(intersection_result.second);
+
+                    if (intersection_size > 0) { // 只考虑有交集的对
+                        local_candidates.emplace_back(intersection_size, std::move(intersection_verts), current_leaf_nodes[i]->node_id, current_leaf_nodes[j]->node_id);
+                    }
                 }
             }
+            // 将局部结果合并到全局结果中（需要加锁）
+            std::lock_guard<std::mutex> lock(merge_candidates_mutex);
+            // 使用 std::move 将局部结果移动到全局结果，提高效率
+            merge_candidates.insert(merge_candidates.end(),
+                                    std::make_move_iterator(local_candidates.begin()),
+                                    std::make_move_iterator(local_candidates.end()));
+        };
+
+        // 按第一个索引 i 划分任务
+        size_t chunk_size = (num_leaves + num_threads - 1) / num_threads;
+        size_t current_start = 0;
+        for (unsigned int t = 0; t < num_threads; ++t) {
+            size_t current_end = std::min(current_start + chunk_size, num_leaves);
+            if (current_start >= current_end) break;
+            threads[t] = std::thread(calculate_leaf_intersections, current_start, current_end);
+            current_start = current_end;
         }
+
+        // 等待所有线程完成
+        for (unsigned int t = 0; t < threads.size(); ++t) {
+            if (threads[t].joinable()) {
+                threads[t].join();
+            }
+        }
+
+
 
         // 3. 按交集大小降序排序合并候选
         std::sort(merge_candidates.rbegin(), merge_candidates.rend(),

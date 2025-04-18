@@ -1,6 +1,7 @@
 #ifndef HYPERGRAPH_H
 #define HYPERGRAPH_H
-
+#include <thread> // 添加此行
+#include <mutex>  // 添加此行
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
@@ -320,71 +321,13 @@ public:
     // 离线预处理
     // 1、构建超图并查集
     // 2、构建反转后的无向加权图，以及反转图的相关参数
-    void offline_industry()
-    {
-        // 检查是否需要重建并查集 (Hypergraph level)
-        if (!ds_valid || !ds)
-        {
-            ds = std::make_unique<DisjointSets>(vertices.size());
-            for (const auto &edge : hyperedges)
-            {
-                if (edge.vertices.size() > 1)
-                {
-                    int first = edge.vertices[0];
-                    for (size_t i = 1; i < edge.vertices.size(); i++)
-                    {
-                        ds->merge(first, edge.vertices[i]);
-                    }
-                }
-            }
-            ds_valid = true;
-            ds_nodes = ds->parent.size(); // 记录并查集大小
-            ds_memory_bytes = sizeof(*ds) + ds->parent.capacity() * sizeof(int) + ds->rank.capacity() * sizeof(int); // Keep in bytes for internal sum
-        }
+    // 3、构建PLL索引
+    void offline_industry(){
+        void offline_industry_baseline();
+        void offline_industry_pll();
 
-        // 构建反转后的无向加权图
-        if (!graphs_built)
-        {
-            weighted_graphs.clear();
-            // 保持大小为 MAX+1，但索引 0 将不被使用或初始化
-            weighted_graphs.resize(MAX_INTERSECTION_SIZE + 1);
-            weighted_graphs_adj_list_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
-            weighted_graphs_ds_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
-            weighted_graphs_total_nodes = 0;
-            weighted_graphs_total_edges = 0;
-
-            // --- 构建 weighted_graphs (从 min_size = 1 开始) ---
-            for (int min_size = 1; min_size <= MAX_INTERSECTION_SIZE; min_size++) // <--- 修改循环起始点
-            {
-                // weighted_graphs[0] 将保持 nullptr 或未初始化
-                weighted_graphs[min_size] = std::make_unique<WeightedGraph>(hyperedges.size(), min_size);
-                // 迭代所有超边对
-                for (size_t i = 0; i < hyperedges.size(); i++)
-                {
-                    if (hyperedges[i].size() == 0) continue;
-                    for (size_t j = i + 1; j < hyperedges.size(); j++)
-                    {
-                        if (hyperedges[j].size() == 0) continue;
-                        auto intersection = getHyperedgeIntersection(i, j);
-                        int size = intersection.size();
-
-                        // 仅当交集大小满足当前层的最小要求(size >= min_size)时才添加边
-                        // 注意：因为 min_size >= 1，所以 size > 0 的检查是隐含的
-                        if (size >= min_size)
-                        {
-                             weighted_graphs[min_size]->addEdge(i, j, size);
-                        }
-                    }
-                }
-                weighted_graphs[min_size]->offline_industry(); // Build DS for this graph level
-                // 累加时跳过索引 0
-                weighted_graphs_total_nodes += weighted_graphs[min_size]->numVertices();
-                weighted_graphs_total_edges += weighted_graphs[min_size]->numEdges();
-                // Store memory in bytes internally
-                weighted_graphs_adj_list_memory_bytes[min_size] = static_cast<size_t>(weighted_graphs[min_size]->getAdjListMemoryUsageMB() * 1024.0 * 1024.0);
-                weighted_graphs_ds_memory_bytes[min_size] = static_cast<size_t>(weighted_graphs[min_size]->getDsMemoryUsageMB() * 1024.0 * 1024.0);
-            }
-
+    }
+    void offline_industry_pll(){
             // --- 构建 pll_graph 和 pll index ---
             pll_graph.release();
             pll_graph = std::make_unique<WeightedGraph>(hyperedges.size());
@@ -407,7 +350,114 @@ public:
             pll_total_label_size = pll->getTotalLabelSize();
             // Store memory in bytes internally
             pll_memory_bytes = static_cast<size_t>((pll_graph->getAdjListMemoryUsageMB() + pll->getMemoryUsageMB()) * 1024.0 * 1024.0);
+    }
 
+    void offline_industry_baseline()
+    {
+        // 检查是否需要重建并查集 (Hypergraph level) - 这部分保持不变
+        if (!ds_valid || !ds)
+        {
+            ds = std::make_unique<DisjointSets>(vertices.size());
+            for (const auto &edge : hyperedges)
+            {
+                if (edge.vertices.size() > 1)
+                {
+                    int first = edge.vertices[0];
+                    for (size_t i = 1; i < edge.vertices.size(); i++)
+                    {
+                        ds->merge(first, edge.vertices[i]);
+                    }
+                }
+            }
+            ds_valid = true;
+            ds_nodes = ds->parent.size();
+            ds_memory_bytes = sizeof(*ds) + ds->parent.capacity() * sizeof(int) + ds->rank.capacity() * sizeof(int);
+        }
+
+        // --- 多线程计算所有交集 ---
+        if (!graphs_built) // 仅在未构建时执行
+        {
+            all_intersections.clear(); // 清空之前的交集数据
+            std::mutex intersections_mutex; // 用于保护 all_intersections 的互斥锁
+            size_t num_edges = hyperedges.size();
+            unsigned int num_threads = std::thread::hardware_concurrency(); // 获取硬件支持的线程数
+            if (num_threads == 0) num_threads = 1; // 至少使用一个线程
+            std::vector<std::thread> threads(num_threads);
+
+            auto calculate_intersections =
+                [&](size_t start_idx, size_t end_idx) {
+                std::vector<std::tuple<size_t, size_t, int>> local_intersections; // 线程局部结果
+                for (size_t i = start_idx; i < end_idx; ++i) {
+                    if (hyperedges[i].size() == 0) continue;
+                    for (size_t j = i + 1; j < num_edges; ++j) {
+                         if (hyperedges[j].size() == 0) continue;
+                         // 注意：getHyperedgeIntersection 内部有排序，可能较慢
+                         // 如果性能关键，可以考虑优化交集计算本身
+                         auto intersection = getHyperedgeIntersection(i, j);
+                         int size = intersection.size();
+                         if (size > 0) { // 只存储有交集的边
+                             local_intersections.emplace_back(i, j, size);
+                         }
+                    }
+                }
+                // 将局部结果合并到全局结果中（需要加锁）
+                std::lock_guard<std::mutex> lock(intersections_mutex);
+                all_intersections.insert(all_intersections.end(),
+                                         local_intersections.begin(),
+                                         local_intersections.end());
+            };
+
+            size_t total_pairs = num_edges * (num_edges - 1) / 2; // 大致的总对数，用于分配任务
+            size_t chunk_size = (num_edges + num_threads -1) / num_threads; // 粗略按第一个索引划分任务量
+
+            size_t current_start = 0;
+            for (unsigned int t = 0; t < num_threads; ++t) {
+                size_t current_end = std::min(current_start + chunk_size, num_edges);
+                 if (current_start >= current_end) break; // 防止创建空任务的线程
+                threads[t] = std::thread(calculate_intersections, current_start, current_end);
+                current_start = current_end;
+            }
+
+            // 等待所有线程完成
+            for (unsigned int t = 0; t < threads.size(); ++t) {
+                 if (threads[t].joinable()) {
+                    threads[t].join();
+                 }
+            }
+
+            // --- 顺序构建各层图 ---
+            weighted_graphs.clear();
+            weighted_graphs.resize(MAX_INTERSECTION_SIZE + 1);
+            weighted_graphs_adj_list_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
+            weighted_graphs_ds_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
+            weighted_graphs_total_nodes = 0;
+            weighted_graphs_total_edges = 0;
+
+            for (int min_size = 1; min_size <= MAX_INTERSECTION_SIZE; min_size++)
+            {
+                weighted_graphs[min_size] = std::make_unique<WeightedGraph>(num_edges, min_size);
+
+                // 遍历预计算的交集
+                for (const auto& intersection_info : all_intersections)
+                {
+                    size_t i = std::get<0>(intersection_info);
+                    size_t j = std::get<1>(intersection_info);
+                    int size = std::get<2>(intersection_info);
+
+                    // 如果交集大小满足当前层的要求，则添加边
+                    if (size >= min_size)
+                    {
+                        weighted_graphs[min_size]->addEdge(i, j, size);
+                    }
+                }
+
+                // 为当前层构建索引并更新统计信息
+                weighted_graphs[min_size]->offline_industry(); // Build DS for this graph level
+                weighted_graphs_total_nodes += weighted_graphs[min_size]->numVertices();
+                weighted_graphs_total_edges += weighted_graphs[min_size]->numEdges();
+                weighted_graphs_adj_list_memory_bytes[min_size] = static_cast<size_t>(weighted_graphs[min_size]->getAdjListMemoryUsageMB() * 1024.0 * 1024.0);
+                weighted_graphs_ds_memory_bytes[min_size] = static_cast<size_t>(weighted_graphs[min_size]->getDsMemoryUsageMB() * 1024.0 * 1024.0);
+            }
             graphs_built = true;
         }
     }
@@ -1041,6 +1091,7 @@ public:
     //需要对外访问
     static const int MAX_INTERSECTION_SIZE = 10;
     std::unique_ptr<WeightedGraph> pll_graph;                    // 专门为pll做的图，权值全保留
+    std::vector<std::tuple<size_t, size_t, int>> all_intersections;
 private:
     std::vector<int> vertices;         // 顶点列表
     std::vector<Hyperedge> hyperedges; // 超边列表
