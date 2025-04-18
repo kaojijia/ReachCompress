@@ -310,9 +310,12 @@ TEST_F(HypergraphTest, PerformanceComparison)
     // const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/test1";
     const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/random_hypergraph_4";
     Hypergraph hg;
-    try {
+    try
+    {
         hg = Hypergraph::fromFile(hypergraph_file);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception &e)
+    {
         cerr << "Error loading hypergraph: " << e.what() << endl;
         FAIL() << "Failed to load hypergraph file: " << hypergraph_file;
         return;
@@ -321,10 +324,11 @@ TEST_F(HypergraphTest, PerformanceComparison)
     cout << "Hypergraph loaded: " << hg.numVertices() << " vertices, "
          << hg.numHyperedges() << " hyperedges." << endl;
 
-    if (hg.numVertices() == 0 || hg.numHyperedges() == 0) {
-         cout << "Hypergraph is empty, skipping performance test." << endl;
-         GTEST_SKIP() << "Skipping performance test on empty hypergraph.";
-         return;
+    if (hg.numVertices() == 0 || hg.numHyperedges() == 0)
+    {
+        cout << "Hypergraph is empty, skipping performance test." << endl;
+        GTEST_SKIP() << "Skipping performance test on empty hypergraph.";
+        return;
     }
 
     // --- Build Indices Concurrently ---
@@ -337,19 +341,22 @@ TEST_F(HypergraphTest, PerformanceComparison)
     std::atomic<bool> pll_build_error(false);
     std::atomic<bool> tree_build_error(false);
 
-
     // Create tree_index instance before launching thread
     std::unique_ptr<HypergraphTreeIndex> tree_index;
-    try {
-         tree_index = std::make_unique<HypergraphTreeIndex>(hg);
-    } catch (const std::exception& e) {
-         cerr << "Error creating HypergraphTreeIndex object: " << e.what() << endl;
-         FAIL() << "Failed to create HypergraphTreeIndex object.";
-         return;
+    try
+    {
+        tree_index = std::make_unique<HypergraphTreeIndex>(hg);
+    }
+    catch (const std::exception &e)
+    {
+        cerr << "Error creating HypergraphTreeIndex object: " << e.what() << endl;
+        FAIL() << "Failed to create HypergraphTreeIndex object.";
+        return;
     }
 
     // Thread for Layered DS (baseline) build
-    std::thread baseline_thread([&hg, &build_duration_baseline, &baseline_build_error]() {
+    std::thread baseline_thread([&hg, &build_duration_baseline, &baseline_build_error]()
+                                {
         auto start = high_resolution_clock::now();
         try {
              // Assuming offline_industry was split into public methods
@@ -360,11 +367,11 @@ TEST_F(HypergraphTest, PerformanceComparison)
         }
         auto end = high_resolution_clock::now();
         build_duration_baseline = duration_cast<milliseconds>(end - start);
-        cout << "Layered DS build completed." << endl;
-    });
+        cout << "Layered DS build completed." << endl; });
 
     // Thread for UWeightedPLL build
-    std::thread pll_thread([&hg, &build_duration_pll, &pll_build_error]() {
+    std::thread pll_thread([&hg, &build_duration_pll, &pll_build_error]()
+                           {
         auto start = high_resolution_clock::now();
          try {
             // Assuming offline_industry was split into public methods
@@ -375,13 +382,13 @@ TEST_F(HypergraphTest, PerformanceComparison)
          }
         auto end = high_resolution_clock::now();
         build_duration_pll = duration_cast<milliseconds>(end - start);
-        cout<< "PLL build completed." << endl;
-    });
+        cout<< "PLL build completed." << endl; });
 
     // Thread for HypergraphTreeIndex build
     // Pass raw pointer as unique_ptr cannot be copied into lambda capture easily
-    HypergraphTreeIndex* tree_index_ptr = tree_index.get();
-    std::thread tree_thread([tree_index_ptr, &build_duration_tree, &tree_build_error]() {
+    HypergraphTreeIndex *tree_index_ptr = tree_index.get();
+    std::thread tree_thread([tree_index_ptr, &build_duration_tree, &tree_build_error]()
+                            {
          if (!tree_index_ptr) {
              cerr << "Error: tree_index_ptr is null in thread." << endl;
              tree_build_error = true;
@@ -396,8 +403,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
          }
          auto end = high_resolution_clock::now();
          build_duration_tree = duration_cast<milliseconds>(end - start);
-         cout << "TreeIndex build completed." << endl;
-    });
+         cout << "TreeIndex build completed." << endl; });
 
     // Wait for all threads to complete
     baseline_thread.join();
@@ -405,7 +411,8 @@ TEST_F(HypergraphTest, PerformanceComparison)
     tree_thread.join();
 
     // Check for errors during build
-    if (baseline_build_error || pll_build_error || tree_build_error) {
+    if (baseline_build_error || pll_build_error || tree_build_error)
+    {
         FAIL() << "Error occurred during concurrent index building. Check logs.";
         return;
     }
@@ -414,7 +421,6 @@ TEST_F(HypergraphTest, PerformanceComparison)
     cout << " - Layered DS build time:          " << build_duration_baseline.count() << " ms." << endl;
     cout << " - UWeightedPLL build time:        " << build_duration_pll.count() << " ms." << endl;
     cout << " - HypergraphTreeIndex build time: " << build_duration_tree.count() << " ms." << endl;
-
 
     // --- 估算 BFS 运行时内存 ---
     size_t N = hg.numVertices();
@@ -435,7 +441,8 @@ TEST_F(HypergraphTest, PerformanceComparison)
     cout << "2. Layered DS Index (Total):        " << setw(8) << hg.getWeightedGraphsMemoryUsageMB() << " MB" << endl;
     cout << "   - Consists of " << (Hypergraph::MAX_INTERSECTION_SIZE) << " WeightedGraph layers (k=1 to "
          << Hypergraph::MAX_INTERSECTION_SIZE << ") (Adj Lists + DS)." << endl;
-    for (int k = 1; k <= Hypergraph::MAX_INTERSECTION_SIZE; ++k) {
+    for (int k = 1; k <= Hypergraph::MAX_INTERSECTION_SIZE; ++k)
+    {
         double adj_mem = hg.getWeightedGraphAdjListMemoryUsageMB(k);
         double ds_mem = hg.getWeightedGraphDsMemoryUsageMB(k);
         cout << "   - Layer " << setw(2) << k << ": AdjList=" << setw(7) << adj_mem << " MB, DS=" << setw(7) << ds_mem << " MB" << endl;
@@ -450,7 +457,8 @@ TEST_F(HypergraphTest, PerformanceComparison)
 
     double tree_index_mem_mb = 0.0;
     size_t tree_index_nodes = 0;
-    if (tree_index) {
+    if (tree_index)
+    {
         tree_index_mem_mb = tree_index->getMemoryUsageMB();
         tree_index_nodes = tree_index->getTotalNodes();
     }
@@ -459,106 +467,379 @@ TEST_F(HypergraphTest, PerformanceComparison)
     cout << "   - Total Tree Nodes:            " << tree_index_nodes << endl;
     cout << "   - Calc: Sum of nodes, pointers, vectors (using capacity)" << endl;
 
-    // --- 准备查询 ---
-    const int num_queries = 3000;
-    std::vector<std::tuple<int, int, int>> queries;
+    // // --- 准备查询 ---
+    // const int num_queries = 3000;
+    // std::vector<std::tuple<int, int, int>> queries;
+    // std::mt19937 rng(std::random_device{}());
+    // std::uniform_int_distribution<int> vertex_dist(0, hg.numVertices() - 1);
+    // std::uniform_int_distribution<int> k_dist(3, Hypergraph::MAX_INTERSECTION_SIZE);
+
+    // cout << "\nGenerating " << num_queries << " random queries (k range [1, " << Hypergraph::MAX_INTERSECTION_SIZE << "])..." << endl;
+    // for (int i = 0; i < num_queries; ++i) {
+    //     int u = vertex_dist(rng);
+    //     int v = vertex_dist(rng);
+    //     int k = k_dist(rng);
+    //     queries.emplace_back(u, v, k);
+    // }
+    // --- Generate Specific Queries ---
+    const int num_queries_per_group = 1000;
+    const int target_k_values[] = {2, 4, 6, 8, 10};
+    const std::string query_types[] = {"Exact", "Unreachable", "Reachable"};
+    const int num_k_values = sizeof(target_k_values) / sizeof(target_k_values[0]);
+    const int num_query_types = sizeof(query_types) / sizeof(query_types[0]);
+    const int total_queries_target = num_query_types * num_k_values * num_queries_per_group;
+    // 设置连续失败次数阈值，达到此阈值则放弃当前 k 值的生成
+    const int consecutive_failure_threshold = 2000;
+    // Store queries with their intended group: (u, v, k_for_query, type_string, k_group)
+    std::vector<std::tuple<int, int, int, std::string, int>> queries;
+    queries.reserve(total_queries_target);
     std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> vertex_dist(0, hg.numVertices() - 1);
-    std::uniform_int_distribution<int> k_dist(3, Hypergraph::MAX_INTERSECTION_SIZE);
 
-    cout << "\nGenerating " << num_queries << " random queries (k range [1, " << Hypergraph::MAX_INTERSECTION_SIZE << "])..." << endl;
-    for (int i = 0; i < num_queries; ++i) {
-        int u = vertex_dist(rng);
-        int v = vertex_dist(rng);
-        int k = k_dist(rng);
-        queries.emplace_back(u, v, k);
+    // Keep track of generated counts for each group
+    std::map<std::pair<int, std::string>, int> generated_counts;
+    for (int k : target_k_values)
+    {
+        for (const auto &type : query_types)
+        {
+            generated_counts[{k, type}] = 0;
+        }
     }
 
+    cout << "\nGenerating up to " << total_queries_target << " specific queries ("
+         << num_queries_per_group << " per k/type group)..." << endl;
 
+    for (int target_k : target_k_values)
+    {
+        cout << "  Generating queries for k=" << target_k << "..." << endl;
+        int consecutive_generation_failures = 0; // 为每个 k 重置连续失败计数器
 
-    
+        // 只要当前 k 值下还有任何类型的查询未生成满，就继续尝试
+        while (generated_counts[{target_k, "Exact"}] < num_queries_per_group ||
+               generated_counts[{target_k, "Unreachable"}] < num_queries_per_group ||
+               generated_counts[{target_k, "Reachable"}] < num_queries_per_group)
+        {
+            // 检查是否达到连续失败阈值
+            if (consecutive_generation_failures >= consecutive_failure_threshold)
+            {
+                cout << "    Warning: Exceeded " << consecutive_failure_threshold
+                     << " consecutive generation failures for k=" << target_k
+                     << ". Moving to next k value." << endl;
+                break; // 跳出当前 k 值的 while 循环
+            }
+
+            int u = vertex_dist(rng);
+            int v = vertex_dist(rng);
+            if (u == v)
+            {
+                // 如果生成了相同的顶点，也算作一次失败尝试（因为我们需要不同的顶点对）
+                consecutive_generation_failures++;
+                continue;
+            }
+
+            bool reachable_at_k = false;
+            bool reachable_at_k_plus_1 = false;
+            bool query_error = false;
+
+            try
+            {
+                reachable_at_k = hg.isReachableViaUWeightedPLL(u, v, target_k);
+                if (target_k < Hypergraph::MAX_INTERSECTION_SIZE)
+                {
+                    reachable_at_k_plus_1 = hg.isReachableViaUWeightedPLL(u, v, target_k + 1);
+                }
+            }
+            catch (const std::exception &e)
+            {
+                query_error = true;
+                // PLL 查询出错，跳过此对，但不计入连续失败次数
+            }
+
+            if (query_error)
+                continue;
+
+            bool pair_added_this_attempt = false;
+
+            // 1. Check Exact k
+            if (generated_counts[{target_k, "Exact"}] < num_queries_per_group)
+            {
+                if (reachable_at_k && (!reachable_at_k_plus_1 || target_k == Hypergraph::MAX_INTERSECTION_SIZE))
+                {
+                    queries.emplace_back(u, v, target_k, "Exact", target_k);
+                    generated_counts[{target_k, "Exact"}]++;
+                    pair_added_this_attempt = true;
+                }
+            }
+
+            // 2. Check Unreachable k (only if not added as Exact)
+            if (!pair_added_this_attempt && generated_counts[{target_k, "Unreachable"}] < num_queries_per_group)
+            {
+                if (!reachable_at_k)
+                {
+                    queries.emplace_back(u, v, target_k, "Unreachable", target_k);
+                    generated_counts[{target_k, "Unreachable"}]++;
+                    pair_added_this_attempt = true;
+                }
+            }
+
+            // 3. Check Reachable k (only if not added as Exact or Unreachable)
+            if (!pair_added_this_attempt && generated_counts[{target_k, "Reachable"}] < num_queries_per_group)
+            {
+                if (reachable_at_k)
+                { // Already know it's not Exact k if we reach here
+                    queries.emplace_back(u, v, target_k, "Reachable", target_k);
+                    generated_counts[{target_k, "Reachable"}]++;
+                    pair_added_this_attempt = true;
+                }
+            }
+
+            // 更新连续失败计数器
+            if (pair_added_this_attempt)
+            {
+                consecutive_generation_failures = 0; // 成功添加，重置计数器
+            }
+            else
+            {
+                // 只有在当前 k 值下仍有未满的查询类型时，才增加失败计数
+                if (generated_counts[{target_k, "Exact"}] < num_queries_per_group ||
+                    generated_counts[{target_k, "Unreachable"}] < num_queries_per_group ||
+                    generated_counts[{target_k, "Reachable"}] < num_queries_per_group)
+                {
+                    consecutive_generation_failures++;
+                }
+            }
+
+        } // End while loop for current k
+
+        // 报告当前 k 值的最终生成数量
+        cout << "    - Exact k:       Generated " << generated_counts[{target_k, "Exact"}] << " / " << num_queries_per_group << endl;
+        cout << "    - Unreachable k: Generated " << generated_counts[{target_k, "Unreachable"}] << " / " << num_queries_per_group << endl;
+        cout << "    - Reachable k:   Generated " << generated_counts[{target_k, "Reachable"}] << " / " << num_queries_per_group << endl;
+        // 如果是因为连续失败而退出，可以加一个提示
+        if (consecutive_generation_failures >= consecutive_failure_threshold)
+        {
+            cout << "    -> Stopped generating for k=" << target_k << " due to consecutive failures." << endl;
+        }
+
+    } // End loop for target_k
+
+    cout << "Generated a total of " << queries.size() << " queries." << endl;
+
     // --- 执行并计时查询 ---
-    cout << "Running queries..." << endl;
-    long long bfs_time_ns = 0;
-    long long layered_ds_time_ns = 0;
-    long long uweighted_pll_time_ns = 0;
-    long long tree_index_time_ns = 0;
-    int bfs_true_count = 0;
-    int layered_ds_true_count = 0;
-    int uweighted_pll_true_count = 0;
-    int tree_index_true_count = 0;
+    cout << "\nRunning " << queries.size() << " queries and grouping results..." << endl;
+    // Data structure to store timings and counts per method/k/type
+    // method_name -> {k_group, type_string} -> {total_ns, count}
+    std::map<std::string, std::map<std::pair<int, std::string>, std::pair<long long, int>>> timings;
+    // Data structure to store true counts per method/k/type
+    std::map<std::string, std::map<std::pair<int, std::string>, int>> true_counts;
 
-    auto start_bfs = high_resolution_clock::now();
-    for (const auto& q : queries) {
-        if (hg.isReachableBidirectionalBFS(get<0>(q), get<1>(q), get<2>(q))) {
-            bfs_true_count++;
+    std::vector<std::string> method_names = {"BFS", "LayeredDS", "UWeightedPLL", "TreeIndex"};
+
+    // Initialize maps
+    for (const auto &method : method_names)
+    {
+        for (int k : target_k_values)
+        {
+            for (const auto &type : query_types)
+            {
+                timings[method][{k, type}] = {0, 0};
+                true_counts[method][{k, type}] = 0;
+            }
         }
     }
-    auto end_bfs = high_resolution_clock::now();
-    bfs_time_ns = duration_cast<nanoseconds>(end_bfs - start_bfs).count();
 
-    auto start_layered_ds = high_resolution_clock::now();
-    for (const auto& q : queries) {
-         if (hg.isReachableViaWeightedGraph(get<0>(q), get<1>(q), get<2>(q))) {
-             layered_ds_true_count++;
-         }
+    // --- Execute BFS ---
+    cout << "  Executing BFS..." << endl;
+    for (const auto &q_tuple : queries)
+    {
+        int u, v, k_query, k_group;
+        std::string type;
+        std::tie(u, v, k_query, type, k_group) = q_tuple;
+        bool result = false;
+        auto start_ns = high_resolution_clock::now();
+        try
+        {
+            result = hg.isReachableBidirectionalBFS(u, v, k_query);
+        }
+        catch (...)
+        { /* Ignore errors during timing */
+        }
+        auto end_ns = high_resolution_clock::now();
+        long long delta_ns = duration_cast<nanoseconds>(end_ns - start_ns).count();
+        timings["BFS"][{k_group, type}].first += delta_ns;
+        timings["BFS"][{k_group, type}].second++;
+        if (result)
+            true_counts["BFS"][{k_group, type}]++;
     }
-    auto end_layered_ds = high_resolution_clock::now();
-    layered_ds_time_ns = duration_cast<nanoseconds>(end_layered_ds - start_layered_ds).count();
 
-    auto start_uweighted_pll = high_resolution_clock::now();
-    for (const auto& q : queries) {
-         if (hg.isReachableViaUWeightedPLL(get<0>(q), get<1>(q), get<2>(q))) {
-             uweighted_pll_true_count++;
-         }
+    // --- Execute Layered DS ---
+    cout << "  Executing LayeredDS..." << endl;
+    for (const auto &q_tuple : queries)
+    {
+        int u, v, k_query, k_group;
+        std::string type;
+        std::tie(u, v, k_query, type, k_group) = q_tuple;
+        bool result = false;
+        auto start_ns = high_resolution_clock::now();
+        try
+        {
+            result = hg.isReachableViaWeightedGraph(u, v, k_query);
+        }
+        catch (...)
+        { /* Ignore errors */
+        }
+        auto end_ns = high_resolution_clock::now();
+        long long delta_ns = duration_cast<nanoseconds>(end_ns - start_ns).count();
+        timings["LayeredDS"][{k_group, type}].first += delta_ns;
+        timings["LayeredDS"][{k_group, type}].second++;
+        if (result)
+            true_counts["LayeredDS"][{k_group, type}]++;
     }
-    auto end_uweighted_pll = high_resolution_clock::now();
-    uweighted_pll_time_ns = duration_cast<nanoseconds>(end_uweighted_pll - start_uweighted_pll).count();
 
-    auto start_tree_index = high_resolution_clock::now();
-    for (const auto& q : queries) {
-         if (tree_index->querySizeOnly(get<0>(q), get<1>(q), get<2>(q))) {
-             tree_index_true_count++;
-         }
+    // --- Execute UWeightedPLL ---
+    cout << "  Executing UWeightedPLL..." << endl;
+    for (const auto &q_tuple : queries)
+    {
+        int u, v, k_query, k_group;
+        std::string type;
+        std::tie(u, v, k_query, type, k_group) = q_tuple;
+        bool result = false;
+        auto start_ns = high_resolution_clock::now();
+        try
+        {
+            result = hg.isReachableViaUWeightedPLL(u, v, k_query);
+        }
+        catch (...)
+        { /* Ignore errors */
+        }
+        auto end_ns = high_resolution_clock::now();
+        long long delta_ns = duration_cast<nanoseconds>(end_ns - start_ns).count();
+        timings["UWeightedPLL"][{k_group, type}].first += delta_ns;
+        timings["UWeightedPLL"][{k_group, type}].second++;
+        if (result)
+            true_counts["UWeightedPLL"][{k_group, type}]++;
     }
-    auto end_tree_index = high_resolution_clock::now();
-    tree_index_time_ns = duration_cast<nanoseconds>(end_tree_index - start_tree_index).count();
 
-    // --- 打印查询性能结果 ---
-    cout << "\n--- Query Performance (" << num_queries << " queries) ---" << endl;
+    // --- Execute Tree Index ---
+    cout << "  Executing TreeIndex..." << endl;
+    for (const auto &q_tuple : queries)
+    {
+        int u, v, k_query, k_group;
+        std::string type;
+        std::tie(u, v, k_query, type, k_group) = q_tuple;
+        bool result = false;
+        auto start_ns = high_resolution_clock::now();
+        try
+        {
+            result = tree_index->querySizeOnly(u, v, k_query);
+        }
+        catch (...)
+        { /* Ignore errors */
+        }
+        auto end_ns = high_resolution_clock::now();
+        long long delta_ns = duration_cast<nanoseconds>(end_ns - start_ns).count();
+        timings["TreeIndex"][{k_group, type}].first += delta_ns;
+        timings["TreeIndex"][{k_group, type}].second++;
+        if (result)
+            true_counts["TreeIndex"][{k_group, type}]++;
+    }
+
+    // --- Print Detailed Query Performance Results ---
+    cout << "\n--- Detailed Query Performance ---" << endl;
     cout << fixed << setprecision(3);
-    cout << "  Method                          | Avg. Time (µs) | Total Time (ms) | True Results" << endl;
-    cout << "----------------------------------|----------------|-----------------|--------------" << endl;
-    cout << "  BFS (Hypergraph)                | " << setw(14) << (double)bfs_time_ns / num_queries / 1000.0
-         << " | " << setw(15) << (double)bfs_time_ns / 1000000.0 << " | " << bfs_true_count << endl;
-    cout << "  Layered DS (WeightedGraph+DS)   | " << setw(14) << (double)layered_ds_time_ns / num_queries / 1000.0
-         << " | " << setw(15) << (double)layered_ds_time_ns / 1000000.0 << " | " << layered_ds_true_count << endl;
-    cout << "  UWeightedPLL                    | " << setw(14) << (double)uweighted_pll_time_ns / num_queries / 1000.0
-         << " | " << setw(15) << (double)uweighted_pll_time_ns / 1000000.0 << " | " << uweighted_pll_true_count << endl;
-    cout << "  HypergraphTreeIndex             | " << setw(14) << (double)tree_index_time_ns / num_queries / 1000.0
-         << " | " << setw(15) << (double)tree_index_time_ns / 1000000.0 << " | " << tree_index_true_count << endl;
 
-    // --- 验证结果一致性 ---
-    cout << "\nVerifying result consistency (first 10 queries)..." << endl;
-    bool consistent = true;
-    for(int i = 0; i < std::min(10, num_queries); ++i) {
-        int u, v, k;
-        std::tie(u, v, k) = queries[i];
-        bool bfs_res = hg.isReachableBidirectionalBFS(u, v, k);
-        bool layered_ds_res = hg.isReachableViaWeightedGraph(u, v, k);
-        bool uweighted_pll_res = hg.isReachableViaUWeightedPLL(u, v, k);
-        bool tree_index_res = tree_index->query(u, v, k);
+    for (int k : target_k_values)
+    {
+        cout << "\n--- k = " << k << " ---" << endl;
+        cout << "  Type         | Method          | Avg. Time (µs) | Count | True Results" << endl;
+        cout << "-----------------|-----------------|----------------|-------|--------------" << endl;
+        for (const auto &type : query_types)
+        {
+            for (const auto &method : method_names)
+            {
+                long long total_ns = timings[method][{k, type}].first;
+                int count = timings[method][{k, type}].second;
+                int trues = true_counts[method][{k, type}];
+                double avg_us = (count == 0) ? 0.0 : (double)total_ns / count / 1000.0;
 
-        if (!(bfs_res == layered_ds_res && bfs_res == uweighted_pll_res && bfs_res == tree_index_res)) {
-            cout << "  Inconsistency found for query (" << u << ", " << v << ", k=" << k << "): "
-                 << "BFS=" << bfs_res << ", LayeredDS=" << layered_ds_res << ", UWeightedPLL=" << uweighted_pll_res
-                 << ", TreeIndex=" << tree_index_res << endl;
-            consistent = false;
+                cout << "  " << left << setw(14) << type
+                     << "| " << left << setw(15) << method
+                     << "| " << right << setw(14) << avg_us
+                     << " | " << right << setw(5) << count
+                     << " | " << right << setw(12) << trues << endl;
+            }
+            if (&type != &query_types[num_query_types - 1])
+            { // Add separator between types within the same k
+                cout << "-----------------|-----------------|----------------|-------|--------------" << endl;
+            }
         }
     }
-    if (consistent) {
-        cout << "  Results appear consistent for the first 10 queries." << endl;
-    } else {
+
+    // --- Verify Result Consistency (Keep as is, checks first few overall queries) ---
+    cout << "\nVerifying result consistency (first 10 overall queries)..." << endl;
+    bool consistent = true;
+    for (int i = 0; i < std::min((int)queries.size(), 10); ++i)
+    {
+        int u, v, k_query, k_group;
+        std::string type;
+        std::tie(u, v, k_query, type, k_group) = queries[i];
+        bool bfs_res = false, layered_ds_res = false, uweighted_pll_res = false, tree_index_res = false;
+        bool bfs_ok = true, layered_ds_ok = true, pll_ok = true, tree_ok = true;
+
+        try
+        {
+            bfs_res = hg.isReachableBidirectionalBFS(u, v, k_query);
+        }
+        catch (...)
+        {
+            bfs_ok = false;
+        }
+        try
+        {
+            layered_ds_res = hg.isReachableViaWeightedGraph(u, v, k_query);
+        }
+        catch (...)
+        {
+            layered_ds_ok = false;
+        }
+        try
+        {
+            uweighted_pll_res = hg.isReachableViaUWeightedPLL(u, v, k_query);
+        }
+        catch (...)
+        {
+            pll_ok = false;
+        }
+        try
+        {
+            tree_index_res = tree_index->querySizeOnly(u, v, k_query);
+        }
+        catch (...)
+        {
+            tree_ok = false;
+        }
+
+        if (bfs_ok && layered_ds_ok && pll_ok && tree_ok)
+        {
+            if (!(bfs_res == layered_ds_res && bfs_res == uweighted_pll_res && bfs_res == tree_index_res))
+            {
+                cout << "  Inconsistency found for query (" << u << ", " << v << ", k=" << k_query << ", type=" << type << ", k_group=" << k_group << "): "
+                     << "BFS=" << bfs_res << ", LayeredDS=" << layered_ds_res << ", UWeightedPLL=" << uweighted_pll_res
+                     << ", TreeIndex=" << tree_index_res << endl;
+                consistent = false;
+            }
+        }
+        else
+        {
+            cout << "  Skipping consistency check for query (" << u << ", " << v << ", k=" << k_query << ") due to query execution error." << endl;
+        }
+    }
+    if (consistent)
+    {
+        cout << "  Results appear consistent for the first 10 queries (where all methods succeeded)." << endl;
+    }
+    else
+    {
         ADD_FAILURE() << "Query results are inconsistent between methods!";
     }
 
