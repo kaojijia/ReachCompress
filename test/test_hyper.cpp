@@ -481,10 +481,13 @@ TEST_F(HypergraphTest, PerformanceComparison)
     //     int k = k_dist(rng);
     //     queries.emplace_back(u, v, k);
     // }
+
+
+// ...existing code...
     // --- Generate Specific Queries ---
     const int num_queries_per_group = 1000;
     const int target_k_values[] = {2, 4, 6, 8, 10};
-    const std::string query_types[] = {"Exact", "Unreachable", "Reachable"};
+    const std::string query_types[] = {"Random", "Unreachable", "Reachable"};  // 将 "Exact" 改为 "Random"
     const int num_k_values = sizeof(target_k_values) / sizeof(target_k_values[0]);
     const int num_query_types = sizeof(query_types) / sizeof(query_types[0]);
     const int total_queries_target = num_query_types * num_k_values * num_queries_per_group;
@@ -515,7 +518,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
         int consecutive_generation_failures = 0; // 为每个 k 重置连续失败计数器
 
         // 只要当前 k 值下还有任何类型的查询未生成满，就继续尝试
-        while (generated_counts[{target_k, "Exact"}] < num_queries_per_group ||
+        while (generated_counts[{target_k, "Random"}] < num_queries_per_group ||
                generated_counts[{target_k, "Unreachable"}] < num_queries_per_group ||
                generated_counts[{target_k, "Reachable"}] < num_queries_per_group)
         {
@@ -538,16 +541,11 @@ TEST_F(HypergraphTest, PerformanceComparison)
             }
 
             bool reachable_at_k = false;
-            bool reachable_at_k_plus_1 = false;
             bool query_error = false;
 
             try
             {
                 reachable_at_k = hg.isReachableViaUWeightedPLL(u, v, target_k);
-                if (target_k < Hypergraph::MAX_INTERSECTION_SIZE)
-                {
-                    reachable_at_k_plus_1 = hg.isReachableViaUWeightedPLL(u, v, target_k + 1);
-                }
             }
             catch (const std::exception &e)
             {
@@ -560,37 +558,29 @@ TEST_F(HypergraphTest, PerformanceComparison)
 
             bool pair_added_this_attempt = false;
 
-            // 1. Check Exact k
-            if (generated_counts[{target_k, "Exact"}] < num_queries_per_group)
+            // 1. Check Random (不管可达性，只要是随机点对)
+            if (generated_counts[{target_k, "Random"}] < num_queries_per_group)
             {
-                if (reachable_at_k && (!reachable_at_k_plus_1 || target_k == Hypergraph::MAX_INTERSECTION_SIZE))
-                {
-                    queries.emplace_back(u, v, target_k, "Exact", target_k);
-                    generated_counts[{target_k, "Exact"}]++;
-                    pair_added_this_attempt = true;
-                }
+                queries.emplace_back(u, v, target_k, "Random", target_k);
+                generated_counts[{target_k, "Random"}]++;
+                pair_added_this_attempt = true;
+                // 注意：即使是随机添加的，我们仍然要检查可达性情况，所以不在这里continue
             }
 
-            // 2. Check Unreachable k (only if not added as Exact)
-            if (!pair_added_this_attempt && generated_counts[{target_k, "Unreachable"}] < num_queries_per_group)
+            // 2. Check Unreachable k (只有尚未满足数量要求时才添加)
+            if (!reachable_at_k && generated_counts[{target_k, "Unreachable"}] < num_queries_per_group)
             {
-                if (!reachable_at_k)
-                {
-                    queries.emplace_back(u, v, target_k, "Unreachable", target_k);
-                    generated_counts[{target_k, "Unreachable"}]++;
-                    pair_added_this_attempt = true;
-                }
+                queries.emplace_back(u, v, target_k, "Unreachable", target_k);
+                generated_counts[{target_k, "Unreachable"}]++;
+                pair_added_this_attempt = true;
             }
 
-            // 3. Check Reachable k (only if not added as Exact or Unreachable)
-            if (!pair_added_this_attempt && generated_counts[{target_k, "Reachable"}] < num_queries_per_group)
+            // 3. Check Reachable k (只有尚未满足数量要求时才添加)
+            if (reachable_at_k && generated_counts[{target_k, "Reachable"}] < num_queries_per_group)
             {
-                if (reachable_at_k)
-                { // Already know it's not Exact k if we reach here
-                    queries.emplace_back(u, v, target_k, "Reachable", target_k);
-                    generated_counts[{target_k, "Reachable"}]++;
-                    pair_added_this_attempt = true;
-                }
+                queries.emplace_back(u, v, target_k, "Reachable", target_k);
+                generated_counts[{target_k, "Reachable"}]++;
+                pair_added_this_attempt = true;
             }
 
             // 更新连续失败计数器
@@ -601,27 +591,28 @@ TEST_F(HypergraphTest, PerformanceComparison)
             else
             {
                 // 只有在当前 k 值下仍有未满的查询类型时，才增加失败计数
-                if (generated_counts[{target_k, "Exact"}] < num_queries_per_group ||
+                if (generated_counts[{target_k, "Random"}] < num_queries_per_group ||
                     generated_counts[{target_k, "Unreachable"}] < num_queries_per_group ||
                     generated_counts[{target_k, "Reachable"}] < num_queries_per_group)
                 {
                     consecutive_generation_failures++;
                 }
             }
-
         } // End while loop for current k
 
         // 报告当前 k 值的最终生成数量
-        cout << "    - Exact k:       Generated " << generated_counts[{target_k, "Exact"}] << " / " << num_queries_per_group << endl;
+        cout << "    - Random k:       Generated " << generated_counts[{target_k, "Random"}] << " / " << num_queries_per_group << endl;
         cout << "    - Unreachable k: Generated " << generated_counts[{target_k, "Unreachable"}] << " / " << num_queries_per_group << endl;
         cout << "    - Reachable k:   Generated " << generated_counts[{target_k, "Reachable"}] << " / " << num_queries_per_group << endl;
+        
         // 如果是因为连续失败而退出，可以加一个提示
         if (consecutive_generation_failures >= consecutive_failure_threshold)
         {
             cout << "    -> Stopped generating for k=" << target_k << " due to consecutive failures." << endl;
         }
-
     } // End loop for target_k
+// ...existing code...
+
 
     cout << "Generated a total of " << queries.size() << " queries." << endl;
 
