@@ -1,0 +1,11 @@
+num_nodes 7
+num_hyperedges 5
+node 0 1 0 0 5 0
+node 1 1 1 0 5 0
+node 2 1 2 0 6 0
+node 3 1 3 0 6 0
+node 4 1 4 0 6 0
+node 5 0 -1 2 6 2 0 1
+node 6 0 -1 1 -1 4 5 4 2 3
+roots 1 6
+hyperedge_to_leaf 5 0 1 2 3 4

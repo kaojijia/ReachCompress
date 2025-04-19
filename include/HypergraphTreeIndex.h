@@ -12,10 +12,11 @@
 #include <string>    // For std::string
 #include <iomanip>   // For std::quoted
 #include <sstream>   // For string stream in saveToFile
-#include <thread> // 需要包含头文件
-#include <mutex>  // 需要包含头文件
-#include <iostream> // For std::cout in test
-#include <chrono>   // For timing
+#include <thread>    // 需要包含头文件
+#include <mutex>     // 需要包含头文件
+#include <iostream>  // For std::cout in test
+#include <chrono>    // For timing
+#include <filesystem> // For directory creation
 // 前向声明 HypergraphTreeIndex 类
 class HypergraphTreeIndex;
 
@@ -110,33 +111,39 @@ public:
             current_leaf_nodes.push_back(leaf); // 加入当前叶子节点列表
         }
 
-        if (current_leaf_nodes.empty()) return; // 没有有效超边
+        if (current_leaf_nodes.empty())
+            return; // 没有有效超边
         // 2. 并行计算所有叶子节点对之间的交集
         std::vector<std::tuple<int, std::vector<int>, int, int>> merge_candidates; // (交集大小, 交集顶点, 节点1ID, 节点2ID)
-        std::mutex merge_candidates_mutex; // 用于保护 merge_candidates 的互斥锁
+        std::mutex merge_candidates_mutex;                                         // 用于保护 merge_candidates 的互斥锁
         size_t num_leaves = current_leaf_nodes.size();
         unsigned int num_threads = std::thread::hardware_concurrency();
-        if (num_threads == 0) num_threads = 1;
+        if (num_threads == 0)
+            num_threads = 1;
         std::vector<std::thread> threads(num_threads);
 
         // 预估候选对数量并预分配，减少后续合并时的重分配
         merge_candidates.reserve(num_leaves * (num_leaves - 1) / 2);
 
         auto calculate_leaf_intersections =
-            [&](size_t start_idx, size_t end_idx) {
+            [&](size_t start_idx, size_t end_idx)
+        {
             std::vector<std::tuple<int, std::vector<int>, int, int>> local_candidates; // 线程局部结果
             // 预分配局部结果，避免频繁扩容
             local_candidates.reserve((end_idx - start_idx) * num_leaves / 2);
 
-            for (size_t i = start_idx; i < end_idx; ++i) {
-                for (size_t j = i + 1; j < num_leaves; ++j) {
+            for (size_t i = start_idx; i < end_idx; ++i)
+            {
+                for (size_t j = i + 1; j < num_leaves; ++j)
+                {
                     // 注意：calculate_intersection 内部会调用 getHyperedgeIntersection，可能较慢
                     auto intersection_result = calculate_intersection(current_leaf_nodes[i], current_leaf_nodes[j]);
                     int intersection_size = intersection_result.first;
                     // 使用 std::move 移动交集顶点数据，避免拷贝
                     std::vector<int> intersection_verts = std::move(intersection_result.second);
 
-                    if (intersection_size > 0) { // 只考虑有交集的对
+                    if (intersection_size > 0)
+                    { // 只考虑有交集的对
                         local_candidates.emplace_back(intersection_size, std::move(intersection_verts), current_leaf_nodes[i]->node_id, current_leaf_nodes[j]->node_id);
                     }
                 }
@@ -152,21 +159,23 @@ public:
         // 按第一个索引 i 划分任务
         size_t chunk_size = (num_leaves + num_threads - 1) / num_threads;
         size_t current_start = 0;
-        for (unsigned int t = 0; t < num_threads; ++t) {
+        for (unsigned int t = 0; t < num_threads; ++t)
+        {
             size_t current_end = std::min(current_start + chunk_size, num_leaves);
-            if (current_start >= current_end) break;
+            if (current_start >= current_end)
+                break;
             threads[t] = std::thread(calculate_leaf_intersections, current_start, current_end);
             current_start = current_end;
         }
 
         // 等待所有线程完成
-        for (unsigned int t = 0; t < threads.size(); ++t) {
-            if (threads[t].joinable()) {
+        for (unsigned int t = 0; t < threads.size(); ++t)
+        {
+            if (threads[t].joinable())
+            {
                 threads[t].join();
             }
         }
-
-
 
         // 3. 按交集大小降序排序合并候选，同一个交集大小的元素按交集点的字典序排序，方便归到同一个根节点
         std::sort(merge_candidates.begin(), merge_candidates.end(),
@@ -473,15 +482,19 @@ public:
     void buildIndexSizeOnly()
     {
         int num_hyperedges = hypergraph_.numHyperedges();
-        if (num_hyperedges == 0) return;
+        if (num_hyperedges == 0)
+            return;
 
         // 清理旧数据 (与 buildIndex 相同)
         nodes_.clear();
         roots_.clear();
         next_node_id_ = 0;
-        if (hyperedge_to_leaf_.size() < num_hyperedges) {
+        if (hyperedge_to_leaf_.size() < num_hyperedges)
+        {
             hyperedge_to_leaf_.resize(num_hyperedges, nullptr);
-        } else {
+        }
+        else
+        {
             std::fill(hyperedge_to_leaf_.begin(), hyperedge_to_leaf_.end(), nullptr);
         }
         dsu_parent_.clear();
@@ -489,21 +502,27 @@ public:
         // 1. 创建叶子节点 (与 buildIndex 相同)
         std::vector<TreeNodePtr> current_leaf_nodes;
         current_leaf_nodes.reserve(num_hyperedges);
-        for (int i = 0; i < num_hyperedges; ++i) {
-            if (hypergraph_.getHyperedge(i).size() == 0) continue;
+        for (int i = 0; i < num_hyperedges; ++i)
+        {
+            if (hypergraph_.getHyperedge(i).size() == 0)
+                continue;
             TreeNodePtr leaf = std::make_shared<TreeNode>(next_node_id_++);
             leaf->is_leaf = true;
             leaf->hyperedge_id = i;
             nodes_.push_back(leaf);
-            if (i < hyperedge_to_leaf_.size()) {
+            if (i < hyperedge_to_leaf_.size())
+            {
                 hyperedge_to_leaf_[i] = leaf;
-            } else {
+            }
+            else
+            {
                 throw std::out_of_range("Hyperedge ID out of range for hyperedge_to_leaf_ vector");
             }
             current_leaf_nodes.push_back(leaf);
         }
 
-        if (current_leaf_nodes.empty()) return;
+        if (current_leaf_nodes.empty())
+            return;
 
         // 2. 并行计算所有叶子节点对之间的交集大小
         // 注意：这里存储的 tuple 不再包含 std::vector<int>
@@ -511,25 +530,30 @@ public:
         std::mutex merge_candidates_mutex;
         size_t num_leaves = current_leaf_nodes.size();
         unsigned int num_threads = std::thread::hardware_concurrency();
-        if (num_threads == 0) num_threads = 1;
+        if (num_threads == 0)
+            num_threads = 1;
         std::vector<std::thread> threads(num_threads);
 
         merge_candidates.reserve(num_leaves * (num_leaves - 1) / 2);
 
         auto calculate_leaf_intersections_size_only =
-            [&](size_t start_idx, size_t end_idx) {
+            [&](size_t start_idx, size_t end_idx)
+        {
             // 注意：局部结果也不再包含 std::vector<int>
             std::vector<std::tuple<int, int, int>> local_candidates;
             local_candidates.reserve((end_idx - start_idx) * num_leaves / 2);
 
-            for (size_t i = start_idx; i < end_idx; ++i) {
-                for (size_t j = i + 1; j < num_leaves; ++j) {
+            for (size_t i = start_idx; i < end_idx; ++i)
+            {
+                for (size_t j = i + 1; j < num_leaves; ++j)
+                {
                     // calculate_intersection 返回 pair<int, vector<int>>
                     // 我们只关心第一个元素 (size)
                     auto intersection_result = calculate_intersection(current_leaf_nodes[i], current_leaf_nodes[j]);
                     int intersection_size = intersection_result.first;
 
-                    if (intersection_size > 0) {
+                    if (intersection_size > 0)
+                    {
                         // 只存储大小和节点 ID
                         local_candidates.emplace_back(intersection_size, current_leaf_nodes[i]->node_id, current_leaf_nodes[j]->node_id);
                     }
@@ -537,21 +561,25 @@ public:
             }
             std::lock_guard<std::mutex> lock(merge_candidates_mutex);
             // 直接插入，因为 tuple 不包含需要移动的大对象
-             merge_candidates.insert(merge_candidates.end(), local_candidates.begin(), local_candidates.end());
+            merge_candidates.insert(merge_candidates.end(), local_candidates.begin(), local_candidates.end());
         };
 
         size_t chunk_size = (num_leaves + num_threads - 1) / num_threads;
         size_t current_start = 0;
-        for (unsigned int t = 0; t < num_threads; ++t) {
+        for (unsigned int t = 0; t < num_threads; ++t)
+        {
             size_t current_end = std::min(current_start + chunk_size, num_leaves);
-            if (current_start >= current_end) break;
+            if (current_start >= current_end)
+                break;
             // 使用新的 lambda 函数
             threads[t] = std::thread(calculate_leaf_intersections_size_only, current_start, current_end);
             current_start = current_end;
         }
 
-        for (unsigned int t = 0; t < threads.size(); ++t) {
-            if (threads[t].joinable()) {
+        for (unsigned int t = 0; t < threads.size(); ++t)
+        {
+            if (threads[t].joinable())
+            {
                 threads[t].join();
             }
         }
@@ -559,19 +587,22 @@ public:
         // 3. 按交集大小降序排序合并候选
         // 注意：排序不再需要比较顶点列表
         std::sort(merge_candidates.begin(), merge_candidates.end(),
-                  [](const auto &a, const auto &b) {
+                  [](const auto &a, const auto &b)
+                  {
                       // 只按交集大小降序排列
                       return std::get<0>(a) > std::get<0>(b);
                   });
 
         // 初始化并查集 (与 buildIndex 相同)
         dsu_parent_.resize(next_node_id_);
-        for (int i = 0; i < next_node_id_; ++i) {
+        for (int i = 0; i < next_node_id_; ++i)
+        {
             dsu_parent_[i] = i;
         }
 
         // 4. 使用并查集合并节点，创建内部节点
-        for (const auto &candidate : merge_candidates) {
+        for (const auto &candidate : merge_candidates)
+        {
             int size = std::get<0>(candidate);     // 交集大小
             int node1_id = std::get<1>(candidate); // 节点1 ID
             int node2_id = std::get<2>(candidate); // 节点2 ID
@@ -579,13 +610,14 @@ public:
             int root1_id = find_set(node1_id);
             int root2_id = find_set(node2_id);
 
-            if (root1_id != root2_id && root1_id != -1 && root2_id != -1) {
+            if (root1_id != root2_id && root1_id != -1 && root2_id != -1)
+            {
                 TreeNodePtr root1_node = nodes_[root1_id];
                 TreeNodePtr root2_node = nodes_[root2_id];
 
                 // --- 合并逻辑简化：不再检查 intersection_vertices ---
                 bool merged = false;
-                 auto updateDsu = [&](const auto &self, TreeNodePtr node, int new_root_id) -> void
+                auto updateDsu = [&](const auto &self, TreeNodePtr node, int new_root_id) -> void
                 {
                     dsu_parent_[node->node_id] = new_root_id;
                     for (auto &child : node->children)
@@ -595,15 +627,18 @@ public:
                 };
 
                 // 检查是否可以合并到现有内部节点 (只比较 size)
-                if (!root1_node->is_leaf && root1_node->intersection_size == size) {
+                if (!root1_node->is_leaf && root1_node->intersection_size == size)
+                {
                     // 将 root2 合并到 root1
                     root1_node->children.push_back(root2_node);
                     root2_node->parent = root1_node;
                     updateDsu(updateDsu, root2_node, root1_id); // 更新 root2 子树的 DSU
                     dsu_parent_[root2_id] = root1_id;
                     merged = true;
-                } else if (!root2_node->is_leaf && root2_node->intersection_size == size) {
-                     // 将 root1 合并到 root2
+                }
+                else if (!root2_node->is_leaf && root2_node->intersection_size == size)
+                {
+                    // 将 root1 合并到 root2
                     root2_node->children.push_back(root1_node);
                     root1_node->parent = root2_node;
                     updateDsu(updateDsu, root1_node, root2_id); // 更新 root1 子树的 DSU
@@ -611,9 +646,9 @@ public:
                     merged = true;
                 }
 
-
                 // 如果没有合并到现有节点，则创建新父节点
-                if (!merged) {
+                if (!merged)
+                {
                     int parent_node_id = next_node_id_++;
                     TreeNodePtr parent = std::make_shared<TreeNode>(parent_node_id);
                     parent->is_leaf = false;
@@ -625,12 +660,14 @@ public:
                     root1_node->parent = parent;
                     root2_node->parent = parent;
 
-                    if (parent_node_id >= nodes_.size()) {
+                    if (parent_node_id >= nodes_.size())
+                    {
                         nodes_.resize(parent_node_id + 1);
                     }
                     nodes_[parent_node_id] = parent;
 
-                    if (parent_node_id >= dsu_parent_.size()) {
+                    if (parent_node_id >= dsu_parent_.size())
+                    {
                         dsu_parent_.resize(parent_node_id + 1);
                     }
                     dsu_parent_[parent_node_id] = parent_node_id;
@@ -643,11 +680,15 @@ public:
         // 5. 确定所有树的根节点 (与 buildIndex 相同)
         roots_.clear();
         std::vector<bool> is_root_added(next_node_id_, false);
-        for (int i = 0; i < next_node_id_; ++i) {
-            if (i < nodes_.size() && nodes_[i] && nodes_[i]->parent.expired()) {
+        for (int i = 0; i < next_node_id_; ++i)
+        {
+            if (i < nodes_.size() && nodes_[i] && nodes_[i]->parent.expired())
+            {
                 int root_id = find_set(i);
-                if (root_id != -1 && root_id < is_root_added.size() && !is_root_added[root_id]) {
-                     if (root_id < nodes_.size() && nodes_[root_id]) {
+                if (root_id != -1 && root_id < is_root_added.size() && !is_root_added[root_id])
+                {
+                    if (root_id < nodes_.size() && nodes_[root_id])
+                    {
                         roots_.push_back(nodes_[root_id]);
                         is_root_added[root_id] = true;
                     }
@@ -656,13 +697,16 @@ public:
         }
 
         // 6. 对每棵树进行 LCA 预计算 (与 buildIndex 相同)
-        if (up_.size() < next_node_id_) {
+        if (up_.size() < next_node_id_)
+        {
             up_.resize(next_node_id_);
         }
-        for (int i = 0; i < next_node_id_; ++i) {
+        for (int i = 0; i < next_node_id_; ++i)
+        {
             up_[i].assign(MAX_LCA_LOG, nullptr);
         }
-        for (const auto &root : roots_) {
+        for (const auto &root : roots_)
+        {
             precompute_lca(root, 0);
         }
     }
@@ -671,23 +715,29 @@ public:
     // 这个函数的逻辑与原 query 函数几乎完全相同，因为原函数主要依赖 intersection_size
     bool querySizeOnly(int u, int v, int k)
     {
-        if (u == v) return true;
+        if (u == v)
+            return true;
 
         const auto &edges_u = hypergraph_.getIncidentHyperedges(u);
         const auto &edges_v = hypergraph_.getIncidentHyperedges(v);
 
-        if (edges_u.empty() || edges_v.empty()) return false;
+        if (edges_u.empty() || edges_v.empty())
+            return false;
 
         // 检查共享超边 (与 query 相同)
         int max_edge_id = hypergraph_.numHyperedges();
         std::vector<bool> v_edge_flags(max_edge_id, false);
-        for (int edge_id_v : edges_v) {
-            if (edge_id_v >= 0 && edge_id_v < max_edge_id) {
+        for (int edge_id_v : edges_v)
+        {
+            if (edge_id_v >= 0 && edge_id_v < max_edge_id)
+            {
                 v_edge_flags[edge_id_v] = true;
             }
         }
-        for (int edge_id_u : edges_u) {
-            if (edge_id_u >= 0 && edge_id_u < max_edge_id && v_edge_flags[edge_id_u]) {
+        for (int edge_id_u : edges_u)
+        {
+            if (edge_id_u >= 0 && edge_id_u < max_edge_id && v_edge_flags[edge_id_u])
+            {
                 return true; // 直接可达
             }
         }
@@ -695,12 +745,14 @@ public:
         // 遍历所有超边对，查找 LCA (与 query 相同)
         for (int edge_id_u : edges_u)
         {
-            if (edge_id_u < 0 || edge_id_u >= hyperedge_to_leaf_.size() || !hyperedge_to_leaf_[edge_id_u]) continue;
+            if (edge_id_u < 0 || edge_id_u >= hyperedge_to_leaf_.size() || !hyperedge_to_leaf_[edge_id_u])
+                continue;
             TreeNodePtr leaf_u = hyperedge_to_leaf_[edge_id_u];
 
             for (int edge_id_v : edges_v)
             {
-                if (edge_id_v < 0 || edge_id_v >= hyperedge_to_leaf_.size() || !hyperedge_to_leaf_[edge_id_v]) continue;
+                if (edge_id_v < 0 || edge_id_v >= hyperedge_to_leaf_.size() || !hyperedge_to_leaf_[edge_id_v])
+                    continue;
                 TreeNodePtr leaf_v = hyperedge_to_leaf_[edge_id_v];
 
                 TreeNodePtr lca_node = find_lca(leaf_u, leaf_v);
@@ -715,8 +767,239 @@ public:
         return false; // 未找到满足条件的路径
     }
 
-    // 将索引树保存为 DOT 文件，用于可视化
-    void saveToFile(const std::string &filename) const;
+    // Build index with caching logic moved here.
+    void buildIndexCache(std::string cache_path = "")
+    {
+        // 1. Try loading from cache first
+        bool loaded_from_cache = false;
+        if (!cache_path.empty())
+        {
+            cache_path = cache_path+ "hypergraph_tree_index";//添加后缀
+            try
+            {
+                loaded_from_cache = loadIndex(cache_path);
+                if (loaded_from_cache)
+                {
+                    std::cout << "HypergraphTreeIndex loaded from cache: " << cache_path << std::endl;
+                    // LCA is recomputed inside loadIndex upon success
+                    return; // Successfully loaded, no need to build
+                }
+                else
+                {
+                    // Cache miss or invalid file, proceed to build
+                    std::cout << "Info: HypergraphTreeIndex cache not found or invalid at '" << cache_path << "'. Building index." << std::endl;
+                }
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Warning: Failed to load HypergraphTreeIndex cache '" << cache_path << "'. Building index. Error: " << e.what() << std::endl;
+            }
+        }
+
+        // 2. Build the index if not loaded from cache
+        std::cout << "Building HypergraphTreeIndex..." << std::endl;
+        int num_hyperedges = hypergraph_.numHyperedges();
+        if (num_hyperedges == 0)
+        {
+            std::cout << "Warning: Hypergraph has no hyperedges. Index is empty." << std::endl;
+            return; // Empty hypergraph
+        }
+
+        // Clear old data before building
+        clearIndexData();
+
+        // 1. Create leaf nodes
+        std::vector<TreeNodePtr> current_leaf_nodes;
+        current_leaf_nodes.reserve(num_hyperedges);
+        for (int i = 0; i < num_hyperedges; ++i)
+        {
+            if (hypergraph_.getHyperedge(i).size() == 0)
+                continue; // Skip empty hyperedges
+
+            TreeNodePtr leaf = std::make_shared<TreeNode>(next_node_id_++);
+            leaf->is_leaf = true;
+            leaf->hyperedge_id = i;
+            nodes_.push_back(leaf);
+
+            if (i < hyperedge_to_leaf_.size())
+            {
+                hyperedge_to_leaf_[i] = leaf;
+            }
+            else
+            {
+                throw std::out_of_range("Hyperedge ID out of range for hyperedge_to_leaf_ vector during build");
+            }
+            current_leaf_nodes.push_back(leaf);
+        }
+
+        if (current_leaf_nodes.empty())
+        {
+            std::cout << "Warning: No valid hyperedges found. Index is empty." << std::endl;
+            return; // No valid hyperedges
+        }
+
+        // 2. Calculate intersections (parallel)
+        std::vector<std::tuple<int, std::vector<int>, int, int>> merge_candidates;
+        calculateAndPrepareMergeCandidates(current_leaf_nodes, merge_candidates);
+
+        // 3. Sort merge candidates
+        sortMergeCandidates(merge_candidates);
+
+        // 4. Initialize DSU
+        initializeDSU();
+
+        // 5. Merge nodes using DSU
+        mergeNodes(merge_candidates);
+
+        // 6. Find roots
+        findRoots();
+
+        // 7. Precompute LCA
+        precomputeAllLCA(); // Use the helper function
+
+        std::cout << "HypergraphTreeIndex build complete." << std::endl;
+
+        // 3. Save the newly built index to cache if path is provided
+        if (!cache_path.empty())
+        {
+            try
+            {
+                // Ensure cache directory exists
+                std::filesystem::path p(cache_path);
+                if (p.has_parent_path())
+                {
+                    std::filesystem::create_directories(p.parent_path());
+                }
+                if (saveIndex(cache_path))
+                {
+                    std::cout << "HypergraphTreeIndex saved to cache: " << cache_path << std::endl;
+                }
+                else
+                {
+                    std::cerr << "Warning: Failed to save HypergraphTreeIndex cache to '" << cache_path << "'." << std::endl;
+                }
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Warning: Failed to save HypergraphTreeIndex cache '" << cache_path << "'. Error: " << e.what() << std::endl;
+            }
+        }
+    }
+
+    // Build index storing only intersection size, with caching logic.
+    void buildIndexCacheSizeOnly(std::string cache_path = "")
+    {
+        // 1. Try loading from cache first
+        bool loaded_from_cache = false;
+        if (!cache_path.empty())
+        {
+            cache_path = cache_path+ "hypergraph_tree_index_SizeOnly";//添加后缀
+            try
+            {
+                loaded_from_cache = loadIndex(cache_path);
+                if (loaded_from_cache)
+                {
+                    std::cout << "HypergraphTreeIndex (SizeOnly) loaded from cache: " << cache_path << std::endl;
+                    // LCA is recomputed inside loadIndex upon success
+                    return; // Successfully loaded
+                }
+                else
+                {
+                    std::cout << "Info: HypergraphTreeIndex (SizeOnly) cache not found or invalid at '" << cache_path << "'. Building index." << std::endl;
+                }
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Warning: Failed to load HypergraphTreeIndex (SizeOnly) cache '" << cache_path << "'. Building index. Error: " << e.what() << std::endl;
+            }
+        }
+
+        // 2. Build the size-only index if not loaded
+        std::cout << "Building HypergraphTreeIndex (SizeOnly)..." << std::endl;
+        int num_hyperedges = hypergraph_.numHyperedges();
+        if (num_hyperedges == 0)
+        {
+            std::cout << "Warning: Hypergraph has no hyperedges. Index is empty." << std::endl;
+            return;
+        }
+
+        // Clear old data
+        clearIndexData();
+
+        // 1. Create leaf nodes (same as buildIndex)
+        std::vector<TreeNodePtr> current_leaf_nodes;
+        current_leaf_nodes.reserve(num_hyperedges);
+        for (int i = 0; i < num_hyperedges; ++i)
+        {
+            if (hypergraph_.getHyperedge(i).size() == 0)
+                continue;
+            TreeNodePtr leaf = std::make_shared<TreeNode>(next_node_id_++);
+            leaf->is_leaf = true;
+            leaf->hyperedge_id = i;
+            nodes_.push_back(leaf);
+            if (i < hyperedge_to_leaf_.size())
+            {
+                hyperedge_to_leaf_[i] = leaf;
+            }
+            else
+            {
+                throw std::out_of_range("Hyperedge ID out of range for hyperedge_to_leaf_ vector during build (SizeOnly)");
+            }
+            current_leaf_nodes.push_back(leaf);
+        }
+
+        if (current_leaf_nodes.empty())
+        {
+            std::cout << "Warning: No valid hyperedges found. Index is empty." << std::endl;
+            return;
+        }
+
+        // 2. Calculate intersection sizes (parallel)
+        std::vector<std::tuple<int, int, int>> merge_candidates_size_only; // (size, id1, id2)
+        calculateAndPrepareMergeCandidatesSizeOnly(current_leaf_nodes, merge_candidates_size_only);
+
+        // 3. Sort merge candidates by size
+        sortMergeCandidatesSizeOnly(merge_candidates_size_only);
+
+        // 4. Initialize DSU
+        initializeDSU();
+
+        // 5. Merge nodes using DSU (size only logic)
+        mergeNodesSizeOnly(merge_candidates_size_only);
+
+        // 6. Find roots
+        findRoots();
+
+        // 7. Precompute LCA
+        precomputeAllLCA();
+
+        std::cout << "HypergraphTreeIndex (SizeOnly) build complete." << std::endl;
+
+        // 3. Save the newly built index to cache
+        if (!cache_path.empty())
+        {
+            try
+            {
+                std::filesystem::path p(cache_path);
+                if (p.has_parent_path())
+                {
+                    std::filesystem::create_directories(p.parent_path());
+                }
+                if (saveIndex(cache_path))
+                { // saveIndex saves the structure, which is the same format
+                    std::cout << "HypergraphTreeIndex (SizeOnly) saved to cache: " << cache_path << std::endl;
+                }
+                else
+                {
+                    std::cerr << "Warning: Failed to save HypergraphTreeIndex (SizeOnly) cache to '" << cache_path << "'." << std::endl;
+                }
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Warning: Failed to save HypergraphTreeIndex (SizeOnly) cache '" << cache_path << "'. Error: " << e.what() << std::endl;
+            }
+        }
+    }
 
     // 估算索引占用的内存（MB）
     // 累加各个成员变量（vector, shared_ptr 等）及其内容的估算大小。
@@ -914,85 +1197,652 @@ private:
         return nullptr; // 理论上在同一棵树中总能找到 LCA，除非是不同树的节点
     }
 
-    // 递归辅助函数，用于将节点及其子树结构写入 DOT 文件
-    void saveNodeToFile(std::ofstream &file, TreeNodePtr node) const;
-};
-
-// 实现 saveToFile 方法
-void HypergraphTreeIndex::saveToFile(const std::string &filename) const
-{
-    std::ofstream file(filename); // 打开文件
-    if (!file.is_open())
+    // --- Caching Methods ---
+    bool saveIndex(const std::string &filename) const
     {
-        throw std::runtime_error("Cannot open file for writing: " + filename);
+        std::ofstream file(filename);
+        if (!file.is_open())
+        {
+            std::cerr << "Error: Cannot open file for writing index: " << filename << std::endl;
+            return false;
+        }
+
+        file << "num_nodes " << next_node_id_ << "\n";
+        file << "num_hyperedges " << hypergraph_.numHyperedges() << "\n";
+
+        // Save node definitions
+        for (int i = 0; i < next_node_id_; ++i)
+        {
+            const auto &node = nodes_[i];
+            if (!node)
+                continue;
+
+            file << "node " << node->node_id << " "
+                 << node->is_leaf << " "
+                 << node->hyperedge_id << " "
+                 << node->intersection_size << " "; // Save size
+
+            auto parent_ptr = node->parent.lock();
+            file << (parent_ptr ? parent_ptr->node_id : -1) << " ";
+
+            file << node->children.size();
+            for (const auto &child : node->children)
+            {
+                if (child)
+                    file << " " << child->node_id;
+            }
+            file << "\n";
+
+            // NOTE: Intersection vertices are NOT saved to keep the cache format
+            // consistent between buildIndex and buildIndexSizeOnly.
+            // If needed, add a flag or separate save method.
+        }
+
+        // Save roots
+        file << "roots " << roots_.size();
+        for (const auto &root : roots_)
+        {
+            if (root)
+                file << " " << root->node_id;
+        }
+        file << "\n";
+
+        // Save hyperedge_to_leaf mapping
+        file << "hyperedge_to_leaf " << hyperedge_to_leaf_.size();
+        for (const auto &leaf_ptr : hyperedge_to_leaf_)
+        {
+            file << " " << (leaf_ptr ? leaf_ptr->node_id : -1);
+        }
+        file << "\n";
+
+        return file.good();
     }
 
-    file << "graph HypergraphTree {" << std::endl; // DOT 文件头
-    file << "  node [shape=record];" << std::endl; // 设置节点形状
-
-    // 遍历所有节点，定义它们的标签
-    for (const auto &node : nodes_)
+    void findRoots()
     {
-        if (!node)
-            continue;                         // 跳过空指针
-        std::stringstream label_ss;           // 使用 stringstream 构建标签字符串
-        label_ss << "{ID: " << node->node_id; // 节点 ID
-        if (node->is_leaf)
+        roots_.clear();
+        std::vector<bool> is_root_added(next_node_id_, false);
+        for (int i = 0; i < next_node_id_; ++i)
         {
-            // 叶子节点标签
-            label_ss << " | Type: Leaf | Hyperedge: " << node->hyperedge_id;
+            // Check if node exists and parent is expired (or was never set)
+            if (i < nodes_.size() && nodes_[i] && nodes_[i]->parent.expired())
+            {
+                int root_id = find_set(i); // Find the ultimate root of the DSU set
+                if (root_id != -1 && root_id < is_root_added.size() && !is_root_added[root_id])
+                {
+                    if (root_id < nodes_.size() && nodes_[root_id])
+                    { // Ensure the root node pointer is valid
+                        roots_.push_back(nodes_[root_id]);
+                        is_root_added[root_id] = true;
+                    }
+                }
+            }
+        }
+        if (roots_.empty() && next_node_id_ > 0)
+        {
+            std::cerr << "Warning: No root nodes found after build. Index might be invalid." << std::endl;
+        }
+    }
+
+    // --- Helper methods for building ---
+    void clearIndexData()
+    {
+        nodes_.clear();
+        roots_.clear();
+        next_node_id_ = 0;
+        // Resize and clear hyperedge_to_leaf_ based on current hypergraph state
+        size_t num_hyperedges = hypergraph_.numHyperedges();
+        if (hyperedge_to_leaf_.size() != num_hyperedges)
+        {
+            hyperedge_to_leaf_.resize(num_hyperedges, nullptr);
         }
         else
         {
-            // 内部节点标签
-            label_ss << " | Type: Internal | Intersection Size: " << node->intersection_size;
-            // 显示部分交集顶点（如果数量不多）
-            if (node->intersection_vertices.size() < 10)
-            {
-                label_ss << " | Vertices: {";
-                for (size_t i = 0; i < node->intersection_vertices.size(); ++i)
-                {
-                    label_ss << node->intersection_vertices[i] << (i == node->intersection_vertices.size() - 1 ? "" : ",");
-                }
-                label_ss << "}";
-            }
-            else
-            {
-                label_ss << " | Vertices: ... (" << node->intersection_vertices.size() << ")";
-            }
+            std::fill(hyperedge_to_leaf_.begin(), hyperedge_to_leaf_.end(), nullptr);
         }
-        label_ss << "}";
-        // 写入节点定义，使用 std::quoted 处理标签中的特殊字符
-        file << "  node" << node->node_id << " [label=" << std::quoted(label_ss.str()) << "];" << std::endl;
+        dsu_parent_.clear();
+        up_.clear(); // Clear LCA data as well
     }
 
-    // 从每个根节点开始，递归写入边信息
-    for (const auto &root : roots_)
+    void mergeNodesSizeOnly(const std::vector<std::tuple<int, int, int>> &merge_candidates)
     {
-        saveNodeToFile(file, root);
-    }
-
-    file << "}" << std::endl; // DOT 文件尾
-    file.close();             // 关闭文件
-}
-
-// 实现 saveNodeToFile 辅助函数
-void HypergraphTreeIndex::saveNodeToFile(std::ofstream &file, TreeNodePtr node) const
-{
-    if (!node)
-        return; // 空节点直接返回
-
-    // 遍历当前节点的所有子节点
-    for (const auto &child : node->children)
-    {
-        if (child)
+        for (const auto &candidate : merge_candidates)
         {
-            // 写入连接父子节点的边
-            file << "  node" << node->node_id << " -- node" << child->node_id << ";" << std::endl;
-            // 递归处理子节点
-            saveNodeToFile(file, child);
+            int size = std::get<0>(candidate);
+            int node1_id = std::get<1>(candidate);
+            int node2_id = std::get<2>(candidate);
+
+            int root1_id = find_set(node1_id);
+            int root2_id = find_set(node2_id);
+
+            if (root1_id != root2_id && root1_id != -1 && root2_id != -1)
+            {
+                TreeNodePtr root1_node = nodes_[root1_id];
+                TreeNodePtr root2_node = nodes_[root2_id];
+                bool merged = false;
+
+                auto updateDsu = [&](const auto &self, TreeNodePtr node, int new_root_id) -> void
+                {
+                    if (node->node_id < 0 || node->node_id >= dsu_parent_.size())
+                        return;
+                    dsu_parent_[node->node_id] = new_root_id;
+                    for (auto &child : node->children)
+                    {
+                        if (child)
+                            self(self, child, new_root_id);
+                    }
+                };
+
+                // Try merging into existing internal nodes (only check size)
+                if (!root1_node->is_leaf && root1_node->intersection_size == size)
+                {
+                    root1_node->children.push_back(root2_node);
+                    root2_node->parent = root1_node;
+                    updateDsu(updateDsu, root2_node, root1_id);
+                    // dsu_parent_[root2_id] = root1_id;
+                    merged = true;
+                }
+                else if (!root2_node->is_leaf && root2_node->intersection_size == size)
+                {
+                    root2_node->children.push_back(root1_node);
+                    root1_node->parent = root2_node;
+                    updateDsu(updateDsu, root1_node, root2_id);
+                    // dsu_parent_[root1_id] = root2_id;
+                    merged = true;
+                }
+
+                // Create new parent if not merged
+                if (!merged)
+                {
+                    int parent_node_id = next_node_id_++;
+                    TreeNodePtr parent = std::make_shared<TreeNode>(parent_node_id);
+                    parent->is_leaf = false;
+                    parent->intersection_size = size; // Only store size
+                    // parent->intersection_vertices is not stored
+
+                    parent->children.push_back(root1_node);
+                    parent->children.push_back(root2_node);
+                    root1_node->parent = parent;
+                    root2_node->parent = parent;
+
+                    if (parent_node_id >= nodes_.size())
+                        nodes_.resize(parent_node_id + 1);
+                    nodes_[parent_node_id] = parent;
+                    if (parent_node_id >= dsu_parent_.size())
+                        dsu_parent_.resize(parent_node_id + 1);
+
+                    dsu_parent_[parent_node_id] = parent_node_id;
+                    dsu_parent_[root1_id] = parent_node_id;
+                    dsu_parent_[root2_id] = parent_node_id;
+                }
+            }
         }
     }
-}
+
+    void mergeNodes(const std::vector<std::tuple<int, std::vector<int>, int, int>> &merge_candidates)
+    {
+        for (const auto &candidate : merge_candidates)
+        {
+            int size = std::get<0>(candidate);
+            const auto &vertices = std::get<1>(candidate);
+            int node1_id = std::get<2>(candidate);
+            int node2_id = std::get<3>(candidate);
+
+            int root1_id = find_set(node1_id);
+            int root2_id = find_set(node2_id);
+
+            if (root1_id != root2_id && root1_id != -1 && root2_id != -1)
+            {
+                TreeNodePtr root1_node = nodes_[root1_id];
+                TreeNodePtr root2_node = nodes_[root2_id];
+                bool merged = false;
+
+                auto updateDsu = [&](const auto &self, TreeNodePtr node, int new_root_id) -> void
+                {
+                    if (node->node_id < 0 || node->node_id >= dsu_parent_.size())
+                        return; // Bounds check
+                    dsu_parent_[node->node_id] = new_root_id;
+                    for (auto &child : node->children)
+                    {
+                        if (child)
+                            self(self, child, new_root_id);
+                    }
+                };
+
+                // Try merging into existing internal nodes if size and vertices match
+                if (!root1_node->is_leaf && root1_node->intersection_size == size && root1_node->intersection_vertices == vertices)
+                {
+                    root1_node->children.push_back(root2_node);
+                    root2_node->parent = root1_node;
+                    updateDsu(updateDsu, root2_node, root1_id); // Update DSU for the merged subtree
+                    // dsu_parent_[root2_id] = root1_id; // updateDsu handles this
+                    merged = true;
+                }
+                else if (!root2_node->is_leaf && root2_node->intersection_size == size && root2_node->intersection_vertices == vertices)
+                {
+                    root2_node->children.push_back(root1_node);
+                    root1_node->parent = root2_node;
+                    updateDsu(updateDsu, root1_node, root2_id); // Update DSU for the merged subtree
+                    // dsu_parent_[root1_id] = root2_id; // updateDsu handles this
+                    merged = true;
+                }
+
+                // If no suitable existing node, create a new parent
+                if (!merged)
+                {
+                    int parent_node_id = next_node_id_++;
+                    TreeNodePtr parent = std::make_shared<TreeNode>(parent_node_id);
+                    parent->is_leaf = false;
+                    parent->intersection_size = size;
+                    parent->intersection_vertices = vertices; // Store vertices
+                    parent->children.push_back(root1_node);
+                    parent->children.push_back(root2_node);
+                    root1_node->parent = parent;
+                    root2_node->parent = parent;
+
+                    // Ensure nodes_ and dsu_parent_ are large enough
+                    if (parent_node_id >= nodes_.size())
+                        nodes_.resize(parent_node_id + 1);
+                    nodes_[parent_node_id] = parent;
+                    if (parent_node_id >= dsu_parent_.size())
+                        dsu_parent_.resize(parent_node_id + 1);
+
+                    dsu_parent_[parent_node_id] = parent_node_id;
+                    dsu_parent_[root1_id] = parent_node_id;
+                    dsu_parent_[root2_id] = parent_node_id;
+                }
+            }
+        }
+    }
+
+    void sortMergeCandidatesSizeOnly(std::vector<std::tuple<int, int, int>> &merge_candidates)
+    {
+        std::sort(merge_candidates.begin(), merge_candidates.end(),
+                  [](const auto &a, const auto &b)
+                  {
+                      // Sort by size descending
+                      return std::get<0>(a) > std::get<0>(b);
+                  });
+    }
+
+    void calculateAndPrepareMergeCandidates(
+        const std::vector<TreeNodePtr> &current_leaf_nodes,
+        std::vector<std::tuple<int, std::vector<int>, int, int>> &merge_candidates)
+    {
+        std::mutex merge_candidates_mutex;
+        size_t num_leaves = current_leaf_nodes.size();
+        unsigned int num_threads = std::thread::hardware_concurrency();
+        if (num_threads == 0)
+            num_threads = 1;
+        std::vector<std::thread> threads(num_threads);
+
+        merge_candidates.reserve(num_leaves * (num_leaves - 1) / 2);
+
+        auto calculate_leaf_intersections =
+            [&](size_t start_idx, size_t end_idx)
+        {
+            std::vector<std::tuple<int, std::vector<int>, int, int>> local_candidates;
+            local_candidates.reserve((end_idx - start_idx) * num_leaves / 2);
+
+            for (size_t i = start_idx; i < end_idx; ++i)
+            {
+                for (size_t j = i + 1; j < num_leaves; ++j)
+                {
+                    auto intersection_result = calculate_intersection(current_leaf_nodes[i], current_leaf_nodes[j]);
+                    int intersection_size = intersection_result.first;
+                    std::vector<int> intersection_verts = std::move(intersection_result.second);
+
+                    if (intersection_size > 0)
+                    {
+                        local_candidates.emplace_back(intersection_size, std::move(intersection_verts), current_leaf_nodes[i]->node_id, current_leaf_nodes[j]->node_id);
+                    }
+                }
+            }
+            std::lock_guard<std::mutex> lock(merge_candidates_mutex);
+            merge_candidates.insert(merge_candidates.end(),
+                                    std::make_move_iterator(local_candidates.begin()),
+                                    std::make_move_iterator(local_candidates.end()));
+        };
+
+        size_t chunk_size = (num_leaves + num_threads - 1) / num_threads;
+        size_t current_start = 0;
+        for (unsigned int t = 0; t < num_threads; ++t)
+        {
+            size_t current_end = std::min(current_start + chunk_size, num_leaves);
+            if (current_start >= current_end)
+                break;
+            threads[t] = std::thread(calculate_leaf_intersections, current_start, current_end);
+            current_start = current_end;
+        }
+
+        for (unsigned int t = 0; t < threads.size(); ++t)
+        {
+            if (threads[t].joinable())
+            {
+                threads[t].join();
+            }
+        }
+    }
+
+    void calculateAndPrepareMergeCandidatesSizeOnly(
+        const std::vector<TreeNodePtr> &current_leaf_nodes,
+        std::vector<std::tuple<int, int, int>> &merge_candidates)
+    {
+        std::mutex merge_candidates_mutex;
+        size_t num_leaves = current_leaf_nodes.size();
+        unsigned int num_threads = std::thread::hardware_concurrency();
+        if (num_threads == 0)
+            num_threads = 1;
+        std::vector<std::thread> threads(num_threads);
+
+        merge_candidates.reserve(num_leaves * (num_leaves - 1) / 2);
+
+        auto calculate_leaf_intersections_size_only =
+            [&](size_t start_idx, size_t end_idx)
+        {
+            std::vector<std::tuple<int, int, int>> local_candidates;
+            local_candidates.reserve((end_idx - start_idx) * num_leaves / 2);
+
+            for (size_t i = start_idx; i < end_idx; ++i)
+            {
+                for (size_t j = i + 1; j < num_leaves; ++j)
+                {
+                    auto intersection_result = calculate_intersection(current_leaf_nodes[i], current_leaf_nodes[j]);
+                    int intersection_size = intersection_result.first;
+
+                    if (intersection_size > 0)
+                    {
+                        local_candidates.emplace_back(intersection_size, current_leaf_nodes[i]->node_id, current_leaf_nodes[j]->node_id);
+                    }
+                }
+            }
+            std::lock_guard<std::mutex> lock(merge_candidates_mutex);
+            merge_candidates.insert(merge_candidates.end(), local_candidates.begin(), local_candidates.end());
+        };
+
+        size_t chunk_size = (num_leaves + num_threads - 1) / num_threads;
+        size_t current_start = 0;
+        for (unsigned int t = 0; t < num_threads; ++t)
+        {
+            size_t current_end = std::min(current_start + chunk_size, num_leaves);
+            if (current_start >= current_end)
+                break;
+            threads[t] = std::thread(calculate_leaf_intersections_size_only, current_start, current_end);
+            current_start = current_end;
+        }
+
+        for (unsigned int t = 0; t < threads.size(); ++t)
+        {
+            if (threads[t].joinable())
+            {
+                threads[t].join();
+            }
+        }
+    }
+
+    void sortMergeCandidates(std::vector<std::tuple<int, std::vector<int>, int, int>> &merge_candidates)
+    {
+        std::sort(merge_candidates.begin(), merge_candidates.end(),
+                  [](const auto &a, const auto &b)
+                  {
+                      if (std::get<0>(a) != std::get<0>(b))
+                      {
+                          return std::get<0>(a) > std::get<0>(b); // Sort by size descending
+                      }
+                      // Optional: Secondary sort by vertices for deterministic merging
+                      return std::get<1>(a) < std::get<1>(b);
+                  });
+    }
+
+    void initializeDSU()
+    {
+        dsu_parent_.resize(next_node_id_);
+        for (int i = 0; i < next_node_id_; ++i)
+        {
+            dsu_parent_[i] = i;
+        }
+    }
+
+    // Helper to recompute LCA for all roots (used after building or loading)
+    void recomputeAllLCA()
+    {
+        if (next_node_id_ == 0)
+            return; // Nothing to compute for empty index
+
+        if (up_.size() < next_node_id_)
+        {
+            up_.resize(next_node_id_);
+        }
+        // Initialize LCA array entries
+        for (int i = 0; i < next_node_id_; ++i)
+        {
+            if (i < up_.size())
+            { // Check bounds before assigning
+                up_[i].assign(MAX_LCA_LOG, nullptr);
+            }
+        }
+        // Compute LCA starting from each root
+        for (const auto &root : roots_)
+        {
+            if (root)
+            {                            // Check if root pointer is valid
+                precompute_lca(root, 0); // Root depth is 0
+            }
+        }
+    }
+
+    bool loadIndex(const std::string &filename)
+    {
+        std::ifstream file(filename);
+        if (!file.is_open())
+        {
+            return false; // Indicate cache miss (file not found)
+        }
+
+        std::string line_type;
+        int num_nodes = 0;
+        size_t num_hyperedges_expected = 0;
+
+        // Read header
+        file >> line_type >> num_nodes;
+        if (file.fail() || line_type != "num_nodes" || num_nodes <= 0)
+        {
+            std::cerr << "Error: Invalid cache file format (num_nodes)." << std::endl;
+            return false;
+        }
+        file >> line_type >> num_hyperedges_expected;
+        if (file.fail() || line_type != "num_hyperedges" || num_hyperedges_expected != hypergraph_.numHyperedges())
+        {
+            std::cerr << "Error: Cache file hyperedge count mismatch with current hypergraph." << std::endl;
+            return false;
+        }
+
+        // Reset internal state before loading
+        clearIndexData();                                            // Use helper to reset
+        nodes_.resize(num_nodes, nullptr);                           // Resize nodes_ based on cache info
+        hyperedge_to_leaf_.resize(num_hyperedges_expected, nullptr); // Resize based on cache info
+        next_node_id_ = num_nodes;                                   // Set next ID correctly
+
+        std::vector<int> parent_ids(num_nodes, -1);
+        std::vector<std::vector<int>> children_ids(num_nodes);
+
+        std::string line;
+        std::getline(file, line); // Consume rest of the num_hyperedges line
+
+        // First pass: Read node data and temporary links
+        while (std::getline(file, line))
+        {
+            std::istringstream iss(line);
+            iss >> line_type;
+
+            if (line_type == "node")
+            {
+                int id, h_id, i_size, p_id, child_count;
+                bool is_leaf;
+                // Read node data (intersection_vertices are not read)
+                iss >> id >> is_leaf >> h_id >> i_size >> p_id >> child_count;
+                if (iss.fail() || id < 0 || id >= num_nodes)
+                {
+                    std::cerr << "Error: Invalid node data in cache." << std::endl;
+                    return false;
+                }
+
+                nodes_[id] = std::make_shared<TreeNode>(id);
+                nodes_[id]->is_leaf = is_leaf;
+                nodes_[id]->hyperedge_id = h_id;
+                nodes_[id]->intersection_size = i_size; // Store size
+                parent_ids[id] = p_id;
+                children_ids[id].resize(child_count);
+                for (int i = 0; i < child_count; ++i)
+                {
+                    if (!(iss >> children_ids[id][i]))
+                    {
+                        std::cerr << "Error: Reading child IDs failed in cache." << std::endl;
+                        return false;
+                    }
+                }
+            }
+            else if (line_type == "roots")
+            {
+                int count, root_id;
+                iss >> count;
+                if (iss.fail())
+                {
+                    std::cerr << "Error: Reading root count failed." << std::endl;
+                    return false;
+                }
+                roots_.reserve(count);
+                for (int i = 0; i < count; ++i)
+                {
+                    iss >> root_id;
+                    if (iss.fail() || root_id < 0 || root_id >= num_nodes || !nodes_[root_id])
+                    {
+                        std::cerr << "Error: Invalid root ID in cache." << std::endl;
+                        return false;
+                    }
+                    roots_.push_back(nodes_[root_id]);
+                }
+            }
+            else if (line_type == "hyperedge_to_leaf")
+            {
+                size_t count;
+                int leaf_id;
+                iss >> count;
+                if (iss.fail() || count != hyperedge_to_leaf_.size())
+                {
+                    std::cerr << "Error: hyperedge_to_leaf count mismatch in cache." << std::endl;
+                    return false;
+                }
+                for (size_t i = 0; i < count; ++i)
+                {
+                    iss >> leaf_id;
+                    if (iss.fail())
+                    {
+                        std::cerr << "Error: Reading leaf ID failed." << std::endl;
+                        return false;
+                    }
+                    if (leaf_id >= 0 && leaf_id < num_nodes && nodes_[leaf_id])
+                    {
+                        hyperedge_to_leaf_[i] = nodes_[leaf_id];
+                    }
+                    else if (leaf_id != -1)
+                    {
+                        std::cerr << "Error: Invalid leaf ID in hyperedge_to_leaf map." << std::endl;
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if (file.bad())
+        { // Check for read errors
+            std::cerr << "Error: File read error occurred during cache loading." << std::endl;
+            return false;
+        }
+
+        // Second pass: Link parents and children using shared/weak pointers
+        for (int i = 0; i < num_nodes; ++i)
+        {
+            if (!nodes_[i])
+                continue; // Skip if node wasn't loaded properly (shouldn't happen with checks)
+            // Link parent (weak_ptr)
+            if (parent_ids[i] != -1)
+            {
+                if (parent_ids[i] >= 0 && parent_ids[i] < num_nodes && nodes_[parent_ids[i]])
+                {
+                    nodes_[i]->parent = nodes_[parent_ids[i]];
+                }
+                else
+                {
+                    std::cerr << "Error: Invalid parent link ID (" << parent_ids[i] << ") for node " << i << " in cache." << std::endl;
+                    return false;
+                }
+            }
+            // Link children (shared_ptr)
+            nodes_[i]->children.reserve(children_ids[i].size());
+            for (int child_id : children_ids[i])
+            {
+                if (child_id >= 0 && child_id < num_nodes && nodes_[child_id])
+                {
+                    nodes_[i]->children.push_back(nodes_[child_id]);
+                }
+                else
+                {
+                    std::cerr << "Error: Invalid child link ID (" << child_id << ") for node " << i << " in cache." << std::endl;
+                    return false;
+                }
+            }
+        }
+
+        // Basic validation: Check if roots were loaded correctly
+        if (roots_.empty() && num_nodes > 0)
+        {
+            std::cerr << "Error: No roots loaded from cache, but nodes exist." << std::endl;
+            // Attempt to find roots manually as a fallback, but indicates cache issue
+            findRoots(); // Try to recover roots
+            if (roots_.empty())
+                return false; // Still no roots found, load failed
+        }
+
+        // Recompute LCA after successfully loading the structure
+        recomputeAllLCA();
+
+        return true; // Successfully loaded
+    }
+
+     // Helper to precompute LCA for all roots (used after building or loading)
+     void precomputeAllLCA()
+     {
+         if (next_node_id_ == 0)
+             return; // Nothing to compute for empty index
+ 
+         // Ensure up_ array is correctly sized
+         if (up_.size() < next_node_id_)
+         {
+             up_.resize(next_node_id_);
+         }
+         // Initialize LCA array entries for all potential nodes
+         for (int i = 0; i < next_node_id_; ++i)
+         {
+             if (i < up_.size())
+             { // Check bounds before assigning
+                 up_[i].assign(MAX_LCA_LOG, nullptr);
+             }
+             // Reset depth in case it was loaded incorrectly or needs recalculation
+             if (i < nodes_.size() && nodes_[i]) {
+                  nodes_[i]->depth = 0; // Reset depth before recalculation
+             }
+         }
+         // Compute LCA starting from each root
+         for (const auto &root : roots_)
+         {
+             if (root)
+             {                            // Check if root pointer is valid
+                 precompute_lca(root, 0); // Start recursive precomputation from root (depth 0)
+             }
+         }
+     }
+ 
+};
 
 #endif // HYPERGRAPH_TREE_INDEX_H

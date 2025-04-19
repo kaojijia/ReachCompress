@@ -9,6 +9,10 @@
 #include <queue>
 #include <utility>
 #include <numeric> // For std::accumulate
+#include <algorithm>
+#include <fstream>
+#include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -241,6 +245,125 @@ public:
     friend class Hypergraph;
     // 允许 WeightedPrunedLandmarkIndex 访问内部数据
     friend class WeightedPrunedLandmarkIndex;
+
+    
+    // Save adjacency list to file
+    bool saveAdjList(const std::string& filename) const {
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+             std::cerr << "Error: Cannot open file for writing WeightedGraph AdjList: " << filename << std::endl;
+             return false;
+        }
+        file << adj_list.size() << "\n"; // Number of vertices
+        for (size_t u = 0; u < adj_list.size(); ++u) {
+            file << u;
+            for (const auto& edge : adj_list[u]) {
+                file << " " << edge.first << " " << edge.second;
+            }
+            file << "\n";
+        }
+        return file.good();
+    }
+
+    // Load adjacency list from file
+    bool loadAdjList(const std::string& filename) {
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            // std::cerr << "Info: WeightedGraph AdjList cache file not found: " << filename << std::endl;
+            return false;
+        }
+        size_t num_vertices_expected;
+        file >> num_vertices_expected;
+        if (file.fail() || num_vertices_expected != adj_list.size()) { // Check against current size
+             std::cerr << "Error: WeightedGraph AdjList cache size mismatch or read error." << std::endl;
+             return false;
+        }
+
+        // Clear existing adjacency list data before loading
+        for(auto& neighbors : adj_list) {
+            neighbors.clear();
+        }
+
+        std::string line;
+        std::getline(file, line); // Consume rest of the first line
+        int u, neighbor, weight;
+        while (std::getline(file, line)) {
+            std::istringstream iss(line);
+            iss >> u;
+             if (iss.fail() || u < 0 || u >= num_vertices_expected) {
+                  std::cerr << "Warning: Skipping invalid line in WeightedGraph AdjList cache: " << line << std::endl;
+                  continue; // Skip invalid lines
+             }
+            while (iss >> neighbor >> weight) {
+                if (neighbor >= 0 && neighbor < num_vertices_expected) { // Basic validation
+                    adj_list[u].emplace_back(neighbor, weight);
+                } else {
+                     std::cerr << "Warning: Invalid neighbor ID " << neighbor << " for vertex " << u << " in AdjList cache." << std::endl;
+                }
+            }
+        }
+         if (file.bad()) {
+             std::cerr << "Error: File read error occurred during WeightedGraph AdjList cache loading." << std::endl;
+             return false;
+         }
+        return true;
+    }
+
+    // Save Disjoint Sets state to file
+    bool saveDisjointSets(const std::string& filename) const {
+        if (!ds) {
+             std::cerr << "Error: Cannot save WeightedGraph DisjointSets, it's not built." << std::endl;
+             return false; // Nothing to save
+        }
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+             std::cerr << "Error: Cannot open file for writing WeightedGraph DisjointSets: " << filename << std::endl;
+             return false;
+        }
+        file << ds->parent.size() << "\n";
+        for (size_t i = 0; i < ds->parent.size(); ++i) {
+            file << ds->parent[i] << " " << ds->rank[i] << "\n";
+        }
+        return file.good();
+    }
+
+    // Load Disjoint Sets state from file
+    bool loadDisjointSets(const std::string& filename) {
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            // std::cerr << "Info: WeightedGraph DisjointSets cache file not found: " << filename << std::endl;
+            return false;
+        }
+        size_t n_expected;
+        file >> n_expected;
+        if (file.fail() || n_expected != adj_list.size()) { // Size must match graph
+             std::cerr << "Error: WeightedGraph DisjointSets cache size mismatch or read error." << std::endl;
+             return false;
+        }
+
+        // Create or replace the DS object
+        ds = std::make_unique<GraphDisjointSets>(n_expected);
+        for (size_t i = 0; i < n_expected; ++i) {
+            if (!(file >> ds->parent[i] >> ds->rank[i])) {
+                 std::cerr << "Error: Failed to read parent/rank data from WeightedGraph DisjointSets cache for index " << i << "." << std::endl;
+                 ds.reset(); // Clear partially loaded DS
+                 return false;
+            }
+        }
+         if (file.bad()) {
+             std::cerr << "Error: File read error occurred during WeightedGraph DisjointSets cache loading." << std::endl;
+             return false;
+         }
+        // Optional: Check for extra data at the end
+        int check_eof;
+        file >> check_eof;
+        if (!file.eof()) {
+             std::cerr << "Warning: Extra data found at the end of WeightedGraph DisjointSets cache file: " << filename << std::endl;
+        }
+
+        return true;
+    }
+
 
 private:
 

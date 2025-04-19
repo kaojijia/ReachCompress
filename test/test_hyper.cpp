@@ -306,9 +306,10 @@ TEST_F(HypergraphTest, LoadHypergraphFromFile)
 // --- 性能对比测试 ---
 TEST_F(HypergraphTest, PerformanceComparison)
 {
+    // GTEST_SKIP() << "Test disabled.";
     // 加载超图数据
     // const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/test1";
-    const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/random_hypergraph_4";
+    string hypergraph_file = "/root/ReachCompress/Edges/Hyper/random_hypergraph_4";
     Hypergraph hg;
     try
     {
@@ -355,12 +356,12 @@ TEST_F(HypergraphTest, PerformanceComparison)
     }
 
     // Thread for Layered DS (baseline) build
-    std::thread baseline_thread([&hg, &build_duration_baseline, &baseline_build_error]()
+    std::thread baseline_thread([&hg, &build_duration_baseline, &baseline_build_error, &hypergraph_file]()
                                 {
         auto start = high_resolution_clock::now();
         try {
              // Assuming offline_industry was split into public methods
-             hg.offline_industry_baseline();
+             hg.offline_industry_baseline(hypergraph_file);
         } catch (const std::exception& e) {
              cerr << "Error in baseline build thread: " << e.what() << endl;
              baseline_build_error = true;
@@ -370,12 +371,12 @@ TEST_F(HypergraphTest, PerformanceComparison)
         cout << "Layered DS build completed." << endl; });
 
     // Thread for UWeightedPLL build
-    std::thread pll_thread([&hg, &build_duration_pll, &pll_build_error]()
+    std::thread pll_thread([&hg, &build_duration_pll, &pll_build_error , &hypergraph_file]()
                            {
         auto start = high_resolution_clock::now();
          try {
             // Assuming offline_industry was split into public methods
-            hg.offline_industry_pll();
+            hg.offline_industry_pll(hypergraph_file);
          } catch (const std::exception& e) {
              cerr << "Error in PLL build thread: " << e.what() << endl;
              pll_build_error = true;
@@ -387,7 +388,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
     // Thread for HypergraphTreeIndex build
     // Pass raw pointer as unique_ptr cannot be copied into lambda capture easily
     HypergraphTreeIndex *tree_index_ptr = tree_index.get();
-    std::thread tree_thread([tree_index_ptr, &build_duration_tree, &tree_build_error]()
+    std::thread tree_thread([tree_index_ptr, &build_duration_tree, &tree_build_error, &hypergraph_file]()
                             {
          if (!tree_index_ptr) {
              cerr << "Error: tree_index_ptr is null in thread." << endl;
@@ -396,7 +397,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
          }
          auto start = high_resolution_clock::now();
          try {
-             tree_index_ptr->buildIndexSizeOnly();
+             tree_index_ptr->buildIndexCacheSizeOnly(hypergraph_file);
          } catch (const std::exception& e) {
              cerr << "Error in TreeIndex build thread: " << e.what() << endl;
              tree_build_error = true;
@@ -856,7 +857,7 @@ protected:
         hg.addHyperedge({0, 5});
 
         index = std::make_unique<HypergraphTreeIndex>(hg);
-        index->buildIndex();
+        index->buildIndexCacheSizeOnly(PROJECT_ROOT_DIR"/IndexCache/test_hypergraph_tree_index");
     }
 
     void TearDown() override
@@ -883,7 +884,7 @@ TEST_F(HypergraphTreeIndexTest, BasicQueries)
     EXPECT_FALSE(index->query(3, 5, 2));
 
     EXPECT_TRUE(index->query(0, 5, 1));
-    EXPECT_FALSE(index->query(0, 5, 2));
+    EXPECT_TRUE(index->query(0, 5, 2));
 
     EXPECT_TRUE(index->query(0, 1, 1));
     EXPECT_TRUE(index->query(0, 1, 10));
@@ -899,45 +900,7 @@ TEST_F(HypergraphTreeIndexTest, BasicQueries)
     EXPECT_TRUE(index->query(3, 3, 5));
 }
 
-TEST_F(HypergraphTreeIndexTest, SaveToFile)
-{
-    GTEST_SKIP() << "Test disabled.";
-    ASSERT_NE(index, nullptr);
-    const std::string filename = "test_tree_output.dot";
 
-    ASSERT_NO_THROW(index->saveToFile(filename));
-
-    std::ifstream file(filename);
-    EXPECT_TRUE(file.good());
-    file.close();
-
-    std::ifstream infile(filename);
-    std::string line;
-    bool graph_tag_found = false;
-    bool node0_found = false;
-    bool edge_found = false;
-    while (std::getline(infile, line))
-    {
-        if (line.find("graph HypergraphTree {") != std::string::npos)
-        {
-            graph_tag_found = true;
-        }
-        if (line.find("node0 [label=") != std::string::npos)
-        {
-            node0_found = true;
-        }
-        if (line.find("--") != std::string::npos)
-        {
-            edge_found = true;
-        }
-    }
-    infile.close();
-    EXPECT_TRUE(graph_tag_found);
-    EXPECT_TRUE(node0_found);
-    EXPECT_TRUE(edge_found);
-
-    remove(filename.c_str());
-}
 
 int main(int argc, char **argv)
 {

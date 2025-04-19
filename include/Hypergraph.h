@@ -55,9 +55,73 @@ public:
         }
     }
 
+
+    
+
+    // Save Disjoint Sets state to file
+    bool saveToFile(const std::string& filename) const {
+        std::ofstream file(filename);
+        if (!file.is_open()) {
+             std::cerr << "Error: Cannot open file for writing DisjointSets: " << filename << std::endl;
+             return false;
+        }
+        file << parent.size() << "\n"; // Save number of elements
+        for (size_t i = 0; i < parent.size(); ++i) {
+            file << parent[i] << " " << rank[i] << "\n";
+        }
+        return file.good();
+    }
+
+    // Load Disjoint Sets state from file
+    bool loadFromFile(const std::string& filename) {
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            // std::cerr << "Info: DisjointSets cache file not found: " << filename << std::endl;
+            return false; // Indicate cache miss
+        }
+        size_t n_expected;
+        file >> n_expected;
+        if (file.fail()) {
+             std::cerr << "Error: Failed to read size from DisjointSets cache: " << filename << std::endl;
+             return false;
+        }
+
+        // Resize vectors according to file content
+        parent.resize(n_expected);
+        rank.resize(n_expected);
+
+        for (size_t i = 0; i < n_expected; ++i) {
+            if (!(file >> parent[i] >> rank[i])) {
+                 std::cerr << "Error: Failed to read parent/rank data from DisjointSets cache for index " << i << " in file: " << filename << std::endl;
+                 // Clear potentially partially loaded data
+                 parent.clear();
+                 rank.clear();
+                 return false;
+            }
+        }
+         if (file.bad()) {
+             std::cerr << "Error: File read error occurred during DisjointSets cache loading." << std::endl;
+             return false;
+         }
+        // Check if we read exactly n_expected elements and nothing more unexpected
+        int check_eof;
+        file >> check_eof;
+        if (!file.eof()) {
+             std::cerr << "Warning: Extra data found at the end of DisjointSets cache file: " << filename << std::endl;
+             // Decide if this is an error or just a warning
+        }
+
+        return true; // Successfully loaded
+    }
+
+
+
     std::vector<int> parent;
     std::vector<int> rank;
 
+
+
+    
 private:
 };
 
@@ -149,6 +213,7 @@ public:
     int addVertex()
     {
         ds_valid = false; // 数据变更，标记并查集失效
+        graphs_built = false; // 重置图构建标志
         int vertexId = vertices.size();
         vertices.push_back(vertexId);
         // 为新顶点添加一个空的超边列表
@@ -160,6 +225,7 @@ public:
     int addVertices(size_t count)
     {
         ds_valid = false; // 数据变更，标记并查集失效
+        graphs_built = false; // 重置图构建标志
         int firstId = vertices.size();
         vertices.resize(firstId + count);
         vertex_to_edges.resize(firstId + count);
@@ -175,6 +241,7 @@ public:
     void addVertexWithId(int vertexId)
     {
         ds_valid = false; // 数据变更，标记并查集失效
+        graphs_built = false; // 重置图构建标志
         if (vertexId < 0)
         {
             throw std::invalid_argument("Vertex ID must be non-negative");
@@ -195,6 +262,7 @@ public:
     void addHyperedgeWithId(int edgeId, const std::vector<int> &vertexList)
     {
         ds_valid = false; // 数据变更，标记并查集失效
+        graphs_built = false; // 重置图构建标志
         if (edgeId < 0)
         {
             throw std::invalid_argument("Edge ID must be non-negative");
@@ -221,6 +289,7 @@ public:
     int addHyperedge(const std::vector<int> &vertexList)
     {
         ds_valid = false; // 数据变更，标记并查集失效
+        graphs_built = false; // 重置图构建标志
         int maxVertex = vertices.size() - 1;
         for (int v : vertexList)
         {
@@ -327,7 +396,8 @@ public:
         void offline_industry_pll();
 
     }
-    void offline_industry_pll(){
+    void offline_industry_pll(string filename = ""){
+
             // --- 构建 pll_graph 和 pll index ---
             pll_graph.release();
             pll_graph = std::make_unique<WeightedGraph>(hyperedges.size());
@@ -346,86 +416,129 @@ public:
                 }
             }
             pll = std::make_unique<WeightedPrunedLandmarkIndex>(*pll_graph);
-            pll->offline_industry();
+            pll->offline_industry(filename);
             pll_total_label_size = pll->getTotalLabelSize();
             // Store memory in bytes internally
             pll_memory_bytes = static_cast<size_t>((pll_graph->getAdjListMemoryUsageMB() + pll->getMemoryUsageMB()) * 1024.0 * 1024.0);
     }
 
-    void offline_industry_baseline()
+
+    void offline_industry_baseline(const std::string& cache_prefix = "")
     {
-        // 检查是否需要重建并查集 (Hypergraph level) - 这部分保持不变
-        if (!ds_valid || !ds)
-        {
-            ds = std::make_unique<DisjointSets>(vertices.size());
-            for (const auto &edge : hyperedges)
-            {
-                if (edge.vertices.size() > 1)
-                {
-                    int first = edge.vertices[0];
-                    for (size_t i = 1; i < edge.vertices.size(); i++)
-                    {
-                        ds->merge(first, edge.vertices[i]);
+        bool hg_ds_loaded = false;
+        bool layered_graphs_loaded = false;
+
+        // --- Try Loading Hypergraph DS from Cache ---
+        if (!cache_prefix.empty()) {
+            std::string hg_ds_file = cache_prefix + "_hg_ds.idx";
+            try {
+                // Create a temporary DS object to load into
+                auto temp_ds = std::make_unique<DisjointSets>(0); // Initial size 0, loadFromFile will resize
+                if (temp_ds->loadFromFile(hg_ds_file)) {
+                    // Check if loaded size matches current vertex count
+                    if (temp_ds->parent.size() == vertices.size()) {
+                        ds = std::move(temp_ds); // Move ownership
+                        ds_valid = true;
+                        ds_nodes = ds->parent.size();
+                        ds_memory_bytes = sizeof(*ds) + ds->parent.capacity() * sizeof(int) + ds->rank.capacity() * sizeof(int);
+                        hg_ds_loaded = true;
+                        std::cout << "Hypergraph Disjoint Set loaded from cache: " << hg_ds_file << std::endl;
+                    } else {
+                         std::cerr << "Warning: Hypergraph DS cache size mismatch (" << temp_ds->parent.size()
+                                   << ") vs current vertex count (" << vertices.size() << "). Rebuilding DS." << std::endl;
+                         ds.reset(); // Ensure ds is cleared if size mismatches
+                         ds_valid = false;
                     }
+                } else {
+                     std::cout << "Info: Hypergraph DS cache not found or invalid at '" << hg_ds_file << "'. Building DS." << std::endl;
                 }
+            } catch (const std::exception& e) {
+                 std::cerr << "Warning: Failed to load Hypergraph DS cache '" << hg_ds_file << "'. Building DS. Error: " << e.what() << std::endl;
+                 ds.reset(); // Ensure ds is cleared on error
+                 ds_valid = false;
             }
-            ds_valid = true;
-            ds_nodes = ds->parent.size();
-            ds_memory_bytes = sizeof(*ds) + ds->parent.capacity() * sizeof(int) + ds->rank.capacity() * sizeof(int);
         }
 
-        // --- 多线程计算所有交集 ---
-        if (!graphs_built) // 仅在未构建时执行
-        {
-            all_intersections.clear(); // 清空之前的交集数据
-            std::mutex intersections_mutex; // 用于保护 all_intersections 的互斥锁
-            size_t num_edges = hyperedges.size();
-            unsigned int num_threads = std::thread::hardware_concurrency(); // 获取硬件支持的线程数
-            if (num_threads == 0) num_threads = 1; // 至少使用一个线程
-            std::vector<std::thread> threads(num_threads);
+        // --- Build Hypergraph DS (if not loaded) ---
+        if (!hg_ds_loaded) {
+            std::cout << "Building Hypergraph Disjoint Set..." << std::endl;
+            buildHypergraphDS(); // Use the existing helper function
 
-            auto calculate_intersections =
-                [&](size_t start_idx, size_t end_idx) {
-                std::vector<std::tuple<size_t, size_t, int>> local_intersections; // 线程局部结果
-                for (size_t i = start_idx; i < end_idx; ++i) {
-                    if (hyperedges[i].size() == 0) continue;
-                    for (size_t j = i + 1; j < num_edges; ++j) {
-                         if (hyperedges[j].size() == 0) continue;
-                         // 注意：getHyperedgeIntersection 内部有排序，可能较慢
-                         // 如果性能关键，可以考虑优化交集计算本身
-                         auto intersection = getHyperedgeIntersection(i, j);
-                         int size = intersection.size();
-                         if (size > 0) { // 只存储有交集的边
-                             local_intersections.emplace_back(i, j, size);
-                         }
+            // --- Save Hypergraph DS to Cache ---
+            if (!cache_prefix.empty()) {
+                std::string hg_ds_file = cache_prefix + "_hg_ds.idx";
+                try {
+                    std::filesystem::path p(hg_ds_file);
+                    if (p.has_parent_path()) {
+                        std::filesystem::create_directories(p.parent_path());
                     }
+                    if (ds && ds->saveToFile(hg_ds_file)) {
+                        std::cout << "Hypergraph Disjoint Set saved to cache: " << hg_ds_file << std::endl;
+                    } else if (ds) {
+                        // saveToFile prints error internally
+                    }
+                } catch (const std::exception& e) {
+                     std::cerr << "Warning: Failed to save Hypergraph DS cache '" << hg_ds_file << "'. Error: " << e.what() << std::endl;
                 }
-                // 将局部结果合并到全局结果中（需要加锁）
-                std::lock_guard<std::mutex> lock(intersections_mutex);
-                all_intersections.insert(all_intersections.end(),
-                                         local_intersections.begin(),
-                                         local_intersections.end());
-            };
+            }
+        }
 
-            size_t total_pairs = num_edges * (num_edges - 1) / 2; // 大致的总对数，用于分配任务
-            size_t chunk_size = (num_edges + num_threads -1) / num_threads; // 粗略按第一个索引划分任务量
 
-            size_t current_start = 0;
-            for (unsigned int t = 0; t < num_threads; ++t) {
-                size_t current_end = std::min(current_start + chunk_size, num_edges);
-                 if (current_start >= current_end) break; // 防止创建空任务的线程
-                threads[t] = std::thread(calculate_intersections, current_start, current_end);
-                current_start = current_end;
+        // --- Try Loading Layered Graphs from Cache ---
+        // (This part reuses/refines the logic from the previous response)
+        if (!cache_prefix.empty() && !graphs_built) { // Only try loading if not already built/loaded
+             bool loaded_all_layers = true; // Assume success initially
+             weighted_graphs.clear();
+             weighted_graphs.resize(MAX_INTERSECTION_SIZE + 1);
+             weighted_graphs_adj_list_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
+             weighted_graphs_ds_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
+             weighted_graphs_total_nodes = 0;
+             weighted_graphs_total_edges = 0;
+
+            for (int k = 1; k <= MAX_INTERSECTION_SIZE; ++k) {
+                std::string adj_file = cache_prefix + "_lds_k" + std::to_string(k) + "_adj.idx";
+                std::string ds_file = cache_prefix + "_lds_k" + std::to_string(k) + "_ds.idx";
+
+                // Create graph object first, passing expected size and min_weight
+                weighted_graphs[k] = std::make_unique<WeightedGraph>(hyperedges.size(), k);
+
+                if (!weighted_graphs[k]->loadAdjList(adj_file) || !weighted_graphs[k]->loadDisjointSets(ds_file)) {
+                    std::cout << "Info: Layered DS cache not found or invalid for k=" << k << ". Building required." << std::endl;
+                    loaded_all_layers = false;
+                    weighted_graphs.clear(); // Clear partially loaded graphs
+                    // Reset stats
+                    weighted_graphs_adj_list_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
+                    weighted_graphs_ds_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
+                    weighted_graphs_total_nodes = 0;
+                    weighted_graphs_total_edges = 0;
+                    break; // Stop trying to load
+                }
+                 // Update stats after successful load for layer k
+                 weighted_graphs_total_nodes += weighted_graphs[k]->numVertices();
+                 weighted_graphs_total_edges += weighted_graphs[k]->numEdges();
+                 weighted_graphs_adj_list_memory_bytes[k] = static_cast<size_t>(weighted_graphs[k]->getAdjListMemoryUsageMB() * 1024.0 * 1024.0);
+                 weighted_graphs_ds_memory_bytes[k] = static_cast<size_t>(weighted_graphs[k]->getDsMemoryUsageMB() * 1024.0 * 1024.0);
+            }
+            if (loaded_all_layers) {
+                 std::cout << "All Layered DS levels loaded from cache prefix: " << cache_prefix << std::endl;
+                 graphs_built = true; // Mark as built (loaded)
+                 layered_graphs_loaded = true;
+                 // No need to return here, let the function finish naturally
+            }
+        }
+
+
+        // --- Build Layered Graphs (if not loaded) ---
+        if (!layered_graphs_loaded && !graphs_built) // Check graphs_built again in case it was set elsewhere
+        {
+            std::cout << "Building Layered DS..." << std::endl;
+
+            // Calculate intersections (parallel) - Reuse existing logic if needed
+            if (all_intersections.empty()) { // Only calculate if not already done
+                 calculateAllIntersectionsParallel();
             }
 
-            // 等待所有线程完成
-            for (unsigned int t = 0; t < threads.size(); ++t) {
-                 if (threads[t].joinable()) {
-                    threads[t].join();
-                 }
-            }
-
-            // --- 顺序构建各层图 ---
+            // Build graphs sequentially
             weighted_graphs.clear();
             weighted_graphs.resize(MAX_INTERSECTION_SIZE + 1);
             weighted_graphs_adj_list_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
@@ -433,34 +546,164 @@ public:
             weighted_graphs_total_nodes = 0;
             weighted_graphs_total_edges = 0;
 
-            for (int min_size = 1; min_size <= MAX_INTERSECTION_SIZE; min_size++)
-            {
-                weighted_graphs[min_size] = std::make_unique<WeightedGraph>(num_edges, min_size);
+            for (int min_size = 1; min_size <= MAX_INTERSECTION_SIZE; min_size++) {
+                // Create graph object with correct size and min_weight
+                weighted_graphs[min_size] = std::make_unique<WeightedGraph>(hyperedges.size(), min_size);
 
-                // 遍历预计算的交集
-                for (const auto& intersection_info : all_intersections)
-                {
-                    size_t i = std::get<0>(intersection_info);
-                    size_t j = std::get<1>(intersection_info);
-                    int size = std::get<2>(intersection_info);
-
-                    // 如果交集大小满足当前层的要求，则添加边
-                    if (size >= min_size)
-                    {
-                        weighted_graphs[min_size]->addEdge(i, j, size);
+                // Add edges from pre-calculated intersections
+                for (const auto& intersection_info : all_intersections) {
+                    if (std::get<2>(intersection_info) >= min_size) {
+                        weighted_graphs[min_size]->addEdge(std::get<0>(intersection_info), std::get<1>(intersection_info), std::get<2>(intersection_info));
                     }
                 }
 
-                // 为当前层构建索引并更新统计信息
-                weighted_graphs[min_size]->offline_industry(); // Build DS for this graph level
+                // Build DS for this graph level
+                weighted_graphs[min_size]->offline_industry();
+
+                // Update stats
                 weighted_graphs_total_nodes += weighted_graphs[min_size]->numVertices();
                 weighted_graphs_total_edges += weighted_graphs[min_size]->numEdges();
                 weighted_graphs_adj_list_memory_bytes[min_size] = static_cast<size_t>(weighted_graphs[min_size]->getAdjListMemoryUsageMB() * 1024.0 * 1024.0);
                 weighted_graphs_ds_memory_bytes[min_size] = static_cast<size_t>(weighted_graphs[min_size]->getDsMemoryUsageMB() * 1024.0 * 1024.0);
+
+                // --- Save Layer to Cache ---
+                if (!cache_prefix.empty()) {
+                     std::string adj_file = cache_prefix + "_lds_k" + std::to_string(min_size) + "_adj.idx";
+                     std::string ds_file = cache_prefix + "_lds_k" + std::to_string(min_size) + "_ds.idx";
+                     try {
+                         std::filesystem::path p(adj_file);
+                         if (p.has_parent_path()) {
+                             std::filesystem::create_directories(p.parent_path());
+                         }
+                         // Save both adjacency list and DS state
+                         if (!weighted_graphs[min_size]->saveAdjList(adj_file)) {
+                              std::cerr << "Warning: Failed to save Layered DS adjacency list cache for k=" << min_size << std::endl;
+                         }
+                         if (!weighted_graphs[min_size]->saveDisjointSets(ds_file)) {
+                              std::cerr << "Warning: Failed to save Layered DS disjoint set cache for k=" << min_size << std::endl;
+                         }
+                     } catch (const std::exception& e) {
+                          std::cerr << "Warning: Failed to save Layered DS cache for k=" << min_size << ". Error: " << e.what() << std::endl;
+                     }
+                }
             }
-            graphs_built = true;
+            graphs_built = true; // Mark as built
+            if (!cache_prefix.empty()) { // Only print save message if we actually built and had a path
+                 std::cout << "Layered DS saved to cache prefix: " << cache_prefix << std::endl;
+            }
         }
     }
+
+    // void offline_industry_baseline()
+    // {
+    //     // 检查是否需要重建并查集 (Hypergraph level) - 这部分保持不变
+    //     if (!ds_valid || !ds)
+    //     {
+    //         ds = std::make_unique<DisjointSets>(vertices.size());
+    //         for (const auto &edge : hyperedges)
+    //         {
+    //             if (edge.vertices.size() > 1)
+    //             {
+    //                 int first = edge.vertices[0];
+    //                 for (size_t i = 1; i < edge.vertices.size(); i++)
+    //                 {
+    //                     ds->merge(first, edge.vertices[i]);
+    //                 }
+    //             }
+    //         }
+    //         ds_valid = true;
+    //         ds_nodes = ds->parent.size();
+    //         ds_memory_bytes = sizeof(*ds) + ds->parent.capacity() * sizeof(int) + ds->rank.capacity() * sizeof(int);
+    //     }
+
+    //     // --- 多线程计算所有交集 ---
+    //     if (!graphs_built) // 仅在未构建时执行
+    //     {
+    //         all_intersections.clear(); // 清空之前的交集数据
+    //         std::mutex intersections_mutex; // 用于保护 all_intersections 的互斥锁
+    //         size_t num_edges = hyperedges.size();
+    //         unsigned int num_threads = std::thread::hardware_concurrency(); // 获取硬件支持的线程数
+    //         if (num_threads == 0) num_threads = 1; // 至少使用一个线程
+    //         std::vector<std::thread> threads(num_threads);
+
+    //         auto calculate_intersections =
+    //             [&](size_t start_idx, size_t end_idx) {
+    //             std::vector<std::tuple<size_t, size_t, int>> local_intersections; // 线程局部结果
+    //             for (size_t i = start_idx; i < end_idx; ++i) {
+    //                 if (hyperedges[i].size() == 0) continue;
+    //                 for (size_t j = i + 1; j < num_edges; ++j) {
+    //                      if (hyperedges[j].size() == 0) continue;
+    //                      // 注意：getHyperedgeIntersection 内部有排序，可能较慢
+    //                      // 如果性能关键，可以考虑优化交集计算本身
+    //                      auto intersection = getHyperedgeIntersection(i, j);
+    //                      int size = intersection.size();
+    //                      if (size > 0) { // 只存储有交集的边
+    //                          local_intersections.emplace_back(i, j, size);
+    //                      }
+    //                 }
+    //             }
+    //             // 将局部结果合并到全局结果中（需要加锁）
+    //             std::lock_guard<std::mutex> lock(intersections_mutex);
+    //             all_intersections.insert(all_intersections.end(),
+    //                                      local_intersections.begin(),
+    //                                      local_intersections.end());
+    //         };
+
+    //         size_t total_pairs = num_edges * (num_edges - 1) / 2; // 大致的总对数，用于分配任务
+    //         size_t chunk_size = (num_edges + num_threads -1) / num_threads; // 粗略按第一个索引划分任务量
+
+    //         size_t current_start = 0;
+    //         for (unsigned int t = 0; t < num_threads; ++t) {
+    //             size_t current_end = std::min(current_start + chunk_size, num_edges);
+    //              if (current_start >= current_end) break; // 防止创建空任务的线程
+    //             threads[t] = std::thread(calculate_intersections, current_start, current_end);
+    //             current_start = current_end;
+    //         }
+
+    //         // 等待所有线程完成
+    //         for (unsigned int t = 0; t < threads.size(); ++t) {
+    //              if (threads[t].joinable()) {
+    //                 threads[t].join();
+    //              }
+    //         }
+
+    //         // --- 顺序构建各层图 ---
+    //         weighted_graphs.clear();
+    //         weighted_graphs.resize(MAX_INTERSECTION_SIZE + 1);
+    //         weighted_graphs_adj_list_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
+    //         weighted_graphs_ds_memory_bytes.assign(MAX_INTERSECTION_SIZE + 1, 0);
+    //         weighted_graphs_total_nodes = 0;
+    //         weighted_graphs_total_edges = 0;
+
+    //         for (int min_size = 1; min_size <= MAX_INTERSECTION_SIZE; min_size++)
+    //         {
+    //             weighted_graphs[min_size] = std::make_unique<WeightedGraph>(num_edges, min_size);
+
+    //             // 遍历预计算的交集
+    //             for (const auto& intersection_info : all_intersections)
+    //             {
+    //                 size_t i = std::get<0>(intersection_info);
+    //                 size_t j = std::get<1>(intersection_info);
+    //                 int size = std::get<2>(intersection_info);
+
+    //                 // 如果交集大小满足当前层的要求，则添加边
+    //                 if (size >= min_size)
+    //                 {
+    //                     weighted_graphs[min_size]->addEdge(i, j, size);
+    //                 }
+    //             }
+
+    //             // 为当前层构建索引并更新统计信息
+    //             weighted_graphs[min_size]->offline_industry(); // Build DS for this graph level
+    //             weighted_graphs_total_nodes += weighted_graphs[min_size]->numVertices();
+    //             weighted_graphs_total_edges += weighted_graphs[min_size]->numEdges();
+    //             weighted_graphs_adj_list_memory_bytes[min_size] = static_cast<size_t>(weighted_graphs[min_size]->getAdjListMemoryUsageMB() * 1024.0 * 1024.0);
+    //             weighted_graphs_ds_memory_bytes[min_size] = static_cast<size_t>(weighted_graphs[min_size]->getDsMemoryUsageMB() * 1024.0 * 1024.0);
+    //         }
+    //         graphs_built = true;
+    //     }
+    // }
+
 
     // 检查两个顶点是否连通（可达）- 优化使用缓存的并查集
     bool isReachable(int u, int v) const
@@ -1088,16 +1331,161 @@ public:
     // --- 结束新增 Getter 方法 ---
 
 
+    
+    // --- 顶点删除 (直接删除，处理空洞) ---
+    void deleteVertex(int vertexId) {
+        // 1. 输入验证: 检查 ID 是否在范围内，以及该顶点是否实际存在
+        //    (这里假设顶点存在当且仅当 vertex_to_edges[vertexId] 非空，
+        //     或者如果 vertices[vertexId] 有特殊标记也可以用那个)
+        if (vertexId < 0 || vertexId >= static_cast<int>(vertex_to_edges.size())) {
+            throw std::invalid_argument("Vertex id is out of bounds for deletion");
+        }
+        // 检查顶点是否已经 "不存在" 或已被删除
+        // 如果 vertices[vertexId] == 0 表示不存在，可以加上这个检查
+        // if (vertices[vertexId] == 0) { // 假设 0 表示不存在
+        //     return; // Vertex already deleted or never existed
+        // }
+        // 或者，如果 vertex_to_edges 为空表示不存在/已删除
+        if (vertex_to_edges[vertexId].empty() && /* 检查 vertices[vertexId] 是否也表示不存在 */ true) {
+             // 可以选择静默返回或抛出异常，表明顶点不存在或已被删除
+             // throw std::invalid_argument("Vertex id does not exist or is already deleted");
+             return; // Or simply return if deleting a non-existent vertex is acceptable
+        }
+
+
+
+
+        // 3. 更新超边列表 (hyperedges)
+        //    从包含 vertexId 的超边中移除 vertexId
+        //    在清除 vertex_to_edges 之前获取列表副本或直接迭代
+        std::vector<int> incident_edges_copy = vertex_to_edges[vertexId]; // 获取副本
+        for (int edgeId : incident_edges_copy) {
+            if (edgeId >= 0 && edgeId < static_cast<int>(hyperedges.size())) { // 边界检查
+                auto& edge_verts = hyperedges[edgeId].vertices;
+                // 使用 erase-remove idiom 从超边的顶点列表中移除 vertexId
+                edge_verts.erase(std::remove(edge_verts.begin(), edge_verts.end(), vertexId), edge_verts.end());
+
+                // 可选: 检查超边是否因此变空或过小。
+                // 如果需要处理无效超边，可以在这里添加逻辑，
+                // 例如，如果 edge_verts.empty()，则标记 hyperedges[edgeId] 为无效
+                // (需要为 Hyperedge 添加状态或使用单独的 hyperedge_active_ 向量)
+                // 这会使问题更复杂，因为超边删除也需要处理 ID 映射。
+            }
+        }
+
+        // 4. 标记顶点为已删除
+        //    a. 清空该顶点的关联超边列表
+        vertex_to_edges[vertexId].clear();
+        //    b. (可选) 如果 vertices 向量用于标记存在性，更新它
+        //       例如，如果 vertices[i] 存储 ID i，可能不需要改动，
+        //       或者如果用 0 表示空洞，则设置为 0。
+        // vertices[vertexId] = 0; // 假设 0 表示空洞/不存在
+
+        // 注意：此方法不会缩小 vertices 或 vertex_to_edges 向量的大小，
+        // 只是在 vertexId 处创建了一个 "逻辑空洞"。
+        // 依赖于顶点迭代的方法 (如 buildDisjointSets, offline_industry)
+        // 未来可能需要检查顶点是否有效（例如检查 vertex_to_edges[i].empty()）
+
+        // 5. 更新索引
+        //    a. 更新并查集 (如果使用)
+        // if (ds_valid && ds) {
+        //     ds_valid = false;
+        //     ds->remove(vertexId);
+        // }
+        // //    PLL索引更新
+        // if (pll) {
+        //     pll->updateVertex(vertexId);
+        // }
+        // //    各层WeightedGraph索引更新
+        // if (graphs_built) {
+        //     for (auto& graph : weighted_graphs) {
+        //         if (graph) {
+        //             graph->removeVertex(vertexId);
+        //         }
+        //     }
+        // }
+
+    }
+
+    // Helper to build hypergraph's own DS (ensure this exists and is correct)
+    void buildHypergraphDS() {
+        ds = std::make_unique<DisjointSets>(vertices.size());
+        for (const auto &edge : hyperedges) {
+            if (edge.vertices.size() > 1) {
+                int first = edge.vertices[0];
+                for (size_t i = 1; i < edge.vertices.size(); i++) {
+                    ds->merge(first, edge.vertices[i]);
+                }
+            }
+        }
+        ds_valid = true;
+        ds_nodes = ds->parent.size();
+        ds_memory_bytes = sizeof(*ds) + ds->parent.capacity() * sizeof(int) + ds->rank.capacity() * sizeof(int);
+   }
+
+   // Helper to calculate all intersections in parallel (ensure this exists and is correct)
+   void calculateAllIntersectionsParallel() {
+       // ... (Implementation from previous response) ...
+        if (!all_intersections.empty()) return; // Already calculated
+
+        std::cout << "Calculating hyperedge intersections..." << std::endl;
+        std::mutex intersections_mutex;
+        size_t num_edges = hyperedges.size();
+        unsigned int num_threads = std::thread::hardware_concurrency();
+        if (num_threads == 0) num_threads = 1;
+        std::vector<std::thread> threads(num_threads);
+        all_intersections.reserve(num_edges * num_edges / 20); // Heuristic preallocation
+
+        auto calculate_intersections_task =
+            [&](size_t start_idx, size_t end_idx) {
+            std::vector<std::tuple<size_t, size_t, int>> local_intersections;
+            local_intersections.reserve((end_idx - start_idx) * num_edges / 20); // Heuristic
+            for (size_t i = start_idx; i < end_idx; ++i) {
+                if (hyperedges[i].size() == 0) continue;
+                for (size_t j = i + 1; j < num_edges; ++j) {
+                    if (hyperedges[j].size() == 0) continue;
+                    auto intersection = getHyperedgeIntersection(i, j);
+                    int size = intersection.size();
+                    if (size > 0) {
+                        local_intersections.emplace_back(i, j, size);
+                    }
+                }
+            }
+            std::lock_guard<std::mutex> lock(intersections_mutex);
+            all_intersections.insert(all_intersections.end(),
+                                     local_intersections.begin(),
+                                     local_intersections.end());
+        };
+
+        size_t chunk_size = (num_edges + num_threads - 1) / num_threads;
+        size_t current_start = 0;
+        for (unsigned int t = 0; t < num_threads; ++t) {
+            size_t current_end = std::min(current_start + chunk_size, num_edges);
+            if (current_start >= current_end) break;
+            threads[t] = std::thread(calculate_intersections_task, current_start, current_end);
+            current_start = current_end;
+        }
+
+        for (unsigned int t = 0; t < threads.size(); ++t) {
+            if (threads[t].joinable()) {
+                threads[t].join();
+            }
+        }
+        std::cout << "Intersection calculation complete. Found " << all_intersections.size() << " intersections." << std::endl;
+   }
+
     //需要对外访问
     static const int MAX_INTERSECTION_SIZE = 10;
     std::unique_ptr<WeightedGraph> pll_graph;                    // 专门为pll做的图，权值全保留
     std::vector<std::tuple<size_t, size_t, int>> all_intersections;
-private:
+
     std::vector<int> vertices;         // 顶点列表
     std::vector<Hyperedge> hyperedges; // 超边列表
     std::vector<std::vector<int>> vertex_to_edges;
 
     std::unique_ptr<DisjointSets> ds; // 使用智能指针存储预构建的并查集
+    
+    //重要，支持动态图更新
     bool ds_valid;                    // 新增：标记并查集是否有效
 
     // 新增：存储不同交集约束下的无向加权图
@@ -1105,6 +1493,9 @@ private:
     std::vector<std::unique_ptr<WeightedGraph>> weighted_graphs; // 索引对应交集大小
 
     std::unique_ptr<WeightedPrunedLandmarkIndex> pll;            // 修改类型
+    
+    
+    //重要，支持动态图更新
     bool graphs_built = false;                                   // 标记图是否已构建
 
     // --- 内存存储保持 bytes 单位 ---
@@ -1118,6 +1509,7 @@ private:
     std::vector<size_t> weighted_graphs_ds_memory_bytes;       // Per layer
     size_t pll_memory_bytes = 0;
     // --- 结束更新 ---
+private:
 };
 
 #endif // HYPERGRAPH_H
