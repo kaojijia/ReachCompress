@@ -238,10 +238,34 @@ public:
     }
 
     // **新方法：通过指定顶点号添加顶点**
+    // void addVertexWithId(int vertexId)
+    // {
+    //     ds_valid = false; // 数据变更，标记并查集失效
+    //     graphs_built = false; // 重置图构建标志
+    //     if (vertexId < 0)
+    //     {
+    //         throw std::invalid_argument("Vertex ID must be non-negative");
+    //     }
+    //     if (vertexId >= static_cast<int>(vertices.size()))
+    //     {
+    //         // 如果顶点ID超出当前范围，扩展顶点列表
+    //         vertices.resize(vertexId + 10);
+    //         vertex_to_edges.resize(vertexId + 10);
+    //         for (int i = vertices.size() - 1; i >= vertexId; --i)
+    //         {
+    //             vertices[i] = i;
+    //         }
+    //     }
+    // }
+    
+    // **新方法：通过指定顶点号添加顶点**
     void addVertexWithId(int vertexId)
     {
-        ds_valid = false; // 数据变更，标记并查集失效
-        graphs_built = false; // 重置图构建标志
+        // 1. 标记索引失效
+        ds_valid = false;
+        graphs_built = false;
+
+        // 2. 核心图结构修改 (保持不变)
         if (vertexId < 0)
         {
             throw std::invalid_argument("Vertex ID must be non-negative");
@@ -249,20 +273,38 @@ public:
         if (vertexId >= static_cast<int>(vertices.size()))
         {
             // 如果顶点ID超出当前范围，扩展顶点列表
-            vertices.resize(vertexId + 10);
-            vertex_to_edges.resize(vertexId + 10);
-            for (int i = vertices.size() - 1; i >= vertexId; --i)
+            // 稍微优化resize，避免每次只加10个
+            size_t new_size = std::max(static_cast<size_t>(vertexId + 1), vertices.size() + (vertices.size() / 2) + 1); // 增长策略
+            vertices.resize(new_size);
+            vertex_to_edges.resize(new_size);
+            // 初始化新添加的顶点ID (只需初始化到 vertexId)
+            for (int i = vertices.size() - 1; i >= vertexId && vertices[i] == 0; --i) // 假设 0 表示未初始化或空洞
             {
-                vertices[i] = i;
+                 if (i < vertex_to_edges.size()) { // 确保 vertex_to_edges 也被正确调整大小
+                    vertices[i] = i;
+                 } else {
+                     // This case should ideally not happen if resize is correct, but handle defensively
+                     throw std::runtime_error("Internal error: vertex_to_edges size mismatch after resize");
+                 }
             }
+             // Ensure the target vertexId itself is set if it was newly created
+             if (vertexId < vertices.size() && vertices[vertexId] == 0) { // Check if it was part of the resize and uninitialized
+                 vertices[vertexId] = vertexId;
+             }
         }
+         // 如果 vertexId 已经存在但被标记为删除 (例如 vertex_to_edges[vertexId] 为空),
+         // 这里不需要特殊处理，添加超边时会重新填充 vertex_to_edges
     }
+
 
     // **新方法：通过指定边号添加超边**
     void addHyperedgeWithId(int edgeId, const std::vector<int> &vertexList)
     {
-        ds_valid = false; // 数据变更，标记并查集失效
-        graphs_built = false; // 重置图构建标志
+        // 1. 标记索引失效
+        ds_valid = false;
+        graphs_built = false;
+
+        // 2. 核心图结构修改 (保持不变)
         if (edgeId < 0)
         {
             throw std::invalid_argument("Edge ID must be non-negative");
@@ -272,46 +314,104 @@ public:
             // 如果边ID超出当前范围，扩展超边列表
             hyperedges.resize(edgeId + 1);
         }
+        // 检查顶点是否存在，如果不存在则添加
+        for (int v : vertexList)
+        {
+            if (v < 0)
+            {
+                throw std::invalid_argument("Vertex ID in edge cannot be negative");
+            }
+            if (v >= static_cast<int>(vertex_to_edges.size())) // 检查 vertex_to_edges 的大小更可靠
+            {
+                // 如果顶点ID超出当前范围，先添加顶点 (调用已修改的 addVertexWithId)
+                addVertexWithId(v); // addVertexWithId 内部会处理索引失效
+            }
+             // 可以在这里添加检查，确保 v 对应的顶点是有效的（如果 vertices[v] 有特殊标记）
+             // if (vertices[v] == 0) { /* handle error or ensure addVertexWithId fixed it */ }
+        }
+
         hyperedges[edgeId] = Hyperedge(vertexList);
 
         // 更新顶点到超边的映射
         for (int v : vertexList)
         {
-            if (v < 0)
-            {
-                throw std::invalid_argument("Vertex ID in edge does not exist");
-            }else if (v >= static_cast<int>(vertex_to_edges.size()))
-            {
-                // 如果顶点ID超出当前范围，先添加顶点
-                addVertexWithId(v);
+            // 再次检查边界，因为 addVertexWithId 可能调整了大小
+            if (v >= 0 && v < static_cast<int>(vertex_to_edges.size())) {
+                 // 避免重复添加同一个 edgeId
+                 if (std::find(vertex_to_edges[v].begin(), vertex_to_edges[v].end(), edgeId) == vertex_to_edges[v].end()) {
+                    vertex_to_edges[v].push_back(edgeId);
+                 }
+            } else {
+                 // Should not happen if addVertexWithId worked correctly
+                 throw std::runtime_error("Internal error: Vertex ID out of bounds after addVertexWithId");
             }
-            vertex_to_edges[v].push_back(edgeId);
         }
     }
-
+    
     // 添加超边，所有参与顶点必须已存在
     int addHyperedge(const std::vector<int> &vertexList)
     {
-        ds_valid = false; // 数据变更，标记并查集失效
-        graphs_built = false; // 重置图构建标志
+        // 1. 标记索引失效
+        ds_valid = false;
+        graphs_built = false;
+
+        // 2. 核心图结构修改 (保持不变)
         int maxVertex = vertices.size() - 1;
         for (int v : vertexList)
         {
-            if (v < 0 || v > maxVertex)
-                throw std::invalid_argument("Vertex id does not exist");
+            // 检查顶点是否存在且有效 (根据你的逻辑，可能需要检查 vertex_to_edges[v] 是否为空或 vertices[v] 的标记)
+            if (v < 0 || v > maxVertex /* || vertex_to_edges[v].empty() if empty means deleted */)
+                throw std::invalid_argument("Vertex id does not exist or is invalid");
         }
 
-        int edgeId = hyperedges.size();
+
+        int newEdgeId = hyperedges.size();
         hyperedges.emplace_back(Hyperedge(vertexList));
 
-        // 更新顶点到超边的映射
+        // 更新顶点到超边的映射 (保持不变)
         for (int v : vertexList)
         {
-            vertex_to_edges[v].push_back(edgeId);
+             if (std::find(vertex_to_edges[v].begin(), vertex_to_edges[v].end(), newEdgeId) == vertex_to_edges[v].end()) {
+                vertex_to_edges[v].push_back(newEdgeId);
+             }
         }
 
-        return edgeId;
+
+        
+        // 3. *** 增量更新 all_intersections ***
+        //    仅在 all_intersections 之前是有效的情况下进行增量更新
+        //    如果 graphs_built 为 false，意味着 all_intersections 可能也无效，
+        //    这种情况下增量更新没有意义，会在下次重建时重新计算。
+        //    但是，如果用户连续调用 addHyperedge，我们希望保持 all_intersections 的更新。
+        //    一个简单的策略是：如果 all_intersections 为空，就不做增量更新，
+        //    依赖后续的 calculateAllIntersectionsParallel。
+        //    或者，我们假设调用者负责维护一致性，这里总是尝试增量更新。
+        //    我们选择后者，但需要注意 calculateAllIntersectionsParallel 的行为。
+
+        const Hyperedge& newEdge = hyperedges[newEdgeId];
+        if (!newEdge.vertices.empty()) { // 只处理非空的新边
+            // 预估需要添加的交集数量，尝试 reserve
+            // all_intersections.reserve(all_intersections.size() + newEdgeId / 10); // 粗略估计
+
+            for (int oldEdgeId = 0; oldEdgeId < newEdgeId; ++oldEdgeId) {
+                const Hyperedge& oldEdge = hyperedges[oldEdgeId];
+                if (!oldEdge.vertices.empty()) { // 只与非空的旧边计算
+                    // 注意：getHyperedgeIntersection 内部排序，有开销
+                    auto intersection = newEdge.intersection(oldEdge);
+                    int size = intersection.size();
+                    if (size > 0) {
+                        // 添加到 all_intersections
+                        // 注意：这里没有加锁，假设 Hypergraph 对象不是线程安全的
+                        all_intersections.emplace_back(oldEdgeId, newEdgeId, size);
+                    }
+                }
+            }
+        }
+
+        return newEdgeId;
+
     }
+
 
     // 预分配一批超边容量
     void reserveHyperedges(size_t count)
@@ -973,59 +1073,59 @@ public:
         return false;
     }
 
-    // 使用转换后的带权图进行顶点可达性查询
-    bool isReachableViaPLLWeightedGraph(int sourceVertex, int targetVertex, int minIntersectionSize = 0)
-    {
-        if (sourceVertex < 0 || sourceVertex >= static_cast<int>(vertices.size()) ||
-            targetVertex < 0 || targetVertex >= static_cast<int>(vertices.size()))
-            throw std::invalid_argument("Vertex id does not exist");
+    // // 使用转换后的带权图进行顶点可达性查询
+    // bool isReachableViaPLLWeightedGraph(int sourceVertex, int targetVertex, int minIntersectionSize = 0)
+    // {
+    //     if (sourceVertex < 0 || sourceVertex >= static_cast<int>(vertices.size()) ||
+    //         targetVertex < 0 || targetVertex >= static_cast<int>(vertices.size()))
+    //         throw std::invalid_argument("Vertex id does not exist");
 
-        // 同一顶点必然可达
-        if (sourceVertex == targetVertex)
-            return true;
+    //     // 同一顶点必然可达
+    //     if (sourceVertex == targetVertex)
+    //         return true;
 
-        // 确保图已构建，并且使用正确的交集约束级别
-        if (!graphs_built || minIntersectionSize > MAX_INTERSECTION_SIZE)
-        {
-            const_cast<Hypergraph *>(this)->offline_industry();
-        }
+    //     // 确保图已构建，并且使用正确的交集约束级别
+    //     if (!graphs_built || minIntersectionSize > MAX_INTERSECTION_SIZE)
+    //     {
+    //         const_cast<Hypergraph *>(this)->offline_industry();
+    //     }
 
-        // 调整交集约束到有效范围
-        int effective_min_size = minIntersectionSize;
+    //     // 调整交集约束到有效范围
+    //     int effective_min_size = minIntersectionSize;
 
-        // 获取源顶点和目标顶点关联的所有超边
-        const auto &source_edges = vertex_to_edges[sourceVertex];
-        const auto &target_edges = vertex_to_edges[targetVertex];
+    //     // 获取源顶点和目标顶点关联的所有超边
+    //     const auto &source_edges = vertex_to_edges[sourceVertex];
+    //     const auto &target_edges = vertex_to_edges[targetVertex];
 
-        if (source_edges.empty() || target_edges.empty())
-        {
-            return false; // 如果源点或终点没有关联的超边，不可达
-        }
+    //     if (source_edges.empty() || target_edges.empty())
+    //     {
+    //         return false; // 如果源点或终点没有关联的超边，不可达
+    //     }
 
-        // 如果源点和目标点有共同的超边，则直接可达
-        for (int source_edge : source_edges)
-        {
-            if (std::find(target_edges.begin(), target_edges.end(), source_edge) != target_edges.end())
-            {
-                return true;
-            }
-        }
+    //     // 如果源点和目标点有共同的超边，则直接可达
+    //     for (int source_edge : source_edges)
+    //     {
+    //         if (std::find(target_edges.begin(), target_edges.end(), source_edge) != target_edges.end())
+    //         {
+    //             return true;
+    //         }
+    //     }
 
-        // 对源点集和目标点集做笛卡尔积检查
-        for (int source_edge : source_edges)
-        {
-            for (int target_edge : target_edges)
-            {
-                // 使用预构建的对应交集约束级别的图进行查询
-                if (weighted_graphs[effective_min_size]->landmark_reachability_query(source_edge, target_edge))
-                {
-                    return true; // 找到一对可达的超边
-                }
-            }
-        }
+    //     // 对源点集和目标点集做笛卡尔积检查
+    //     for (int source_edge : source_edges)
+    //     {
+    //         for (int target_edge : target_edges)
+    //         {
+    //             // 使用预构建的对应交集约束级别的图进行查询
+    //             if (weighted_graphs[effective_min_size]->landmark_reachability_query(source_edge, target_edge))
+    //             {
+    //                 return true; // 找到一对可达的超边
+    //             }
+    //         }
+    //     }
 
-        return false; // 所有笛卡尔积对都不可达
-    }
+    //     return false; // 所有笛卡尔积对都不可达
+    // }
 
     bool isReachableViaWeightedGraph(int sourceVertex, int targetVertex, int minIntersectionSize = 1) // Default to 1
     {
@@ -1038,9 +1138,11 @@ public:
             return true;
 
         // 确保图已构建
+        // 未构建就重新构建
+        // 但是还没有做存盘的逻辑
         if (!graphs_built)
         {
-             const_cast<Hypergraph *>(this)->offline_industry();
+             const_cast<Hypergraph *>(this)->offline_industry_baseline();
         }
 
         // 处理 minIntersectionSize 的有效范围
@@ -1345,10 +1447,10 @@ public:
             throw std::invalid_argument("Vertex id is out of bounds for deletion");
         }
         // 检查顶点是否已经 "不存在" 或已被删除
-        // 如果 vertices[vertexId] == 0 表示不存在，可以加上这个检查
-        // if (vertices[vertexId] == 0) { // 假设 0 表示不存在
-        //     return; // Vertex already deleted or never existed
-        // }
+        bool already_deleted = true;
+        if (vertexId < vertex_to_edges.size() && !vertex_to_edges[vertexId].empty()) {
+             already_deleted = false;
+        }
         // 或者，如果 vertex_to_edges 为空表示不存在/已删除
         if (vertex_to_edges[vertexId].empty() && /* 检查 vertices[vertexId] 是否也表示不存在 */ true) {
              // 可以选择静默返回或抛出异常，表明顶点不存在或已被删除
@@ -1356,8 +1458,14 @@ public:
              return; // Or simply return if deleting a non-existent vertex is acceptable
         }
 
+        // 2. 标记所有相关索引失效
+        ds_valid = false;
+        graphs_built = false;
 
-
+        pll.reset();               // PLL 索引也失效
+        pll_graph.reset();         // PLL 依赖的图也失效
+        //调整all_intersections
+        all_intersections.clear(); // 删除顶点会改变超边内容，进而改变交集
 
         // 3. 更新超边列表 (hyperedges)
         //    从包含 vertexId 的超边中移除 vertexId
@@ -1390,25 +1498,6 @@ public:
         // 依赖于顶点迭代的方法 (如 buildDisjointSets, offline_industry)
         // 未来可能需要检查顶点是否有效（例如检查 vertex_to_edges[i].empty()）
 
-        // 5. 更新索引
-        //    a. 更新并查集 (如果使用)
-        // if (ds_valid && ds) {
-        //     ds_valid = false;
-        //     ds->remove(vertexId);
-        // }
-        // //    PLL索引更新
-        // if (pll) {
-        //     pll->updateVertex(vertexId);
-        // }
-        // //    各层WeightedGraph索引更新
-        // if (graphs_built) {
-        //     for (auto& graph : weighted_graphs) {
-        //         if (graph) {
-        //             graph->removeVertex(vertexId);
-        //         }
-        //     }
-        // }
-
     }
 
     // Helper to build hypergraph's own DS (ensure this exists and is correct)
@@ -1430,7 +1519,7 @@ public:
    // Helper to calculate all intersections in parallel (ensure this exists and is correct)
    void calculateAllIntersectionsParallel() {
        // ... (Implementation from previous response) ...
-        if (!all_intersections.empty()) return; // Already calculated
+        all_intersections.clear(); // <--- 在开始时清除，确保从头计算
 
         std::cout << "Calculating hyperedge intersections..." << std::endl;
         std::mutex intersections_mutex;
