@@ -303,6 +303,7 @@ public:
         // 1. 标记索引失效
         ds_valid = false;
         graphs_built = false;
+        all_intersections.clear();
 
         // 2. 核心图结构修改 (保持不变)
         if (edgeId < 0)
@@ -376,7 +377,8 @@ public:
              }
         }
 
-
+        // 交集还是得清空
+        all_intersections.clear();
         
         // 3. *** 增量更新 all_intersections ***
         //    仅在 all_intersections 之前是有效的情况下进行增量更新
@@ -388,25 +390,25 @@ public:
         //    或者，我们假设调用者负责维护一致性，这里总是尝试增量更新。
         //    我们选择后者，但需要注意 calculateAllIntersectionsParallel 的行为。
 
-        const Hyperedge& newEdge = hyperedges[newEdgeId];
-        if (!newEdge.vertices.empty()) { // 只处理非空的新边
-            // 预估需要添加的交集数量，尝试 reserve
-            // all_intersections.reserve(all_intersections.size() + newEdgeId / 10); // 粗略估计
+        // const Hyperedge& newEdge = hyperedges[newEdgeId];
+        // if (!newEdge.vertices.empty()) { // 只处理非空的新边
+        //     // 预估需要添加的交集数量，尝试 reserve
+        //     // all_intersections.reserve(all_intersections.size() + newEdgeId / 10); // 粗略估计
 
-            for (int oldEdgeId = 0; oldEdgeId < newEdgeId; ++oldEdgeId) {
-                const Hyperedge& oldEdge = hyperedges[oldEdgeId];
-                if (!oldEdge.vertices.empty()) { // 只与非空的旧边计算
-                    // 注意：getHyperedgeIntersection 内部排序，有开销
-                    auto intersection = newEdge.intersection(oldEdge);
-                    int size = intersection.size();
-                    if (size > 0) {
-                        // 添加到 all_intersections
-                        // 注意：这里没有加锁，假设 Hypergraph 对象不是线程安全的
-                        all_intersections.emplace_back(oldEdgeId, newEdgeId, size);
-                    }
-                }
-            }
-        }
+        //     for (int oldEdgeId = 0; oldEdgeId < newEdgeId; ++oldEdgeId) {
+        //         const Hyperedge& oldEdge = hyperedges[oldEdgeId];
+        //         if (!oldEdge.vertices.empty()) { // 只与非空的旧边计算
+        //             // 注意：getHyperedgeIntersection 内部排序，有开销
+        //             auto intersection = newEdge.intersection(oldEdge);
+        //             int size = intersection.size();
+        //             if (size > 0) {
+        //                 // 添加到 all_intersections
+        //                 // 注意：这里没有加锁，假设 Hypergraph 对象不是线程安全的
+        //                 all_intersections.emplace_back(oldEdgeId, newEdgeId, size);
+        //             }
+        //         }
+        //     }
+        // }
 
         return newEdgeId;
 
