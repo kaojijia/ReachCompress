@@ -17,6 +17,7 @@
 #include <iostream>  // For std::cout in test
 #include <chrono>    // For timing
 #include <filesystem> // For directory creation
+#include <numeric>   // For std::iota in recalculate
 // 前向声明 HypergraphTreeIndex 类
 class HypergraphTreeIndex;
 
@@ -54,6 +55,15 @@ public:
         nodes_.reserve(num_hyperedges * 2);                 // 预估节点数大约是超边数的两倍
         up_.reserve(num_hyperedges * 2);                    // LCA 预计算数组
         hyperedge_to_leaf_.resize(num_hyperedges, nullptr); // 映射超边ID到叶子节点
+        
+        // 初始化邻居数据结构
+        if (max_intersection_k_ >= 1) { // 只要 k >= 1 就需要存储
+            edge_neighbors_by_size_.resize(num_hyperedges);
+            for(size_t i = 0; i < num_hyperedges; ++i) {
+                // 需要 k 个槽位来存储大小为 1 到 k 的邻居 (索引 0 到 k-1)
+                edge_neighbors_by_size_[i].resize(max_intersection_k_);
+            }
+        }
     }
 
     // 构建索引树
@@ -187,6 +197,9 @@ public:
                       }
                       return std::get<1>(a) < std::get<1>(b);
                   });
+
+
+        populateEdgeNeighbors(merge_candidates); // 调用修改后的填充函数
 
         // 初始化并查集，每个节点初始时自成一个集合
         dsu_parent_.resize(next_node_id_);
@@ -593,6 +606,11 @@ public:
                       return std::get<0>(a) > std::get<0>(b);
                   });
 
+
+
+        // *** 填充邻居信息数据结构 (SizeOnly 版本) (修改点) ***
+        populateEdgeNeighborsSizeOnly(merge_candidates); // 调用修改后的填充函数
+
         // 初始化并查集 (与 buildIndex 相同)
         dsu_parent_.resize(next_node_id_);
         for (int i = 0; i < next_node_id_; ++i)
@@ -781,6 +799,9 @@ public:
                 if (loaded_from_cache)
                 {
                     std::cout << "HypergraphTreeIndex loaded from cache: " << cache_path << std::endl;
+                    std::cout << "Recalculating neighbor information after loading from cache..." << std::endl;
+                    recalculateAndPopulateNeighbors(); // 调用修改后的重新计算函数
+                    std::cout << "Neighbor information recalculated." << std::endl;
                     // LCA is recomputed inside loadIndex upon success
                     return; // Successfully loaded, no need to build
                 }
@@ -845,6 +866,9 @@ public:
         // 3. Sort merge candidates
         sortMergeCandidates(merge_candidates);
 
+
+        populateEdgeNeighbors(merge_candidates);
+
         // 4. Initialize DSU
         initializeDSU();
 
@@ -900,6 +924,9 @@ public:
                 if (loaded_from_cache)
                 {
                     std::cout << "HypergraphTreeIndex (SizeOnly) loaded from cache: " << cache_path << std::endl;
+                    std::cout << "Recalculating neighbor information (SizeOnly) after loading from cache..." << std::endl;
+                    recalculateAndPopulateNeighborsSizeOnly(); // 使用 SizeOnly 版本
+                    std::cout << "Neighbor information recalculated." << std::endl;
                     // LCA is recomputed inside loadIndex upon success
                     return; // Successfully loaded
                 }
@@ -960,6 +987,10 @@ public:
 
         // 3. Sort merge candidates by size
         sortMergeCandidatesSizeOnly(merge_candidates_size_only);
+
+        // *** 填充邻居信息数据结构 (SizeOnly 版本) (修改点) ***
+        populateEdgeNeighborsSizeOnly(merge_candidates_size_only); // 调用修改后的填充函数
+
 
         // 4. Initialize DSU
         initializeDSU();
@@ -1043,7 +1074,40 @@ public:
             memory_bytes += vec.capacity() * sizeof(TreeNodePtr); // 内层 vector 存储指针的开销
         }
 
+        // 新增：估算 edge_neighbors_by_size_ 的内存 (修改点: 检查 k>=1)
+        if (max_intersection_k_ >= 1) {
+            memory_bytes += sizeof(edge_neighbors_by_size_); // 外层 vector 对象
+            memory_bytes += edge_neighbors_by_size_.capacity() * sizeof(std::vector<std::vector<int>>); // 外层 vector 存储中层 vector 对象的开销
+            for (const auto& mid_vec : edge_neighbors_by_size_) {
+                memory_bytes += sizeof(mid_vec); // 中层 vector 对象
+                memory_bytes += mid_vec.capacity() * sizeof(std::vector<int>); // 中层 vector 存储内层 vector 对象的开销
+                for (const auto& inner_vec : mid_vec) {
+                    memory_bytes += sizeof(inner_vec); // 内层 vector 对象
+                    memory_bytes += inner_vec.capacity() * sizeof(int); // 内层 vector 存储 int 的开销
+                }
+            }
+        }
+
+
         return static_cast<double>(memory_bytes) / (1024.0 * 1024.0); // 转换为 MB
+    }
+
+    
+    // 新增：获取指定超边和交集大小的邻居列表
+    // edge_id: 目标超边的 ID
+    // intersection_size: 期望的交集大小 (范围 [1, max_intersection_k_]) (修改点)
+    // 返回: 包含邻居超边 ID 的 const 引用；如果输入无效或无邻居，返回空 vector 的引用
+    const std::vector<int>& getNeighborsBySize(int edge_id, int intersection_size) const {
+        // 检查输入有效性 (修改点: intersection_size >= 1)
+        if (intersection_size < 1 || intersection_size > max_intersection_k_ ||
+            edge_id < 0 || edge_id >= static_cast<int>(edge_neighbors_by_size_.size()) ||
+            (intersection_size - 1) < 0 || (intersection_size - 1) >= static_cast<int>(edge_neighbors_by_size_[edge_id].size()) ) {
+            // 返回静态空 vector 的引用以避免创建临时对象
+            static const std::vector<int> empty_vec;
+            return empty_vec;
+        }
+        // 调整索引：大小 s 存储在索引 s-1 (修改点)
+        return edge_neighbors_by_size_[edge_id][intersection_size - 1];
     }
 
     // 获取索引树中的总节点数
@@ -1062,6 +1126,14 @@ private:
     std::vector<int> dsu_parent_;                // 并查集数组，用于构建树
     static const int MAX_LCA_LOG = 20;           // LCA 预计算的最大深度（2^20 足够处理大量节点）
     std::vector<std::vector<TreeNodePtr>> up_;   // LCA 预计算数组, up_[i][j] 表示节点 i 的第 2^j 个祖先
+
+
+    // --- 新增邻居信息成员 ---
+    int max_intersection_k_; // 存储邻居的最大交集大小 k (>= 1) (修改点)
+    // 结构: edge_neighbors_by_size_[edge_id][intersection_size - 1] = vector<neighbor_edge_id> (修改点)
+    std::vector<std::vector<std::vector<int>>> edge_neighbors_by_size_;
+
+
 
     // 计算两个叶子节点对应超边的交集
     // n1, n2: 两个叶子节点的指针
@@ -1302,6 +1374,20 @@ private:
         }
         dsu_parent_.clear();
         up_.clear(); // Clear LCA data as well
+
+        // Clear neighbor data structure (修改点: 检查 k>=1, 大小为 k)
+        if (max_intersection_k_ >= 1) {
+            size_t num_hyperedges = hypergraph_.numHyperedges();
+            edge_neighbors_by_size_.assign(num_hyperedges, std::vector<std::vector<int>>(max_intersection_k_)); // 大小为 k
+            // Clear inner vectors explicitly
+            for (auto& mid_vec : edge_neighbors_by_size_) {
+                for (auto& inner_vec : mid_vec) {
+                    inner_vec.clear();
+                }
+            }
+       } else {
+            edge_neighbors_by_size_.clear();
+       }
     }
 
     void mergeNodesSizeOnly(const std::vector<std::tuple<int, int, int>> &merge_candidates)
@@ -1842,6 +1928,129 @@ private:
              }
          }
      }
+
+     
+    // --- 新增：填充邻居信息 (完整版) ---
+    void populateEdgeNeighbors(const std::vector<std::tuple<int, std::vector<int>, int, int>>& merge_candidates) {
+        if (max_intersection_k_ < 1) return; // 不需要存储邻居信息 (修改点)
+
+        // 清空旧的邻居信息
+        for (auto& mid_vec : edge_neighbors_by_size_) {
+            for (auto& inner_vec : mid_vec) {
+                inner_vec.clear();
+            }
+        }
+
+        for (const auto& candidate : merge_candidates) {
+            int size = std::get<0>(candidate);
+            int node1_id = std::get<2>(candidate);
+            int node2_id = std::get<3>(candidate);
+
+            // 只处理叶子节点之间的交集，并且交集大小在 [1, k] 范围内 (修改点: size >= 1)
+            if (size >= 1 && size <= max_intersection_k_ &&
+                node1_id >= 0 && node1_id < nodes_.size() && nodes_[node1_id]->is_leaf && // 增加 node_id 边界检查
+                node2_id >= 0 && node2_id < nodes_.size() && nodes_[node2_id]->is_leaf)   // 增加 node_id 边界检查
+            {
+                int edge1_id = nodes_[node1_id]->hyperedge_id;
+                int edge2_id = nodes_[node2_id]->hyperedge_id;
+
+                // 检查边界并添加到邻居列表 (修改点: 索引 size - 1)
+                if (edge1_id >= 0 && edge1_id < edge_neighbors_by_size_.size() &&
+                    edge2_id >= 0 && edge2_id < edge_neighbors_by_size_.size() &&
+                    (size - 1) >= 0 && (size - 1) < edge_neighbors_by_size_[edge1_id].size() &&
+                    (size - 1) < edge_neighbors_by_size_[edge2_id].size())
+                {
+                    edge_neighbors_by_size_[edge1_id][size - 1].push_back(edge2_id);
+                    edge_neighbors_by_size_[edge2_id][size - 1].push_back(edge1_id);
+                }
+            }
+        }
+        // 可选排序去重
+    }
+
+    // --- 新增：填充邻居信息 (SizeOnly 版) ---
+    void populateEdgeNeighborsSizeOnly(const std::vector<std::tuple<int, int, int>>& merge_candidates_size_only) {
+         if (max_intersection_k_ < 1) return; // (修改点)
+
+         // 清空旧的邻居信息
+         for (auto& mid_vec : edge_neighbors_by_size_) {
+             for (auto& inner_vec : mid_vec) {
+                 inner_vec.clear();
+             }
+         }
+
+         for (const auto& candidate : merge_candidates_size_only) {
+             int size = std::get<0>(candidate);
+             int node1_id = std::get<1>(candidate);
+             int node2_id = std::get<2>(candidate);
+
+             // 只处理叶子节点之间的交集，并且交集大小在 [1, k] 范围内 (修改点: size >= 1)
+             if (size >= 1 && size <= max_intersection_k_ &&
+                 node1_id >= 0 && node1_id < nodes_.size() && nodes_[node1_id]->is_leaf && // 增加 node_id 边界检查
+                 node2_id >= 0 && node2_id < nodes_.size() && nodes_[node2_id]->is_leaf)   // 增加 node_id 边界检查
+             {
+                 int edge1_id = nodes_[node1_id]->hyperedge_id;
+                 int edge2_id = nodes_[node2_id]->hyperedge_id;
+
+                 // 检查边界并添加到邻居列表 (修改点: 索引 size - 1)
+                 if (edge1_id >= 0 && edge1_id < edge_neighbors_by_size_.size() &&
+                     edge2_id >= 0 && edge2_id < edge_neighbors_by_size_.size() &&
+                     (size - 1) >= 0 && (size - 1) < edge_neighbors_by_size_[edge1_id].size() &&
+                     (size - 1) < edge_neighbors_by_size_[edge2_id].size())
+                 {
+                     edge_neighbors_by_size_[edge1_id][size - 1].push_back(edge2_id);
+                     edge_neighbors_by_size_[edge2_id][size - 1].push_back(edge1_id);
+                 }
+             }
+         }
+         // 可选排序去重
+    }
+
+
+    // --- 新增：重新计算并填充邻居信息 (用于缓存加载后) ---
+    void recalculateAndPopulateNeighbors() {
+        if (max_intersection_k_ < 2) return;
+
+        // 1. 获取所有有效的叶子节点
+        std::vector<TreeNodePtr> current_leaf_nodes;
+        current_leaf_nodes.reserve(hyperedge_to_leaf_.size());
+        for(const auto& leaf_ptr : hyperedge_to_leaf_) {
+            if (leaf_ptr) { // 只考虑有效的叶子节点映射
+                current_leaf_nodes.push_back(leaf_ptr);
+            }
+        }
+        if (current_leaf_nodes.empty()) return;
+
+        // 2. 重新计算所有叶子节点对之间的交集
+        std::vector<std::tuple<int, std::vector<int>, int, int>> merge_candidates;
+        calculateAndPrepareMergeCandidates(current_leaf_nodes, merge_candidates); // 重用计算逻辑
+
+        // 3. 填充邻居信息
+        populateEdgeNeighbors(merge_candidates);
+    }
+
+    // --- 新增：重新计算并填充邻居信息 (SizeOnly, 用于缓存加载后) ---
+    void recalculateAndPopulateNeighborsSizeOnly() {
+         if (max_intersection_k_ < 2) return;
+
+         // 1. 获取所有有效的叶子节点 (同上)
+         std::vector<TreeNodePtr> current_leaf_nodes;
+         current_leaf_nodes.reserve(hyperedge_to_leaf_.size());
+         for(const auto& leaf_ptr : hyperedge_to_leaf_) {
+             if (leaf_ptr) {
+                 current_leaf_nodes.push_back(leaf_ptr);
+             }
+         }
+         if (current_leaf_nodes.empty()) return;
+
+         // 2. 重新计算所有叶子节点对之间的交集大小
+         std::vector<std::tuple<int, int, int>> merge_candidates_size_only;
+         calculateAndPrepareMergeCandidatesSizeOnly(current_leaf_nodes, merge_candidates_size_only); // 重用计算逻辑
+
+         // 3. 填充邻居信息
+         populateEdgeNeighborsSizeOnly(merge_candidates_size_only);
+    }
+
  
 };
 

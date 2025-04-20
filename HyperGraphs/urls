@@ -1,3 +1,36 @@
-https://networks.skewed.de/net/dblp_simplices#full-proj_draw
-https://networks.skewed.de/net/mag_geology_coauthor
-https://networks.skewed.de/net/mag_history_coauthor
+https://www.cs.cornell.edu/~arb/data/email-Enron/
+This is a temporal higher-order network dataset, which here means a sequence of timestamped simplices where each simplex is a set of nodes. In email communication, messages can be sent to multiple recipients. In this dataset, nodes are email addresses at Enron and a simplex is comprised of the sender and all recipients of the email. Timestamps are in millisecond resolution. Only email addresses from a core set of employees are included. The dataset was derived from the corpus hosted by William Cohen here. We restricted to simplices that consist of at most 25 nodes. Some basic statistics of this dataset are:
+number of nodes: 143
+number of timestamped simplices: 10,883
+number of unique simplices: 1,542
+number of edges in projected graph: 1,800
+
+
+https://www.cs.cornell.edu/~arb/data/walmart-trips/
+The walmart-trips network is a hypergraph where hyperedges are sets of co-purchased products at Walmart, as released as part of a Kaggle competition. We assigned products to one of ten broad departments in which the product appears on walmart.com (e.g., "Clothing, Shoes, and Accessories"), and these serve as node labels (there is also an additional "Other" class). Some summary statistics of the dataset are:
+number of nodes: 88,860
+number of hyperedges: 69,906
+mean / median hyperedge size: 6.6 / 5
+rank of hypergraph (maximum hyperedge size): 25
+number of node classes: 11
+
+
+
+https://www.cs.cornell.edu/~arb/data/cat-edge-Cooking/
+cat-edge-Cooking dataset
+Hypergraph where nodes are food ingredients, hyperedges are recipes made from combining multiple ingredients and categories indicate cuisine (e.g., "Southern-US", "Indian", "Spanish"). Raw data was obtained from the "What's Cooking?" Kaggle competition. Some summary statistics of the network are:
+number of nodes: 6,714
+number of hyperedges: 39,774
+number of edge label categories: 20
+rank of hypergraph (maximum hyperedge size): 65
+
+
+
+https://www.cs.cornell.edu/~arb/data/cat-edge-DAWN/
+
+cat-edge-DAWN dataset
+Here nodes are drugs, hyperedges are combinations of drugs taken by a patient prior to an emergency room visit and edge categories indicate the patient disposition (e.g., "sent home", "surgery", "released to detox"). Some summary statistics of the network are:
+number of nodes: 2,109
+number of hyperedges: 87,104
+number of edge label categories: 10
+rank of hypergraph network (maximum hyperedge size): 22

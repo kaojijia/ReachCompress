@@ -309,8 +309,8 @@ TEST_F(HypergraphTest, PerformanceComparison)
     // GTEST_SKIP() << "Test disabled.";
     // 加载超图数据
     // const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/test1";
-    string hypergraph_file = PROJECT_ROOT_DIR"/Edges/Hyper/random_hypergraph_4";
-    string cache_path = PROJECT_ROOT_DIR"/IndexCache/random_hypergraph_4/";
+    string hypergraph_file = PROJECT_ROOT_DIR"/HyperGraphs/cat-edge-Cooking.edges";
+    string cache_path = PROJECT_ROOT_DIR"/IndexCache/cat-edge-Cooking/";
     Hypergraph hg;
     try
     {
