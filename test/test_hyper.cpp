@@ -309,7 +309,8 @@ TEST_F(HypergraphTest, PerformanceComparison)
     // GTEST_SKIP() << "Test disabled.";
     // 加载超图数据
     // const string hypergraph_file = "/root/ReachCompress/Edges/Hyper/test1";
-    string hypergraph_file = "/root/ReachCompress/Edges/Hyper/random_hypergraph_4";
+    string hypergraph_file = PROJECT_ROOT_DIR"/Edges/Hyper/random_hypergraph_4";
+    string cache_path = PROJECT_ROOT_DIR"/IndexCache/random_hypergraph_4/";
     Hypergraph hg;
     try
     {
@@ -356,12 +357,12 @@ TEST_F(HypergraphTest, PerformanceComparison)
     }
 
     // Thread for Layered DS (baseline) build
-    std::thread baseline_thread([&hg, &build_duration_baseline, &baseline_build_error, &hypergraph_file]()
+    std::thread baseline_thread([&hg, &build_duration_baseline, &baseline_build_error, &cache_path]()
                                 {
         auto start = high_resolution_clock::now();
         try {
              // Assuming offline_industry was split into public methods
-             hg.offline_industry_baseline(hypergraph_file);
+             hg.offline_industry_baseline(cache_path);
         } catch (const std::exception& e) {
              cerr << "Error in baseline build thread: " << e.what() << endl;
              baseline_build_error = true;
@@ -371,12 +372,12 @@ TEST_F(HypergraphTest, PerformanceComparison)
         cout << "Layered DS build completed." << endl; });
 
     // Thread for UWeightedPLL build
-    std::thread pll_thread([&hg, &build_duration_pll, &pll_build_error , &hypergraph_file]()
+    std::thread pll_thread([&hg, &build_duration_pll, &pll_build_error , &cache_path]()
                            {
         auto start = high_resolution_clock::now();
          try {
             // Assuming offline_industry was split into public methods
-            hg.offline_industry_pll(hypergraph_file);
+            hg.offline_industry_pll(cache_path);
          } catch (const std::exception& e) {
              cerr << "Error in PLL build thread: " << e.what() << endl;
              pll_build_error = true;
@@ -388,7 +389,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
     // Thread for HypergraphTreeIndex build
     // Pass raw pointer as unique_ptr cannot be copied into lambda capture easily
     HypergraphTreeIndex *tree_index_ptr = tree_index.get();
-    std::thread tree_thread([tree_index_ptr, &build_duration_tree, &tree_build_error, &hypergraph_file]()
+    std::thread tree_thread([tree_index_ptr, &build_duration_tree, &tree_build_error, &cache_path]()
                             {
          if (!tree_index_ptr) {
              cerr << "Error: tree_index_ptr is null in thread." << endl;
@@ -397,7 +398,7 @@ TEST_F(HypergraphTest, PerformanceComparison)
          }
          auto start = high_resolution_clock::now();
          try {
-             tree_index_ptr->buildIndexCacheSizeOnly(hypergraph_file);
+             tree_index_ptr->buildIndexCacheSizeOnly(cache_path);
          } catch (const std::exception& e) {
              cerr << "Error in TreeIndex build thread: " << e.what() << endl;
              tree_build_error = true;
