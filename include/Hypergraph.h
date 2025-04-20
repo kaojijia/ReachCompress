@@ -277,9 +277,13 @@ public:
         // 更新顶点到超边的映射
         for (int v : vertexList)
         {
-            if (v < 0 || v >= static_cast<int>(vertices.size()))
+            if (v < 0)
             {
                 throw std::invalid_argument("Vertex ID in edge does not exist");
+            }else if (v >= static_cast<int>(vertex_to_edges.size()))
+            {
+                // 如果顶点ID超出当前范围，先添加顶点
+                addVertexWithId(v);
             }
             vertex_to_edges[v].push_back(edgeId);
         }
